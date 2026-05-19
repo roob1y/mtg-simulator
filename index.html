@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MTG Simulator</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>MTG Simulator</h1>
+      <nav>
+        <button class="nav-btn active" onclick="showPage('deck-builder')">Deck Builder</button>
+        <button class="nav-btn" onclick="showPage('game')" id="play-btn" disabled>Play</button>
+      </nav>
+    </header>
+
+    <!-- DECK BUILDER PAGE -->
+    <div id="deck-builder" class="page active">
+      <div class="deck-builder-layout">
+        <!-- Left: Search Panel -->
+        <div class="panel" id="search-panel">
+          <h2>Card Search</h2>
+          <div class="search-row">
+            <input type="text" id="search-input" placeholder="Search for a card..." />
+            <button onclick="searchCards()">Search</button>
+          </div>
+          <div id="search-results"></div>
+        </div>
+
+        <!-- Middle: Deck List -->
+        <div class="panel" id="deck-panel">
+          <h2>Deck List</h2>
+
+          <div class="deck-controls">
+            <input type="text" id="deck-name-input" placeholder="Deck name..." value="My Deck" />
+            <button onclick="saveDeck()">Save Deck</button>
+            <button onclick="loadDeckMenu()">Load Deck</button>
+            <button onclick="showImportModal()">Import List</button>
+            <button onclick="clearDeck()">Clear</button>
+          </div>
+
+          <div class="deck-stats">
+            <span id="card-count">Cards: 0 / 100</span>
+            <span id="land-count">Lands: 0</span>
+            <span id="color-identity">Colors: —</span>
+          </div>
+
+          <div id="validation-msg"></div>
+
+          <div id="deck-list"></div>
+
+          <button id="start-game-btn" onclick="startGame()" disabled>▶ Start Game</button>
+        </div>
+
+        <!-- Right: Card Preview -->
+        <div class="panel" id="preview-panel">
+          <h2>Card Preview</h2>
+          <div id="card-preview">
+            <p class="muted">Click a card to preview it</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Decks Modal -->
+      <div id="load-modal" class="modal hidden">
+        <div class="modal-inner">
+          <h3>Saved Decks</h3>
+          <div id="saved-decks-list"></div>
+          <button onclick="closeModal()">Close</button>
+        </div>
+      </div>
+
+      <!-- Import Deck Modal -->
+      <div id="import-modal" class="modal hidden">
+        <div class="modal-inner">
+          <h3>Import Decklist</h3>
+          <p class="muted">Paste your decklist below. One card per line in format: quantity name</p>
+          <p class="muted">Example: 1 Sol Ring</p>
+          <textarea
+            id="import-text"
+            style="
+              width: 100%;
+              height: 300px;
+              background: #2a2a2a;
+              border: 1px solid #444;
+              color: #e0e0e0;
+              padding: 10px;
+              font-family: monospace;
+              font-size: 13px;
+              resize: vertical;
+            "
+            placeholder="1 Auntie Ool, Cursewretch&#10;1 Sol Ring&#10;10 Swamp&#10;7 Mountain"
+          ></textarea>
+          <div id="import-progress" class="muted"></div>
+          <div style="display: flex; gap: 8px">
+            <button onclick="runImport()">Import</button>
+            <button onclick="closeImportModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME PAGE -->
+    <div id="game" class="page hidden">
+      <p class="muted" style="padding: 20px">Game engine coming in Phase 2...</p>
+      <button onclick="showPage('deck-builder')">← Back to Deck Builder</button>
+    </div>
+
+    <script src="js/scryfall.js"></script>
+    <script src="js/deck.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

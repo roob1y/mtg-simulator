@@ -1,0 +1,22 @@
+{
+  "name": "mtg-simulator",
+  "version": "1.0.0",
+  "description": "A browser-based MTG Commander deck builder and simulator",
+  "keywords": [
+    "mtg",
+    "magic",
+    "commander",
+    "simulator"
+  ],
+  "license": "MIT",
+  "author": "Robbie James",
+  "type": "commonjs",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "live-server"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
