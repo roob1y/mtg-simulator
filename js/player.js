@@ -1,6 +1,10 @@
 // ── PLAYER ──
 // Represents a single player's game state.
 
+// Incrementing ID counter — avoids Date.now() collision risk
+let _permId = 0;
+const nextPermId = () => ++_permId;
+
 class Player {
   constructor(name, isHuman = false) {
     this.name = name;
@@ -16,16 +20,21 @@ class Player {
     this.manaPool = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
     this.landsPlayedThisTurn = 0;
     this.hasDrawnThisTurn = false;
+    this.maxHandSize = 7; // can be increased by card effects
   }
 
   // ── LIBRARY ──
 
   // Load and shuffle a flat array of card objects
+  // Commanders are passed separately via loadCommanders()
   loadDeck(cards) {
-    // Separate commanders
-    this.commanders = cards.filter((c) => Scryfall.getCategory(c) === 'commander');
-    this.library = cards.filter((c) => Scryfall.getCategory(c) !== 'commander');
+    this.library = [...cards];
     this.shuffle();
+  }
+
+  // Set commanders directly (called from Game.init)
+  loadCommanders(commanders) {
+    this.commanders = [...commanders];
   }
 
   shuffle() {
@@ -125,12 +134,13 @@ class Player {
     if (Scryfall.getCategory(card) !== 'land') return false;
 
     this.hand.splice(cardIndex, 1);
+    // FIX: lands enter untapped by default; game.js sets tapped if oracle says so
     this.battlefield.push({
       card,
-      tapped: true, // lands enter tapped if they have ETB tapped, otherwise untapped
+      tapped: false,
       counters: [],
       summoningSick: false,
-      id: Date.now() + Math.random(),
+      id: nextPermId(),
     });
     this.landsPlayedThisTurn++;
     return true;
@@ -212,7 +222,7 @@ class Player {
         tapped: false,
         counters: [],
         summoningSick: type.includes('creature'), // creatures have summoning sickness
-        id: Date.now() + Math.random(),
+        id: nextPermId(),
       });
     } else {
       // Spell — resolves and goes to graveyard
@@ -231,14 +241,13 @@ class Player {
     const castCount = this.commanderCastCount[name] || 0;
     this.commanderCastCount[name] = castCount + 1;
 
-    const type = (commander.type_line || '').toLowerCase();
     this.battlefield.push({
       card: commander,
       tapped: false,
       counters: [],
       summoningSick: true,
       isCommander: true,
-      id: Date.now() + Math.random(),
+      id: nextPermId(),
     });
 
     return commander;
@@ -314,11 +323,11 @@ class Player {
 
   // Discard down to 7 at end of turn
   mustDiscard() {
-    return this.hand.length > 7;
+    return this.hand.length > this.maxHandSize;
   }
 
   discardToHandSize() {
-    while (this.hand.length > 7) {
+    while (this.hand.length > this.maxHandSize) {
       const discarded = this.hand.pop();
       this.graveyard.push(discarded);
       GameLog.add(`${this.name} discarded ${discarded.name}.`, 'info');

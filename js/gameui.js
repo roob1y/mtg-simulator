@@ -17,6 +17,8 @@ const GameUI = {
     this.renderHand(game.human);
     this.renderCommandZone(game.human);
     this.renderActionButtons(game);
+    this.renderGraveyard(game.human, game.opponent);
+    this.renderExile(game.human);
   },
 
   // ── PHASE BAR ──
@@ -95,13 +97,12 @@ const GameUI = {
 
     let html = `<div class="zone-label">Opponent — Hand: ${handSize} cards · Library: ${game.opponent.library.length}</div>`;
 
-    // Opponent creatures
     if (creatures.length > 0) {
       html += `<div class="permanent-row">`;
       creatures.forEach((perm) => {
         const { power, toughness } = game.opponent.getEffectivePT(perm);
         html += `
-          <div class="permanent opp-permanent ${perm.tapped ? 'tapped' : ''}">
+            <div class="permanent opp-permanent ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onPermanentClick('${perm.id}')">
             <div class="perm-name">${perm.card.name}</div>
             <div class="perm-pt">${power}/${toughness}</div>
             ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(', ')}</div>` : ''}
@@ -110,12 +111,11 @@ const GameUI = {
       html += `</div>`;
     }
 
-    // Opponent lands
     if (lands.length > 0) {
       html += `<div class="permanent-row lands-row">`;
       lands.forEach((perm) => {
         html += `
-          <div class="permanent land-perm opp-land ${perm.tapped ? 'tapped' : ''}">
+            <div class="permanent land-perm opp-land ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onPermanentClick('${perm.id}')">
             <div class="perm-name">${perm.card.name}</div>
           </div>`;
       });
@@ -140,12 +140,11 @@ const GameUI = {
 
     let html = `<div class="zone-label">Your Battlefield · Library: ${humanPlayer.library.length} · Graveyard: ${humanPlayer.graveyard.length}</div>`;
 
-    // Non-creature permanents (enchantments, artifacts, planeswalkers)
     if (otherPerms.length > 0) {
       html += `<div class="permanent-row">`;
       otherPerms.forEach((perm) => {
         html += `
-          <div class="permanent other-perm ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onPermanentClick('${perm.id}')">
+          <div class="permanent other-perm ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onArtifactClick('${perm.id}')">
             <div class="perm-name">${perm.card.name}</div>
             <div class="perm-type">${perm.card.type_line || ''}</div>
           </div>`;
@@ -153,7 +152,6 @@ const GameUI = {
       html += `</div>`;
     }
 
-    // Creatures
     if (creatures.length > 0) {
       html += `<div class="permanent-row">`;
       creatures.forEach((perm) => {
@@ -178,7 +176,6 @@ const GameUI = {
       html += `</div>`;
     }
 
-    // Lands
     if (lands.length > 0) {
       html += `<div class="permanent-row lands-row">`;
       lands.forEach((perm) => {
@@ -186,6 +183,7 @@ const GameUI = {
           <div class="permanent land-perm ${perm.tapped ? 'tapped' : ''}"
             onclick="GameUI.onLandClick('${perm.id}')">
             <div class="perm-name">${perm.card.name}</div>
+            ${perm.canUntap && perm.tapped ? '<div class="sick-label" onclick="event.stopPropagation(); GameUI.untapLand(' + perm.id + ')">↺ Undo</div>' : ''}
           </div>`;
       });
       html += `</div>`;
@@ -219,7 +217,7 @@ const GameUI = {
         const type = card.type_line || '';
         const isSelected = this.selectedCard === idx;
         const cmc = card.cmc || 0;
-        const canAfford = Game.human.totalMana() >= cmc;
+        const canAfford = Game.canAffordCard(card);
 
         return `
         <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''}"
@@ -250,8 +248,7 @@ const GameUI = {
         const imgUrl = Scryfall.getArtUrl(commander);
         const tax = humanPlayer.commanderTax(commander.name);
         const totalCost = (commander.cmc || 0) + tax;
-        const canAfford = humanPlayer.totalMana() >= totalCost;
-
+        const canAfford = Game.canAffordCard(commander);
         return `
         <div class="commander-card ${!canAfford ? 'cant-afford' : ''}"
           onclick="Game.castCommander(${idx})">
@@ -265,19 +262,96 @@ const GameUI = {
       .join('');
   },
 
+  renderGraveyard(humanPlayer, opponent) {
+    // Human graveyard
+    const el = document.getElementById('graveyard-list');
+    const countEl = document.getElementById('graveyard-count');
+    if (el) {
+      if (countEl) countEl.textContent = humanPlayer.graveyard.length;
+      if (humanPlayer.graveyard.length === 0) {
+        el.innerHTML = '<p class="muted" style="font-size:12px">Empty.</p>';
+      } else {
+        el.innerHTML = humanPlayer.graveyard
+          .map((card) => {
+            const imgUrl = Scryfall.getArtUrl(card);
+            return `
+            <div class="hand-card" onclick="GameUI.previewGameCard(${JSON.stringify(card).replace(/"/g, '&quot;')})">
+              ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+              <div class="hand-card-info">
+                <div class="hand-card-name">${card.name}</div>
+                <div class="hand-card-meta">${card.type_line || ''}</div>
+              </div>
+            </div>`;
+          })
+          .join('');
+      }
+    }
+
+    // Opponent graveyard
+    const oppEl = document.getElementById('opp-graveyard-list');
+    const oppCountEl = document.getElementById('opp-graveyard-count');
+    if (oppEl) {
+      if (oppCountEl) oppCountEl.textContent = opponent.graveyard.length;
+      if (opponent.graveyard.length === 0) {
+        oppEl.innerHTML = '<p class="muted" style="font-size:12px">Empty.</p>';
+      } else {
+        oppEl.innerHTML = opponent.graveyard
+          .map((card) => {
+            const imgUrl = Scryfall.getArtUrl(card);
+            return `
+            <div class="hand-card" onclick="GameUI.previewGameCard(${JSON.stringify(card).replace(/"/g, '&quot;')})">
+              ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+              <div class="hand-card-info">
+                <div class="hand-card-name">${card.name}</div>
+                <div class="hand-card-meta">${card.type_line || ''}</div>
+              </div>
+            </div>`;
+          })
+          .join('');
+      }
+    }
+  },
+
+  renderExile(humanPlayer) {
+    const el = document.getElementById('exile-list');
+    const countEl = document.getElementById('exile-count');
+    if (!el) return;
+
+    if (countEl) countEl.textContent = humanPlayer.exile.length;
+
+    if (humanPlayer.exile.length === 0) {
+      el.innerHTML = '<p class="muted" style="font-size:12px">Empty.</p>';
+      return;
+    }
+
+    el.innerHTML = humanPlayer.exile
+      .map((card) => {
+        const imgUrl = Scryfall.getArtUrl(card);
+        return `
+        <div class="hand-card" onclick="GameUI.previewGameCard(${JSON.stringify(card).replace(/"/g, '&quot;')})">
+          ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+          <div class="hand-card-info">
+            <div class="hand-card-name">${card.name}</div>
+            <div class="hand-card-meta">${card.type_line || ''}</div>
+          </div>
+        </div>`;
+      })
+      .join('');
+  },
+
   // ── ACTION BUTTONS ──
 
   renderActionButtons(game) {
     const el = document.getElementById('action-buttons');
     if (!el) return;
 
+    // FIX: use local `phase` variable consistently — no Game.currentPhase reference
     const phase = game.currentPhase;
     const isMain = ['main1', 'main2'].includes(phase);
     const isCombat = phase === 'combat';
 
     let html = '';
 
-    // Next Phase button (always available except in combat when attacking)
     const phaseNames = {
       untap: 'Untap',
       upkeep: 'Upkeep',
@@ -289,55 +363,72 @@ const GameUI = {
     };
 
     const phases = ['untap', 'upkeep', 'draw', 'main1', 'combat', 'main2', 'end'];
-    const currentIdx = phases.indexOf(game.currentPhase);
+    const currentIdx = phases.indexOf(phase);
     const nextPhase = phases[currentIdx + 1];
     const nextLabel = nextPhase ? phaseNames[nextPhase] : 'End Turn';
-    const currentLabel = phaseNames[game.currentPhase] || game.currentPhase;
+    const currentLabel = phaseNames[phase] || phase;
 
-    html += `<button class="action-btn primary" onclick="Game.advancePhase()">
-  ${currentLabel} → ${nextLabel}
-</button>`;
+    // Don't show Next Phase during active attacker declaration
+    if (!(isCombat && Combat.phase === 'declare_attackers')) {
+      html += `<button class="action-btn primary" onclick="Game.advancePhase()">
+        ${currentLabel} → ${nextLabel}
+      </button>`;
+    }
 
-    // Combat button
+    // Combat buttons
     if (game.isHumanTurn) {
       if (isCombat && Combat.phase === null) {
         html += `<button class="action-btn attack" onclick="Game.beginCombat()">
-      ⚔ Declare Attackers
-    </button>`;
+          ⚔ Declare Attackers
+        </button>`;
       }
 
-      // Confirm attackers button
       if (isCombat && Combat.phase === 'declare_attackers') {
         html += `<button class="action-btn attack" onclick="Combat.confirmAttackers(Game.human, Game.opponent)">
-      ✓ Confirm Attackers (${Combat.attackers.length})
-    </button>`;
+          ✓ Confirm Attackers (${Combat.attackers.length})
+        </button>`;
         html += `<button class="action-btn" onclick="Combat.end()">
-      Skip Combat
-    </button>`;
+          Skip Combat
+        </button>`;
       }
     }
 
-    // Discard selected card
+    // Actions for selected hand card
     if (this.selectedCard !== null) {
       const card = game.human.hand[this.selectedCard];
       if (card) {
         const type = (card.type_line || '').toLowerCase();
         const isLand = type.includes('land');
 
-        if (isLand && isMain && game.human.canPlayLand()) {
-          html += `<button class="action-btn land" onclick="Game.playLand(${this.selectedCard}); GameUI.selectedCard = null;">
-            🌲 Play ${card.name}
-          </button>`;
+        if (Scryfall.isMDFC(card) && isMain) {
+          const landFace = Scryfall.getMDFCLandFace(card);
+          const spellFace = Scryfall.getMDFCSpellFace(card);
+          if (landFace && game.human.canPlayLand()) {
+            html += `<button class="action-btn land" onclick="Game.playMDFCLand(${this.selectedCard})">
+      🌲 Play ${landFace.name}
+    </button>`;
+          }
+          if (spellFace) {
+            const cmc = card.cmc || 0;
+            html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})">
+      ✨ Cast ${spellFace.name} (${cmc} mana)
+    </button>`;
+          }
+        } else if (isLand && isMain && game.human.canPlayLand()) {
+          html += `<button class="action-btn land" onclick="Game.playLand(${this.selectedCard})">
+    🌲 Play ${card.name}
+  </button>`;
         } else if (!isLand && isMain) {
-          html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard}); GameUI.selectedCard = null;">
-            ✨ Cast ${card.name} (${card.cmc || 0} mana)
-          </button>`;
+          html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})">
+    ✨ Cast ${card.name} (${card.cmc || 0} mana)
+  </button>`;
         }
 
-        if (Game.currentPhase === 'end' && Game.human.hand.length > 7) {
+        // FIX: use local phase variable, not Game.currentPhase
+        if (phase === 'end' && game.human.hand.length > game.human.maxHandSize) {
           html += `<button class="action-btn discard" onclick="GameUI.discardCard(${this.selectedCard})">
-    🗑 Discard ${card.name}
-  </button>`;
+            🗑 Discard ${card.name}
+          </button>`;
         }
       }
     }
@@ -353,7 +444,6 @@ const GameUI = {
     } else {
       this.selectedCard = idx;
 
-      // Preview the card
       const card = Game.human.hand[idx];
       if (card) this.previewGameCard(card);
     }
@@ -361,28 +451,81 @@ const GameUI = {
   },
 
   onPermanentClick(permanentId) {
-    // Only allow attacker selection on human's turn during combat
+    console.log('onPermanentClick called', permanentId);
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+
     if (Combat.phase === 'declare_attackers' && Game.isHumanTurn) {
-      Combat.toggleAttacker(permanentId, Game.human);
+      Combat.toggleAttacker(id, Game.human);
       GameUI.renderGame(Game);
       return;
     }
-    // Otherwise preview the card
-    const perm = Game.human.battlefield.find((p) => p.id === permanentId);
+
+    const perm =
+      Game.human.battlefield.find((p) => p.id === id) ||
+      Game.opponent.battlefield.find((p) => p.id === id);
+    console.log('preview lookup', id, perm);
     if (perm) this.previewGameCard(perm.card);
   },
 
   onLandClick(permanentId) {
-    // In main phase, tap for mana
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+    const perm = Game.human.battlefield.find((p) => p.id === id);
+
     if (['main1', 'main2', 'combat'].includes(Game.currentPhase)) {
-      Game.tapLandForMana(permanentId);
+      if (perm && perm.tapped && perm.canUntap) {
+        this.untapLand(id);
+      } else {
+        Game.tapLandForMana(permanentId);
+      }
+    } else {
+      if (perm) this.previewGameCard(perm.card);
     }
+  },
+  onArtifactClick(permanentId) {
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+    const perm = Game.human.battlefield.find((p) => p.id === id);
+    if (!perm) return;
+
+    // Beginner mode undo
+    if (perm.tapped && perm.canUntap && Settings.get('beginnerMode')) {
+      Game.untapArtifact(id);
+      return;
+    }
+
+    const type = (perm.card.type_line || '').toLowerCase();
+    if (!type.includes('artifact')) {
+      this.previewGameCard(perm.card);
+      return;
+    }
+
+    // Check if artifact taps for mana (like Sol Ring)
+    const oracle = (perm.card.oracle_text || '').toLowerCase();
+    if (oracle.includes('{t}') && oracle.includes('add') && !perm.tapped) {
+      Game.tapArtifactForMana(id);
+    } else {
+      this.previewGameCard(perm.card);
+    }
+  },
+  untapLand(permanentId) {
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+    const perm = Game.human.battlefield.find((p) => p.id === id);
+    if (!perm || !perm.canUntap) return;
+    perm.tapped = false;
+    perm.canUntap = false;
+    // Remove the mana that was added
+    const colors = Game.getLandColors(perm.card);
+    if (colors.length === 1) {
+      Game.human.manaPool[colors[0]] = Math.max(0, Game.human.manaPool[colors[0]] - 1);
+    }
+    GameLog.add(`Untapped ${perm.card.name} (undo).`, 'action');
+    GameUI.renderGame(Game);
   },
 
   // ── CARD PREVIEW IN GAME ──
 
   previewGameCard(card) {
     const el = document.getElementById('game-card-preview');
+    console.log('preview el', el, 'imgUrl', Scryfall.getImageUrl(card, 'normal'));
     if (!el) return;
 
     const imgUrl = Scryfall.getImageUrl(card, 'normal');
@@ -419,7 +562,6 @@ const GameUI = {
     el.classList.remove('hidden');
     gameEl.classList.add('hidden');
 
-    // Render the hand
     const handEl = document.getElementById('mulligan-hand');
     if (handEl) {
       handEl.innerHTML = Game.human.hand
@@ -442,7 +584,6 @@ const GameUI = {
           : `Mulligan taken. This is your new hand of ${handSize}. Keep or mulligan again (${handSize - 1} cards next time)?`;
     }
 
-    // Show/hide mulligan button based on hand size
     const mulliganBtn = document.getElementById('mulligan-btn');
     if (mulliganBtn) {
       mulliganBtn.disabled = handSize <= 1;
@@ -453,6 +594,7 @@ const GameUI = {
     const el = document.getElementById('mulligan-screen');
     const gameEl = document.getElementById('game-board');
     if (el) el.classList.add('hidden');
+    // FIX: ensure game-board is shown
     if (gameEl) gameEl.classList.remove('hidden');
     Game.acceptHand();
   },
@@ -463,12 +605,16 @@ const GameUI = {
 
   // ── PHASE TIP ──
 
+  // FIX: always update and show the tip (clear-then-set pattern)
   showPhaseTip(phase) {
     const tip = PHASE_TIPS[phase];
-    if (!tip) return;
-
     const el = document.getElementById('phase-tip');
     if (!el) return;
+
+    if (!tip) {
+      el.classList.add('hidden');
+      return;
+    }
 
     el.innerHTML = `
       <div class="tip-title">${tip.title}</div>
@@ -527,8 +673,7 @@ const GameUI = {
   // ── DISCARD PROMPT ──
 
   showDiscardPrompt() {
-    GameLog.add('Select cards to discard down to 7.', 'warning');
-    // Cards in hand are already clickable and show discard option when selected
+    GameLog.add('Select a card in your hand and click Discard to reduce to 7.', 'warning');
   },
 
   // ── GAME OVER ──

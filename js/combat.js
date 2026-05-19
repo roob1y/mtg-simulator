@@ -17,7 +17,8 @@ const Combat = {
 
   // Toggle a creature as an attacker
   toggleAttacker(permanentId, humanPlayer) {
-    const perm = humanPlayer.battlefield.find((p) => p.id === permanentId);
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+    const perm = humanPlayer.battlefield.find((p) => p.id === id);
     if (!perm) return;
 
     const type = (perm.card.type_line || '').toLowerCase();
@@ -27,9 +28,9 @@ const Combat = {
       return;
     }
 
-    const idx = this.attackers.indexOf(permanentId);
+    const idx = this.attackers.indexOf(id);
     if (idx === -1) {
-      this.attackers.push(permanentId);
+      this.attackers.push(id);
       GameLog.add(`${perm.card.name} declared as attacker.`, 'combat');
     } else {
       this.attackers.splice(idx, 1);
@@ -61,8 +62,6 @@ const Combat = {
 
   // Simple AI blocker logic
   aiDeclareBlockers(humanPlayer, opponent) {
-    GameLog.add('Opponent is attacking — you have no blockers yet (coming in Phase 3).', 'warning');
-
     const aiCreatures = opponent.getUntappedCreatures();
 
     this.attackers.forEach((attackerId) => {
@@ -155,20 +154,34 @@ const Combat = {
       );
     }
 
-    this.end();
+    // FIX: call end() which cleans up state; Game.advancePhase() is called
+    // separately by the player clicking the Next Phase button AFTER combat ends.
+    this.endCombatState();
+
+    // Check win condition after damage
+    Game.checkWinCondition();
+    GameUI.renderGame(Game);
   },
 
-  // End combat
-  end() {
+  // FIX: Renamed from end() — cleans up combat state WITHOUT advancing the phase.
+  // The player must click "Next Phase" to advance to main2.
+  endCombatState() {
     this.attackers = [];
     this.blockers = {};
     this.phase = null;
-    GameLog.add('Combat phase ends.', 'combat');
-    Game.advancePhase();
+    GameLog.add('Combat phase ends. Proceed to Main Phase 2.', 'combat');
+  },
+
+  // Skip combat entirely (called from Skip Combat button)
+  end() {
+    this.endCombatState();
+    GameUI.renderGame(Game);
+    // Do NOT advance phase here — player uses the Next Phase button
   },
 
   // Render attacker selection UI
   renderAttackerSelection(humanPlayer) {
     GameUI.renderBattlefield(humanPlayer, true);
+    GameUI.renderActionButtons(Game);
   },
 };
