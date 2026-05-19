@@ -27,8 +27,7 @@ Requires internet connection for Scryfall card images and search.
 
 ## Phases
 
-### Phase 1 — Deck Builder (COMPLETE)
-
+### Phase 1 — Deck Builder (CURRENT)
 - Search cards via Scryfall API
 - Add/remove cards from deck
 - Card preview with full art and oracle text
@@ -36,48 +35,28 @@ Requires internet connection for Scryfall card images and search.
 - Save/load multiple decks via localStorage
 - Color identity tracking
 
-### Phase 2 — Game Engine (IN PROGRESS)
-
+### Phase 2 — Game Engine (NEXT)
 - Shuffle and draw opening hand
 - Play lands and cast spells
-- Track battlefield, hand, graveyard, exile, commander zone
+- Track battlefield, hand, graveyard
 - Life total tracking
 - Turn phases (untap, upkeep, draw, main, combat, end)
-- Mana pool tracking
-- Basic combat — declare attackers and blockers
+- Trigger reminders for key cards
 
-### Phase 3 — Simulated Opponent (PLANNED)
-
-- Scripted AI opponents with different play styles
+### Phase 3 — Simulated Opponent
+- Scriptable AI opponents
 - Aggro opponent — floods board with cheap creatures
 - Control opponent — plays removal and board wipes
+- Each opponent has their own deck and play patterns
 - Expandable — add new opponent scripts easily
 
-### Phase 4 — UI Redesign (PLANNED)
-
-- Full visual redesign, dark MTG theme
-- Card animations and hover effects
+### Phase 4 — Polish
+- Full visual redesign
+- Animations and card hover effects
+- Sound effects
 - Mobile optimisation
 
-### Phase 5 — The Stack (PLANNED)
-
-- Priority passing
-- Instant speed responses
-- Counterspells
-
-### Phase 6 — Keywords (PLANNED)
-
-- Automatic handling of deathtouch, lifelink, trample, flying etc
-
-### Phase 7 — Triggers (PLANNED)
-
-- Automatic trigger detection for common card effects
-
-### Phase 8 — Full Rules Compliance (PLANNED)
-
-- Layers system
-- Replacement effects
-- State based actions
+## Adding a New Opponent (Phase 3+)
 
 Create a new file in `js/opponents/` following this template:
 
@@ -85,9 +64,7 @@ Create a new file in `js/opponents/` following this template:
 const OpponentAggro = {
   name: 'Aggressive Bot',
   description: 'Floods the board with cheap creatures',
-  deck: [
-    /* card names */
-  ],
+  deck: [ /* card names */ ],
   // play logic...
 };
 ```

@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MTG Simulator</title>
     <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/game.css" />
   </head>
   <body>
     <header>
@@ -13,12 +14,21 @@
         <button class="nav-btn active" onclick="showPage('deck-builder')">Deck Builder</button>
         <button class="nav-btn" onclick="showPage('game')" id="play-btn" disabled>Play</button>
       </nav>
+      <div id="settings-bar">
+        <label class="setting-toggle">
+          <input type="checkbox" id="beginner-mode-toggle" onchange="toggleBeginnerMode()" />
+          Beginner Mode
+        </label>
+        <label class="setting-toggle">
+          <input type="checkbox" id="auto-tap-toggle" onchange="toggleAutoTap()" />
+          Auto-tap
+        </label>
+      </div>
     </header>
 
     <!-- DECK BUILDER PAGE -->
     <div id="deck-builder" class="page active">
       <div class="deck-builder-layout">
-        <!-- Left: Search Panel -->
         <div class="panel" id="search-panel">
           <h2>Card Search</h2>
           <div class="search-row">
@@ -28,10 +38,8 @@
           <div id="search-results"></div>
         </div>
 
-        <!-- Middle: Deck List -->
         <div class="panel" id="deck-panel">
           <h2>Deck List</h2>
-
           <div class="deck-controls">
             <input type="text" id="deck-name-input" placeholder="Deck name..." value="My Deck" />
             <button onclick="saveDeck()">Save Deck</button>
@@ -39,21 +47,16 @@
             <button onclick="showImportModal()">Import List</button>
             <button onclick="clearDeck()">Clear</button>
           </div>
-
           <div class="deck-stats">
             <span id="card-count">Cards: 0 / 100</span>
             <span id="land-count">Lands: 0</span>
             <span id="color-identity">Colors: —</span>
           </div>
-
           <div id="validation-msg"></div>
-
           <div id="deck-list"></div>
-
           <button id="start-game-btn" onclick="startGame()" disabled>▶ Start Game</button>
         </div>
 
-        <!-- Right: Card Preview -->
         <div class="panel" id="preview-panel">
           <h2>Card Preview</h2>
           <div id="card-preview">
@@ -62,7 +65,6 @@
         </div>
       </div>
 
-      <!-- Saved Decks Modal -->
       <div id="load-modal" class="modal hidden">
         <div class="modal-inner">
           <h3>Saved Decks</h3>
@@ -71,29 +73,18 @@
         </div>
       </div>
 
-      <!-- Import Deck Modal -->
       <div id="import-modal" class="modal hidden">
         <div class="modal-inner">
           <h3>Import Decklist</h3>
-          <p class="muted">Paste your decklist below. One card per line in format: quantity name</p>
+          <p class="muted">Paste your decklist below. One card per line: quantity name</p>
           <p class="muted">Example: 1 Sol Ring</p>
           <textarea
             id="import-text"
-            style="
-              width: 100%;
-              height: 300px;
-              background: #2a2a2a;
-              border: 1px solid #444;
-              color: #e0e0e0;
-              padding: 10px;
-              font-family: monospace;
-              font-size: 13px;
-              resize: vertical;
-            "
+            style="width:100%;height:300px;background:#2a2a2a;border:1px solid #444;color:#e0e0e0;padding:10px;font-family:monospace;font-size:13px;resize:vertical;"
             placeholder="1 Auntie Ool, Cursewretch&#10;1 Sol Ring&#10;10 Swamp&#10;7 Mountain"
           ></textarea>
           <div id="import-progress" class="muted"></div>
-          <div style="display: flex; gap: 8px">
+          <div style="display:flex;gap:8px;">
             <button onclick="runImport()">Import</button>
             <button onclick="closeImportModal()">Cancel</button>
           </div>
@@ -103,12 +94,89 @@
 
     <!-- GAME PAGE -->
     <div id="game" class="page hidden">
-      <p class="muted" style="padding: 20px">Game engine coming in Phase 2...</p>
-      <button onclick="showPage('deck-builder')">← Back to Deck Builder</button>
+
+      <!-- Mulligan Screen -->
+      <div id="mulligan-screen" class="hidden">
+        <div class="mulligan-inner">
+          <h2>Opening Hand</h2>
+          <div id="mulligan-info" class="muted"></div>
+          <div id="mulligan-hand" class="mulligan-hand"></div>
+          <div class="mulligan-actions">
+            <button onclick="GameUI.acceptHand()" class="action-btn primary">Keep Hand</button>
+            <button onclick="GameUI.takeMulligan()" id="mulligan-btn" class="action-btn">Mulligan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Board -->
+      <div id="game-board" class="hidden">
+
+        <div id="phase-bar" class="phase-bar"></div>
+
+        <div class="game-header">
+          <div class="life-block">
+            <span class="life-label">Opponent</span>
+            <span class="life-total" id="opp-life">40</span>
+          </div>
+          <div class="turn-block">
+            <div id="turn-info">Turn 1 — Your Turn</div>
+          </div>
+          <div class="life-block">
+            <span class="life-label">You</span>
+            <span class="life-total" id="human-life">40</span>
+          </div>
+        </div>
+
+        <div class="game-layout">
+
+          <div class="game-main">
+            <div class="game-zone opp-zone" id="opp-battlefield"></div>
+            <div class="battlefield-divider">— Battlefield —</div>
+            <div class="game-zone human-zone" id="human-battlefield"></div>
+            <div class="mana-bar" id="mana-pool"></div>
+            <div class="action-bar" id="action-buttons"></div>
+            <div class="hand-zone">
+              <div class="zone-label">Your Hand</div>
+              <div class="hand-cards" id="human-hand"></div>
+            </div>
+            <div class="command-zone-area">
+              <div class="zone-label">Command Zone</div>
+              <div id="command-zone"></div>
+            </div>
+          </div>
+
+          <div class="game-sidebar">
+            <div class="sidebar-section">
+              <div class="sidebar-label">Card Preview</div>
+              <div id="game-card-preview">
+                <p class="muted" style="font-size:12px">Click a card to preview</p>
+              </div>
+            </div>
+            <div id="phase-tip" class="phase-tip hidden"></div>
+            <div id="trigger-reminder" class="trigger-reminder hidden"></div>
+            <div id="mana-choice" class="mana-choice hidden"></div>
+            <div class="sidebar-section">
+              <div class="sidebar-label">Game Log</div>
+              <div id="game-log-entries" class="game-log"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div id="game-over" class="game-over hidden"></div>
+
+      </div>
     </div>
 
     <script src="js/scryfall.js"></script>
     <script src="js/deck.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/gamelog.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/gameui.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

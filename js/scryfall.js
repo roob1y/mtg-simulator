@@ -1,18 +1,29 @@
 // ── SCRYFALL API ──
 // All communication with the Scryfall API lives here.
 
+const searchCache = {};
+
 const Scryfall = {
   BASE: 'https://api.scryfall.com',
 
   // Search for cards by name
   async search(query) {
     if (!query || query.trim().length < 2) return [];
+
+    // Return cached result if available
+    const key = query.trim().toLowerCase();
+    if (searchCache[key]) return searchCache[key];
+
     try {
       const encoded = encodeURIComponent(query.trim());
       const res = await fetch(`${this.BASE}/cards/search?q=${encoded}&order=name&unique=cards`);
       if (!res.ok) return [];
       const data = await res.json();
-      return data.data || [];
+      const results = data.data || [];
+
+      // Cache the results
+      searchCache[key] = results;
+      return results;
     } catch (e) {
       console.error('Scryfall search error:', e);
       return [];
@@ -92,12 +103,22 @@ const Scryfall = {
   // Determine card type category for deck grouping
   getCategory(card) {
     const type = (card.type_line || '').toLowerCase();
-    const ci = card.color_identity || [];
+    const oracle = (card.oracle_text || '').toLowerCase();
 
-    // Check if it's a commander (legendary creature or background)
-    if (type.includes('legendary') && (type.includes('creature') || type.includes('background'))) {
-      return 'commander';
+    // Faceless One and similar — legendary creature that is also a background
+    // Treat as legendary so it can be set as main commander
+    if (type.includes('legendary') && type.includes('creature') && type.includes('background')) {
+      return 'legendary';
     }
+
+    // Pure background enchantments (not creatures)
+    if (type.includes('background') && !type.includes('creature')) return 'background';
+
+    // Legendary creatures with "Choose a Background" are also legendaries
+    if (type.includes('legendary') && type.includes('creature')) {
+      return 'legendary';
+    }
+
     if (type.includes('land')) return 'land';
     if (type.includes('creature')) return 'creature';
     if (type.includes('planeswalker')) return 'planeswalker';

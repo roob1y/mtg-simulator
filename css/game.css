@@ -1,0 +1,721 @@
+/* ── GAME CSS ── */
+/* All styles for the game board, separate from deck builder */
+
+/* ── SETTINGS BAR ── */
+#settings-bar {
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.setting-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  user-select: none;
+}
+
+.setting-toggle input {
+  cursor: pointer;
+}
+
+/* ── PHASE BAR ── */
+.phase-bar {
+  display: flex;
+  background: #111;
+  border-bottom: 1px solid #222;
+  overflow-x: auto;
+}
+
+.phase-pip {
+  flex: 1;
+  text-align: center;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-family: monospace;
+  color: #444;
+  border-right: 1px solid #222;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.phase-pip.active {
+  background: #1a1a2a;
+  color: #8888cc;
+  border-bottom: 2px solid #6666aa;
+}
+
+/* ── GAME HEADER ── */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #111;
+  border-bottom: 1px solid #222;
+}
+
+.life-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.life-label {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.life-total {
+  font-size: 28px;
+  font-family: monospace;
+  color: #e0e0e0;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.turn-block {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+/* ── GAME LAYOUT ── */
+.game-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  height: calc(100vh - 130px);
+  overflow: hidden;
+}
+
+.game-main {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-right: 1px solid #222;
+}
+
+.game-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: #0e0e0e;
+}
+
+/* ── GAME ZONES ── */
+.game-zone {
+  min-height: 120px;
+  padding: 8px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.opp-zone {
+  background: #0e0a0a;
+}
+
+.human-zone {
+  background: #0a0e0a;
+  flex: 1;
+}
+
+.battlefield-divider {
+  text-align: center;
+  font-size: 10px;
+  color: #333;
+  padding: 4px;
+  background: #111;
+  border-top: 1px solid #1a1a1a;
+  border-bottom: 1px solid #1a1a1a;
+  letter-spacing: 0.15em;
+}
+
+.zone-label {
+  font-size: 10px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+/* ── PERMANENTS ── */
+.permanent-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.lands-row .permanent {
+  width: 36px;
+  height: 52px;
+}
+
+.permanent {
+  width: 64px;
+  height: 88px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    border-color 0.15s;
+  position: relative;
+  font-size: 10px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.permanent:hover {
+  border-color: #444;
+}
+
+.permanent.tapped {
+  transform: rotate(90deg);
+  margin: 16px 8px;
+}
+
+.permanent.sick {
+  border-color: #3a2a1a;
+  opacity: 0.7;
+}
+.permanent.attacking {
+  border-color: #aa4444 !important;
+  background: #1a0a0a;
+}
+.permanent.can-attack {
+  border-color: #44aa44;
+  cursor: pointer;
+}
+.permanent.can-attack:hover {
+  background: #0a1a0a;
+}
+
+.opp-permanent {
+  background: #1a1010;
+  border-color: #2a1a1a;
+  cursor: default;
+}
+.opp-land {
+  background: #181010;
+  cursor: default;
+}
+.land-perm {
+  background: #0e1a0e;
+  border-color: #1a2a1a;
+}
+.other-perm {
+  background: #10101a;
+  border-color: #1a1a2a;
+}
+.creature-perm {
+  background: #0e0e1a;
+}
+
+.perm-name {
+  font-size: 9px;
+  line-height: 1.2;
+  color: #ccc;
+  text-align: center;
+  word-break: break-word;
+}
+
+.perm-pt {
+  font-size: 10px;
+  color: #aaa;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+.perm-type {
+  font-size: 8px;
+  color: #666;
+}
+
+.perm-counters {
+  font-size: 8px;
+  color: #c88;
+  margin-top: 2px;
+}
+
+.sick-label {
+  font-size: 8px;
+  color: #a86;
+  position: absolute;
+  bottom: 2px;
+}
+
+.cmd-label {
+  font-size: 8px;
+  color: #aa8;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+/* ── MANA BAR ── */
+.mana-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #111;
+  border-bottom: 1px solid #1a1a1a;
+  flex-wrap: wrap;
+  min-height: 32px;
+}
+
+.mana-label {
+  font-size: 11px;
+  color: #555;
+  margin-right: 4px;
+}
+
+.mana-empty {
+  font-size: 11px;
+  color: #333;
+}
+
+.mana-pip {
+  font-size: 16px;
+  cursor: default;
+}
+
+/* ── ACTION BAR ── */
+.action-bar {
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #111;
+  border-bottom: 1px solid #1a1a1a;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  font-family: monospace;
+  font-size: 12px;
+  padding: 6px 12px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background: #222;
+  color: #fff;
+}
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.action-btn.primary {
+  border-color: #446;
+  color: #aaf;
+  background: #111128;
+}
+.action-btn.primary:hover {
+  background: #161630;
+}
+.action-btn.attack {
+  border-color: #644;
+  color: #faa;
+  background: #1a1111;
+}
+.action-btn.attack:hover {
+  background: #221414;
+}
+.action-btn.land {
+  border-color: #464;
+  color: #afa;
+  background: #111a11;
+}
+.action-btn.cast {
+  border-color: #446;
+  color: #aaf;
+  background: #111128;
+}
+.action-btn.discard {
+  border-color: #644;
+  color: #f88;
+  background: #1a1111;
+  font-size: 11px;
+}
+
+/* ── HAND ── */
+.hand-zone {
+  padding: 8px;
+  border-bottom: 1px solid #1a1a1a;
+  background: #0a0a0a;
+}
+
+.hand-cards {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.hand-card {
+  width: 80px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+
+.hand-card:hover {
+  border-color: #444;
+  transform: translateY(-2px);
+}
+.hand-card.selected {
+  border-color: #6688cc;
+  background: #111a2a;
+  transform: translateY(-4px);
+}
+.hand-card.cant-afford {
+  opacity: 0.5;
+}
+
+.hand-card-img {
+  width: 100%;
+  height: 56px;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+
+.hand-card-info {
+  padding: 4px;
+}
+
+.hand-card-name {
+  font-size: 9px;
+  color: #ccc;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.hand-card-meta {
+  font-size: 8px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* ── COMMAND ZONE ── */
+.command-zone-area {
+  padding: 8px;
+  background: #0a0a0e;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.commander-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: #14141e;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.commander-card:hover {
+  border-color: #4a4a8a;
+  background: #181828;
+}
+.commander-card.cant-afford {
+  opacity: 0.5;
+}
+
+.cmd-art {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 3px;
+}
+
+.cmd-name {
+  font-size: 11px;
+  color: #ccccee;
+}
+.cmd-cost {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* ── SIDEBAR ── */
+.sidebar-section {
+  padding: 10px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.sidebar-label {
+  font-size: 10px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+/* ── PHASE TIP ── */
+.phase-tip {
+  margin: 8px;
+  background: #0a1a0a;
+  border: 1px solid #1a3a1a;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 12px;
+}
+
+.tip-title {
+  color: #6a9a6a;
+  font-weight: bold;
+  margin-bottom: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tip-text {
+  color: #8a8a6a;
+  line-height: 1.6;
+}
+
+/* ── TRIGGER REMINDER ── */
+.trigger-reminder {
+  margin: 8px;
+  background: #1a1a0a;
+  border: 1px solid #3a3a1a;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 12px;
+  color: #aaaa6a;
+  line-height: 1.6;
+}
+
+/* ── MANA CHOICE ── */
+.mana-choice {
+  margin: 8px;
+  background: #0a0a1a;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.mana-choice-title {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.mana-choice-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 6px;
+  background: #1a1a2a;
+  border: 1px solid #2a2a4a;
+  color: #aaa;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mana-choice-btn:hover {
+  background: #222233;
+  color: #fff;
+}
+
+/* ── GAME LOG ── */
+.game-log {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.log-entry {
+  display: flex;
+  gap: 6px;
+  padding: 3px 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  border-bottom: 1px solid #111;
+}
+
+.log-icon {
+  color: #444;
+  flex-shrink: 0;
+  width: 12px;
+}
+.log-msg {
+  color: #888;
+  flex: 1;
+}
+
+.log-action .log-msg {
+  color: #aaa;
+}
+.log-phase .log-msg {
+  color: #7a7aaa;
+  font-style: italic;
+}
+.log-combat .log-msg {
+  color: #aa7a7a;
+}
+.log-trigger .log-msg {
+  color: #aaaa7a;
+}
+.log-warning .log-msg {
+  color: #aa8a4a;
+}
+
+/* ── MULLIGAN SCREEN ── */
+#mulligan-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 45px);
+  padding: 20px;
+}
+
+.mulligan-inner {
+  max-width: 900px;
+  width: 100%;
+  text-align: center;
+}
+
+.mulligan-inner h2 {
+  font-size: 18px;
+  color: #ccc;
+  margin-bottom: 8px;
+}
+
+.mulligan-hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.mulligan-card {
+  width: 90px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mulligan-card img {
+  width: 100%;
+  height: 64px;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+
+.mulligan-card-name {
+  font-size: 9px;
+  color: #aaa;
+  padding: 4px;
+  text-align: center;
+  word-break: break-word;
+}
+
+.mulligan-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* ── GAME OVER ── */
+.game-over {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.game-over-inner {
+  text-align: center;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  padding: 40px;
+  border-radius: 8px;
+}
+
+.game-over-title {
+  font-size: 32px;
+  color: #e0e0e0;
+  margin-bottom: 10px;
+  font-family: monospace;
+}
+
+.game-over-text {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .game-sidebar {
+    border-top: 1px solid #222;
+    max-height: 400px;
+  }
+
+  .permanent {
+    width: 52px;
+    height: 72px;
+  }
+
+  .hand-card {
+    width: 64px;
+  }
+  .hand-card-img {
+    height: 44px;
+  }
+
+  .game-header {
+    padding: 6px 10px;
+  }
+  .life-total {
+    font-size: 22px;
+  }
+}
+
+.hidden {
+  display: none !important;
+}
