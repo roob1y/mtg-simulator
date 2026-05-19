@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files (never commit secrets)
+.env
+.env.local
+
+# Build output (for future if we add a build step)
+dist/
+build/
+
+# Prettier cache
+.prettier-cache
+
+# Local test files
+*.test.js
