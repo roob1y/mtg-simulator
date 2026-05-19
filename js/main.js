@@ -28,10 +28,9 @@ function showPage(id) {
 
 // ── CARD SEARCH ──
 
-let searchTimeout = null;
-
-// Allow pressing Enter to search
+// FIX: Merged into a single DOMContentLoaded listener
 document.addEventListener('DOMContentLoaded', () => {
+  // Search on Enter
   const input = document.getElementById('search-input');
   if (input) {
     input.addEventListener('keydown', (e) => {
@@ -42,6 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialise deck display
   Deck.render();
   Deck.updateStats();
+
+  // FIX: null-guard on settings checkboxes
+  const bm = document.getElementById('beginner-mode-toggle');
+  const at = document.getElementById('auto-tap-toggle');
+  if (bm) bm.checked = Settings.get('beginnerMode');
+  if (at) at.checked = Settings.get('autoTap');
 });
 
 async function searchCards() {
@@ -88,7 +93,6 @@ async function searchCards() {
 async function addCardById(id) {
   let card = cardCache[id];
   if (!card) {
-    // Shouldn't happen but fetch if needed
     const res = await fetch(`https://api.scryfall.com/cards/${id}`);
     if (res.ok) card = await res.json();
   }
@@ -96,7 +100,6 @@ async function addCardById(id) {
 
   const added = Deck.add(card);
   if (!added) {
-    // Flash the existing row to indicate it's already there
     const rows = document.querySelectorAll('.deck-card-row');
     rows.forEach((r) => {
       if (r.textContent.includes(card.name)) {
@@ -230,7 +233,6 @@ async function runImport() {
 
   progressEl.textContent = `Fetching ${cardRequests.length} cards...`;
 
-  // Process in batches of 10 for speed while respecting rate limits
   const batchSize = 10;
   for (let i = 0; i < cardRequests.length; i += batchSize) {
     const batch = cardRequests.slice(i, i + batchSize);
@@ -256,7 +258,6 @@ async function runImport() {
 
     progressEl.textContent = `Loading ${loaded} / ${cardRequests.length}...`;
 
-    // Small delay between batches to respect Scryfall
     if (i + batchSize < cardRequests.length) {
       await delay(100);
     }
@@ -276,66 +277,45 @@ document.addEventListener('click', (e) => {
 
 // ── START GAME ──
 
-function startGame() {
+async function startGame() {
   const { valid } = Deck.validate();
-  if (!valid) return;
+  if (!valid && Deck.totalCards() === 0) return;
 
-  // Get flat deck (100 cards)
-  const deckCards = Deck.getFlatDeck();
+  // FIX: separate commanders from library cards
+  const allCards = Deck.getFlatDeck();
+  const commanderNames = new Set(Deck.getCommanders().map((c) => c.name));
 
-  // Initialise game
-  Game.init(deckCards);
+  // Library = all non-commander copies
+  const deckCards = allCards.filter((c) => !commanderNames.has(c.name));
+  const commanders = Deck.getCommanders();
+
+  const btn = document.getElementById('start-game-btn');
+  btn.textContent = 'Loading opponent deck...';
+  btn.disabled = true;
+
+  // FIX: init game BEFORE showing game page
+  await Game.init(deckCards, commanders);
 
   // Show game page
   showPage('game');
 
-  // Show mulligan screen
+  // Show mulligan screen, hide board
   const mulliganEl = document.getElementById('mulligan-screen');
   const boardEl = document.getElementById('game-board');
   if (mulliganEl) mulliganEl.classList.remove('hidden');
   if (boardEl) boardEl.classList.add('hidden');
 }
 
-// ── IMPORT A DECKLIST (text format) ──
-// Future feature placeholder — will allow pasting a decklist text
-async function importDecklist(text) {
-  const lines = text.trim().split('\n');
-  const results = [];
-
-  for (const line of lines) {
-    const match = line.match(/^(\d+)\s+(.+)$/);
-    if (!match) continue;
-    const [, qty, name] = match;
-    const card = await Scryfall.getByName(name.trim());
-    if (card) {
-      for (let i = 0; i < parseInt(qty); i++) {
-        Deck.add(card);
-      }
-      results.push({ name, success: true });
-    } else {
-      results.push({ name, success: false });
-    }
-  }
-
-  return results;
-}
-
 // ── SETTINGS TOGGLES ──
 
 function toggleBeginnerMode() {
   const val = Settings.toggle('beginnerMode');
-  document.getElementById('beginner-mode-toggle').checked = val;
+  const el = document.getElementById('beginner-mode-toggle');
+  if (el) el.checked = val;
 }
 
 function toggleAutoTap() {
   const val = Settings.toggle('autoTap');
-  document.getElementById('auto-tap-toggle').checked = val;
+  const el = document.getElementById('auto-tap-toggle');
+  if (el) el.checked = val;
 }
-
-// Initialise settings checkboxes on load
-document.addEventListener('DOMContentLoaded', () => {
-  const bm = document.getElementById('beginner-mode-toggle');
-  const at = document.getElementById('auto-tap-toggle');
-  if (bm) bm.checked = Settings.get('beginnerMode');
-  if (at) at.checked = Settings.get('autoTap');
-});

@@ -128,4 +128,17 @@ const Scryfall = {
     if (type.includes('artifact')) return 'artifact';
     return 'other';
   },
+  isMDFC(card) {
+    return card.layout === 'modal_dfc' && Array.isArray(card.card_faces);
+  },
+
+  getMDFCLandFace(card) {
+    if (!this.isMDFC(card)) return null;
+    return card.card_faces.find((f) => (f.type_line || '').toLowerCase().includes('land')) || null;
+  },
+
+  getMDFCSpellFace(card) {
+    if (!this.isMDFC(card)) return null;
+    return card.card_faces.find((f) => !(f.type_line || '').toLowerCase().includes('land')) || null;
+  },
 };

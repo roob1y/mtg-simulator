@@ -6,14 +6,43 @@ const AI = {
   player: null,
 
   // Initialise AI with a pre-built deck
-  init(name = 'Opponent') {
+  async init(name = 'Opponent') {
     this.player = new Player(name, false);
-    this.player.loadDeck(this.buildDeck());
+    this.player.loadCommanders([]);
+    const list = this.getDeckList();
+
+    // Build identifiers array for collection endpoint
+    const identifiers = list.map((e) => ({ name: e.name }));
+
+    // Fetch all cards in one POST request
+    const res = await fetch('https://api.scryfall.com/cards/collection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifiers }),
+    });
+
+    const data = await res.json();
+    const fetched = data.data || [];
+
+    // Build deck from results, matching back to quantities
+    const cards = [];
+    list.forEach((entry) => {
+      const card = fetched.find((c) => c.name.toLowerCase() === entry.name.toLowerCase());
+      if (card) {
+        for (let i = 0; i < entry.qty; i++) cards.push({ ...card });
+      } else {
+        GameLog.add(`AI deck: couldn't find ${entry.name}.`, 'warning');
+      }
+    });
+
+    this.player.loadDeck(cards);
     return this.player;
   },
 
   // AI takes its turn
   takeTurn(humanPlayer) {
+    if (Game.gameOver) return;
+
     GameLog.add(`--- ${this.player.name}'s turn ---`, 'phase');
 
     // Untap
@@ -30,8 +59,10 @@ const AI = {
     // Cast spells
     this.castSpells();
 
-    // Attack
+    // FIX: Attack with blocking support
     this.attack(humanPlayer);
+
+    if (Game.gameOver) return;
 
     // End step
     if (this.player.mustDiscard()) {
@@ -48,9 +79,9 @@ const AI = {
     if (landIdx === -1) return;
     const land = this.player.hand[landIdx];
     this.player.playLand(landIdx);
-    // Auto-tap new AI lands for appropriate mana
+    // AI lands enter untapped for simplicity
     const newLand = this.player.battlefield[this.player.battlefield.length - 1];
-    if (newLand) newLand.tapped = false; // AI lands enter untapped for simplicity
+    if (newLand) newLand.tapped = false;
     GameLog.add(`${this.player.name} plays ${land.name}.`, 'action');
   },
 
@@ -68,9 +99,14 @@ const AI = {
 
     if (sortedCreatures.length === 0) return;
 
+    // Count available mana without tapping yet
+    const availableMana = this.player.getLands().filter((l) => !l.tapped).length;
+    const cheapest = sortedCreatures[0].card.cmc || 0;
+    if (availableMana < cheapest) return; // nothing affordable — don't tap any lands
+
     this.generateMana();
 
-    for (const { card, idx } of sortedCreatures) {
+    for (const { card } of sortedCreatures) {
       if (!card) continue;
       const cmc = card.cmc || 0;
       if (this.player.totalMana() >= cmc) {
@@ -89,7 +125,6 @@ const AI = {
     this.player.clearManaPool();
     this.player.getLands().forEach((land) => {
       if (!land.tapped) {
-        // Determine color from land type
         const type = (land.card.type_line || '').toLowerCase();
         if (type.includes('swamp')) this.player.addMana('B');
         else if (type.includes('mountain')) this.player.addMana('R');
@@ -114,80 +149,107 @@ const AI = {
     }
   },
 
-  // Attack with all available creatures
+  // FIX: Attack with human blocking — human's untapped creatures can block
   attack(humanPlayer) {
     const attackers = this.player.getUntappedCreatures();
     if (attackers.length === 0) return;
 
-    let totalPower = 0;
+    GameLog.add(`${this.player.name} attacks with ${attackers.length} creature(s)!`, 'combat');
+
+    // Tap all attackers
     attackers.forEach((perm) => {
-      const { power } = this.player.getEffectivePT(perm);
-      totalPower += power;
       perm.tapped = true;
     });
 
-    // Simple: no blocking logic for now, just deal damage
-    // Human player can't block in Phase 2 (Phase 3 will add this)
-    humanPlayer.life -= totalPower;
-    GameLog.add(
-      `${this.player.name} attacks with ${attackers.length} creature(s) for ${totalPower} damage! Your life: ${humanPlayer.life}. (Blocking coming in Phase 3)`,
-      'combat'
-    );
+    // Human auto-blocks: assign best available blockers
+    const humanBlockers = humanPlayer.getUntappedCreatures();
+    const assignments = {}; // attackerId -> blockerId | null
+    const usedBlockers = new Set();
+
+    attackers.forEach((attacker) => {
+      const { power: atkPwr } = this.player.getEffectivePT(attacker);
+      // Find a blocker that trades favourably or survives
+      const blocker = humanBlockers.find((b) => {
+        if (usedBlockers.has(b.id)) return false;
+        const { power: blkPwr, toughness: blkTgh } = humanPlayer.getEffectivePT(b);
+        const { toughness: atkTgh } = this.player.getEffectivePT(attacker);
+        return blkPwr >= atkTgh || atkPwr < blkTgh; // kills attacker or blocker survives
+      });
+
+      if (blocker) {
+        assignments[attacker.id] = blocker.id;
+        usedBlockers.add(blocker.id);
+        GameLog.add(`You block ${attacker.card.name} with ${blocker.card.name}.`, 'combat');
+      } else {
+        assignments[attacker.id] = null;
+      }
+    });
+
+    // Resolve damage
+    let totalDamageToHuman = 0;
+
+    attackers.forEach((attacker) => {
+      const { power: atkPwr, toughness: atkTgh } = this.player.getEffectivePT(attacker);
+      const blockerId = assignments[attacker.id];
+
+      if (!blockerId) {
+        totalDamageToHuman += atkPwr;
+        GameLog.add(`${attacker.card.name} deals ${atkPwr} damage to you (unblocked).`, 'combat');
+      } else {
+        const blocker = humanPlayer.battlefield.find((p) => p.id === blockerId);
+        if (!blocker) {
+          totalDamageToHuman += atkPwr;
+          return;
+        }
+        const { power: blkPwr, toughness: blkTgh } = humanPlayer.getEffectivePT(blocker);
+
+        GameLog.add(
+          `${attacker.card.name} (${atkPwr}/${atkTgh}) vs ${blocker.card.name} (${blkPwr}/${blkTgh}).`,
+          'combat'
+        );
+
+        // Attacker dies?
+        if (blkPwr >= atkTgh) {
+          this.player.sendToGraveyard(attacker.id);
+          GameLog.add(`${attacker.card.name} dies.`, 'combat');
+        }
+        // Blocker dies?
+        if (atkPwr >= blkTgh) {
+          humanPlayer.sendToGraveyard(blockerId);
+          GameLog.add(`${blocker.card.name} dies.`, 'combat');
+        }
+      }
+    });
+
+    if (totalDamageToHuman > 0) {
+      humanPlayer.life -= totalDamageToHuman;
+      GameLog.add(
+        `You take ${totalDamageToHuman} damage. Your life: ${humanPlayer.life}.`,
+        'combat'
+      );
+    }
+
+    // FIX: check win condition immediately after AI attack
+    Game.checkWinCondition();
   },
 
   // Build a simple pre-constructed aggro deck for the AI
-  buildDeck() {
-    // Returns an array of minimal card objects for the AI
-    // These are simplified cards, not full Scryfall objects
-    const makeCard = (name, type, cmc, power, toughness, colors = []) => ({
-      name,
-      type_line: type,
-      cmc,
-      power: String(power),
-      toughness: String(toughness),
-      color_identity: colors,
-      mana_cost: '',
-      oracle_text: '',
-      keywords: [],
-      id: name.replace(/\s/g, '_').toLowerCase(),
-      image_uris: null,
-    });
-
-    const lands = [];
-    for (let i = 0; i < 17; i++)
-      lands.push(makeCard('Swamp', 'Basic Land — Swamp', 0, 0, 0, ['B']));
-    for (let i = 0; i < 17; i++)
-      lands.push(makeCard('Mountain', 'Basic Land — Mountain', 0, 0, 0, ['R']));
-
-    const creatures = [
-      makeCard('Vampire Grunt', 'Creature — Vampire', 1, 1, 1, ['B']),
-      makeCard('Vampire Grunt', 'Creature — Vampire', 1, 1, 1, ['B']),
-      makeCard('Vampire Grunt', 'Creature — Vampire', 1, 1, 1, ['B']),
-      makeCard('Goblin Raider', 'Creature — Goblin', 1, 1, 1, ['R']),
-      makeCard('Goblin Raider', 'Creature — Goblin', 1, 1, 1, ['R']),
-      makeCard('Goblin Raider', 'Creature — Goblin', 1, 1, 1, ['R']),
-      makeCard('Dark Cultist', 'Creature — Human Cleric', 2, 2, 1, ['B']),
-      makeCard('Dark Cultist', 'Creature — Human Cleric', 2, 2, 1, ['B']),
-      makeCard('Dark Cultist', 'Creature — Human Cleric', 2, 2, 1, ['B']),
-      makeCard('Flame Imp', 'Creature — Imp', 2, 2, 2, ['R']),
-      makeCard('Flame Imp', 'Creature — Imp', 2, 2, 2, ['R']),
-      makeCard('Flame Imp', 'Creature — Imp', 2, 2, 2, ['R']),
-      makeCard('Bloodthirsty Marauder', 'Creature — Vampire Warrior', 3, 3, 2, ['B']),
-      makeCard('Bloodthirsty Marauder', 'Creature — Vampire Warrior', 3, 3, 2, ['B']),
-      makeCard('Scorch Drake', 'Creature — Drake', 3, 2, 3, ['R']),
-      makeCard('Scorch Drake', 'Creature — Drake', 3, 2, 3, ['R']),
-      makeCard('Night Stalker', 'Creature — Vampire', 4, 4, 3, ['B']),
-      makeCard('Night Stalker', 'Creature — Vampire', 4, 4, 3, ['B']),
-      makeCard('Hellfire Titan', 'Creature — Giant', 5, 5, 5, ['R']),
-      makeCard('Hellfire Titan', 'Creature — Giant', 5, 5, 5, ['R']),
+  getDeckList() {
+    return [
+      { name: 'Llanowar Elves', qty: 3 },
+      { name: 'Elvish Mystic', qty: 3 },
+      { name: 'Runeclaw Bear', qty: 3 },
+      { name: 'Centaur Courser', qty: 3 },
+      { name: 'Kalonian Tusker', qty: 3 },
+      { name: 'Deadly Recluse', qty: 2 },
+      { name: 'Charging Rhino', qty: 2 },
+      { name: 'Serra Angel', qty: 2 },
+      { name: 'Silvercoat Lion', qty: 3 },
+      { name: 'Lone Missionary', qty: 3 },
+      { name: 'Attended Knight', qty: 2 },
+      { name: 'Siege Mastodon', qty: 2 },
+      { name: 'Forest', qty: 17 },
+      { name: 'Plains', qty: 16 },
     ];
-
-    // Pad to 100 with lands
-    const deck = [...creatures, ...lands];
-    while (deck.length < 100) {
-      deck.push(makeCard('Swamp', 'Basic Land — Swamp', 0, 0, 0, ['B']));
-    }
-
-    return deck.slice(0, 100);
   },
 };

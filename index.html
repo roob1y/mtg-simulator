@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -80,11 +80,21 @@
           <p class="muted">Example: 1 Sol Ring</p>
           <textarea
             id="import-text"
-            style="width:100%;height:300px;background:#2a2a2a;border:1px solid #444;color:#e0e0e0;padding:10px;font-family:monospace;font-size:13px;resize:vertical;"
+            style="
+              width: 100%;
+              height: 300px;
+              background: #2a2a2a;
+              border: 1px solid #444;
+              color: #e0e0e0;
+              padding: 10px;
+              font-family: monospace;
+              font-size: 13px;
+              resize: vertical;
+            "
             placeholder="1 Auntie Ool, Cursewretch&#10;1 Sol Ring&#10;10 Swamp&#10;7 Mountain"
           ></textarea>
           <div id="import-progress" class="muted"></div>
-          <div style="display:flex;gap:8px;">
+          <div style="display: flex; gap: 8px">
             <button onclick="runImport()">Import</button>
             <button onclick="closeImportModal()">Cancel</button>
           </div>
@@ -94,7 +104,6 @@
 
     <!-- GAME PAGE -->
     <div id="game" class="page hidden">
-
       <!-- Mulligan Screen -->
       <div id="mulligan-screen" class="hidden">
         <div class="mulligan-inner">
@@ -103,14 +112,15 @@
           <div id="mulligan-hand" class="mulligan-hand"></div>
           <div class="mulligan-actions">
             <button onclick="GameUI.acceptHand()" class="action-btn primary">Keep Hand</button>
-            <button onclick="GameUI.takeMulligan()" id="mulligan-btn" class="action-btn">Mulligan</button>
+            <button onclick="GameUI.takeMulligan()" id="mulligan-btn" class="action-btn">
+              Mulligan
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Game Board -->
       <div id="game-board" class="hidden">
-
         <div id="phase-bar" class="phase-bar"></div>
 
         <div class="game-header">
@@ -128,9 +138,16 @@
         </div>
 
         <div class="game-layout">
-
           <div class="game-main">
             <div class="game-zone opp-zone" id="opp-battlefield"></div>
+            <div class="graveyard-area">
+              <div class="zone-label">
+                Opponent Graveyard (
+                <span id="opp-graveyard-count">0</span>
+                )
+              </div>
+              <div id="opp-graveyard-list"></div>
+            </div>
             <div class="battlefield-divider">— Battlefield —</div>
             <div class="game-zone human-zone" id="human-battlefield"></div>
             <div class="mana-bar" id="mana-pool"></div>
@@ -143,13 +160,29 @@
               <div class="zone-label">Command Zone</div>
               <div id="command-zone"></div>
             </div>
+            <div class="graveyard-area">
+              <div class="zone-label">
+                Graveyard (
+                <span id="graveyard-count">0</span>
+                )
+              </div>
+              <div id="graveyard-list"></div>
+            </div>
+            <div class="graveyard-area">
+              <div class="zone-label">
+                Exile (
+                <span id="exile-count">0</span>
+                )
+              </div>
+              <div id="exile-list"></div>
+            </div>
           </div>
 
           <div class="game-sidebar">
             <div class="sidebar-section">
               <div class="sidebar-label">Card Preview</div>
               <div id="game-card-preview">
-                <p class="muted" style="font-size:12px">Click a card to preview</p>
+                <p class="muted" style="font-size: 12px">Click a card to preview</p>
               </div>
             </div>
             <div id="phase-tip" class="phase-tip hidden"></div>
@@ -160,11 +193,9 @@
               <div id="game-log-entries" class="game-log"></div>
             </div>
           </div>
-
         </div>
 
         <div id="game-over" class="game-over hidden"></div>
-
       </div>
     </div>
 
