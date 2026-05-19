@@ -186,13 +186,20 @@ function closeModal() {
   document.getElementById('load-modal').classList.add('hidden');
 }
 
+function handleDeckCardClick(el) {
+  const id = el.getAttribute('data-card-id');
+  if (id && cardCache[id]) {
+    previewCardObj(id, cardCache[id]);
+  }
+}
+
 // Close modal on backdrop click
 document.addEventListener('click', (e) => {
   const modal = document.getElementById('load-modal');
   if (modal && e.target === modal) closeModal();
 });
 
-// ──IMPORT──
+// ── IMPORT ──
 
 function showImportModal() {
   document.getElementById('import-modal').classList.remove('hidden');
@@ -213,7 +220,6 @@ async function runImport() {
   let loaded = 0;
   let failed = [];
 
-  // Parse all lines
   const cardRequests = [];
   for (const line of lines) {
     const match = line.trim().match(/^(\d+)x?\s+(.+)$/);
@@ -224,28 +230,45 @@ async function runImport() {
 
   progressEl.textContent = `Fetching ${cardRequests.length} cards...`;
 
-  for (const { qty, name } of cardRequests) {
-    const card = await Scryfall.getByName(name);
-    await delay(100);
-    if (card) {
-      for (let i = 0; i < qty; i++) {
-        cardCache[card.id] = card;
-        Deck.add(card);
+  // Process in batches of 10 for speed while respecting rate limits
+  const batchSize = 10;
+  for (let i = 0; i < cardRequests.length; i += batchSize) {
+    const batch = cardRequests.slice(i, i + batchSize);
+
+    const results = await Promise.all(
+      batch.map(async ({ qty, name }) => {
+        const card = await Scryfall.getByName(name);
+        return { card, qty, name };
+      })
+    );
+
+    for (const { card, qty, name } of results) {
+      if (card) {
+        for (let j = 0; j < qty; j++) {
+          cardCache[card.id] = card;
+          Deck.add(card);
+        }
+        loaded++;
+      } else {
+        failed.push(name);
       }
-      loaded++;
-    } else {
-      failed.push(name);
     }
+
     progressEl.textContent = `Loading ${loaded} / ${cardRequests.length}...`;
+
+    // Small delay between batches to respect Scryfall
+    if (i + batchSize < cardRequests.length) {
+      await delay(100);
+    }
   }
 
-  // Done
   if (failed.length === 0) {
     progressEl.textContent = `✓ Imported ${loaded} cards successfully!`;
   } else {
     progressEl.textContent = `✓ Imported ${loaded} cards. Failed: ${failed.join(', ')}`;
   }
 }
+
 document.addEventListener('click', (e) => {
   const modal = document.getElementById('import-modal');
   if (modal && e.target === modal) closeImportModal();
@@ -256,7 +279,21 @@ document.addEventListener('click', (e) => {
 function startGame() {
   const { valid } = Deck.validate();
   if (!valid) return;
+
+  // Get flat deck (100 cards)
+  const deckCards = Deck.getFlatDeck();
+
+  // Initialise game
+  Game.init(deckCards);
+
+  // Show game page
   showPage('game');
+
+  // Show mulligan screen
+  const mulliganEl = document.getElementById('mulligan-screen');
+  const boardEl = document.getElementById('game-board');
+  if (mulliganEl) mulliganEl.classList.remove('hidden');
+  if (boardEl) boardEl.classList.add('hidden');
 }
 
 // ── IMPORT A DECKLIST (text format) ──
@@ -282,3 +319,23 @@ async function importDecklist(text) {
 
   return results;
 }
+
+// ── SETTINGS TOGGLES ──
+
+function toggleBeginnerMode() {
+  const val = Settings.toggle('beginnerMode');
+  document.getElementById('beginner-mode-toggle').checked = val;
+}
+
+function toggleAutoTap() {
+  const val = Settings.toggle('autoTap');
+  document.getElementById('auto-tap-toggle').checked = val;
+}
+
+// Initialise settings checkboxes on load
+document.addEventListener('DOMContentLoaded', () => {
+  const bm = document.getElementById('beginner-mode-toggle');
+  const at = document.getElementById('auto-tap-toggle');
+  if (bm) bm.checked = Settings.get('beginnerMode');
+  if (at) at.checked = Settings.get('autoTap');
+});

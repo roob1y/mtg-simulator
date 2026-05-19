@@ -3,15 +3,18 @@
 
 const Deck = {
   // Current deck state
-  cards: [], // Array of { card: ScryfallCard, qty: number }
+  cards: [],
   name: 'My Deck',
-
+  designatedCommanders: [], // manually assigned commanders
   // ── ADD / REMOVE ──
 
   add(card) {
     const category = Scryfall.getCategory(card);
     const existing = this.cards.find((e) => e.card.name === card.name);
-
+    // Cache the card for preview
+    if (card.id && typeof cardCache !== 'undefined') {
+      cardCache[card.id] = card;
+    }
     // Commanders and basic lands can have multiples (basics unlimited, commanders max 1)
     if (existing) {
       if (category === 'land' && this.isBasicLand(card)) {
@@ -28,6 +31,30 @@ const Deck = {
     this.render();
     this.updateStats();
     return true;
+  },
+
+  // Designate a card as commander
+  setCommander(cardName, role = 'commander') {
+    const entry = this.cards.find((e) => e.card.name === cardName);
+    if (!entry) return;
+    if (!this.designatedCommanders.find((c) => c.name === cardName)) {
+      this.designatedCommanders.push({ ...entry.card, commanderRole: role });
+      GameLog && GameLog.add && GameLog.add(`${cardName} set as ${role}.`, 'info');
+    }
+    this.render();
+    this.updateStats();
+  },
+
+  // Remove a card from commander designation
+  removeCommander(cardName) {
+    this.designatedCommanders = this.designatedCommanders.filter((c) => c.name !== cardName);
+    this.render();
+    this.updateStats();
+  },
+
+  // Check if a card is designated as commander
+  isCommander(cardName) {
+    return !!this.designatedCommanders.find((c) => c.name === cardName);
   },
 
   remove(cardName) {
@@ -89,11 +116,13 @@ const Deck = {
     const warnings = [];
     const total = this.totalCards();
     const lands = this.landCount();
-    const commanders = this.cards.filter((e) => Scryfall.getCategory(e.card) === 'commander');
-
-    if (total < 100) errors.push(`Deck has ${total}/100 cards — needs ${100 - total} more.`);
+    const commanders = this.designatedCommanders;
+    if (total < 100)
+      warnings.push(
+        `Deck has ${total}/100 cards (${100 - total} short of full Commander size — OK for testing).`
+      );
     if (total > 100) errors.push(`Deck has ${total} cards — ${total - 100} too many.`);
-    if (commanders.length === 0) errors.push('No commander detected — add a Legendary Creature.');
+    if (commanders.length === 0) warnings.push('No commander detected.');
     if (commanders.length > 2) errors.push('Commander format allows max 2 commanders.');
     if (lands < 33) warnings.push(`Only ${lands} lands — recommend at least 33.`);
     if (lands < 20) errors.push(`Only ${lands} lands — this is critically low.`);
@@ -115,7 +144,9 @@ const Deck = {
 
     // Group by category
     const groups = {
-      commander: { label: 'Commanders', cards: [] },
+      commander: { label: '👑 Commanders', cards: [] },
+      legendary: { label: '⭐ Legendary Creatures', cards: [] },
+      background: { label: '🌟 Backgrounds', cards: [] },
       planeswalker: { label: 'Planeswalkers', cards: [] },
       creature: { label: 'Creatures', cards: [] },
       instant: { label: 'Instants', cards: [] },
@@ -127,8 +158,13 @@ const Deck = {
     };
 
     this.cards.forEach((e) => {
-      const cat = Scryfall.getCategory(e.card);
-      if (groups[cat]) groups[cat].cards.push(e);
+      const isDesignated = this.isCommander(e.card.name);
+      if (isDesignated) {
+        groups.commander.cards.push(e);
+      } else {
+        const cat = Scryfall.getCategory(e.card);
+        if (groups[cat]) groups[cat].cards.push(e);
+      }
     });
 
     let html = '';
@@ -140,22 +176,63 @@ const Deck = {
         .sort((a, b) => a.card.name.localeCompare(b.card.name))
         .forEach((e) => {
           const cost = Scryfall.formatManaCost(Scryfall.getManaCost(e.card));
-          const nameClass =
-            cat === 'commander'
-              ? 'deck-card-name commander'
-              : cat === 'land'
-                ? 'deck-card-name land'
-                : 'deck-card-name';
+          const isCmd = Deck.isCommander(e.card.name);
+          const cmdEntry = Deck.designatedCommanders.find((c) => c.name === e.card.name);
+          const cmdRole = cmdEntry ? cmdEntry.commanderRole : null;
+          const isLegendary = cat === 'legendary' || cat === 'background' || cat === 'commander';
           html += `
-            <div class="deck-card-row" onclick="previewCard('${e.card.id}')">
-              <span class="deck-card-name ${nameClass === 'deck-card-name' ? '' : nameClass.split(' ')[1]}">${e.qty > 1 ? e.qty + 'x ' : ''}${e.card.name}</span>
-              <span class="deck-card-cost">${cost}</span>
-              <button class="remove-btn" onclick="event.stopPropagation(); Deck.remove('${e.card.name.replace(/'/g, "\\'")}')">✕</button>
-            </div>`;
+        <div class="deck-card-row" data-card-id="${e.card.id || ''}" onclick="handleDeckCardClick(this)">
+        <span class="deck-card-name ${cat === 'commander' ? 'commander' : cat === 'land' ? 'land' : ''}">${e.qty > 1 ? e.qty + 'x ' : ''}${e.card.name}${isCmd ? (cmdRole === 'background' ? ' 🌟' : ' 👑') : ''}</span>
+        <span class="deck-card-cost">${cost}</span>
+        ${
+          cat === 'legendary'
+            ? `
+  <button class="cmd-assign-btn ${isCmd ? 'active' : ''}" 
+    onclick="event.stopPropagation(); ${isCmd ? `Deck.removeCommander('${e.card.name.replace(/'/g, "\\'")}')` : `Deck.setCommander('${e.card.name.replace(/'/g, "\\'")}', 'commander')`}">
+    ${isCmd ? '👑 Remove' : '+ Commander'}
+  </button>
+  ${
+    (e.card.type_line || '').toLowerCase().includes('background')
+      ? `
+  <button class="cmd-assign-btn ${isCmd ? 'active' : ''}"
+    onclick="event.stopPropagation(); ${isCmd ? `Deck.removeCommander('${e.card.name.replace(/'/g, "\\'")}')` : `Deck.setCommander('${e.card.name.replace(/'/g, "\\'")}', 'background')`}">
+    ${isCmd ? '🌟 Remove' : '+ Background'}
+  </button>`
+      : ''
+  }`
+            : ''
+        }
+${
+  cat === 'background'
+    ? `
+  <button class="cmd-assign-btn ${isCmd ? 'active' : ''}" 
+    onclick="event.stopPropagation(); ${isCmd ? `Deck.removeCommander('${e.card.name.replace(/'/g, "\\'")}')` : `Deck.setCommander('${e.card.name.replace(/'/g, "\\'")}', 'background')`}">
+    ${isCmd ? '🌟 Remove' : '+ Background'}
+  </button>`
+    : ''
+}
+${
+  cat === 'commander'
+    ? `
+  <button class="cmd-assign-btn active" 
+    onclick="event.stopPropagation(); Deck.removeCommander('${e.card.name.replace(/'/g, "\\'")}')">
+    ${cmdRole === 'background' ? '🌟 Remove' : '👑 Remove'}
+  </button>`
+    : ''
+}
+        <button class="remove-btn" onclick="event.stopPropagation(); Deck.remove('${e.card.name.replace(/'/g, "\\'")}')">✕</button>
+      </div>`;
         });
     });
 
     el.innerHTML = html;
+
+    // Rebuild cardCache from current deck
+    this.cards.forEach((e) => {
+      if (e.card && e.card.id && typeof cardCache !== 'undefined') {
+        cardCache[e.card.id] = e.card;
+      }
+    });
   },
 
   // ── UPDATE STATS BAR ──
@@ -180,7 +257,7 @@ const Deck = {
 
     if (errors.length > 0) {
       msgEl.className = 'error';
-      msgEl.innerHTML = errors.map((e) => `<div>⚠ ${e}</div>`).join('');
+      msgEl.textContent = errors[0];
     } else if (warnings.length > 0) {
       msgEl.className = 'ok';
       msgEl.textContent = '⚠ ' + warnings[0];
@@ -189,8 +266,9 @@ const Deck = {
       msgEl.textContent = '✓ Deck is valid and ready to play!';
     }
 
-    startBtn.disabled = !valid;
-    if (playBtn) playBtn.disabled = !valid;
+    const canPlay = total > 0 && this.designatedCommanders.length > 0;
+    startBtn.disabled = !canPlay;
+    if (playBtn) playBtn.disabled = !canPlay;
   },
 
   // ── SAVE / LOAD ──
@@ -206,6 +284,7 @@ const Deck = {
         cardData: e.card,
         qty: e.qty,
       })),
+      designatedCommanders: this.designatedCommanders,
       savedAt: new Date().toISOString(),
     };
 
@@ -227,7 +306,15 @@ const Deck = {
     if (!deck) return;
 
     this.cards = deck.cards.map((e) => ({ card: e.cardData, qty: e.qty }));
+    this.designatedCommanders = deck.designatedCommanders || [];
     this.name = deck.name;
+
+    // Rebuild cache from loaded cards
+    this.cards.forEach((e) => {
+      if (e.card.id && typeof cardCache !== 'undefined') {
+        cardCache[e.card.id] = e.card;
+      }
+    });
     document.getElementById('deck-name-input').value = deck.name;
 
     this.render();
@@ -263,8 +350,6 @@ const Deck = {
 
   // Get commanders separately
   getCommanders() {
-    return this.cards
-      .filter((e) => Scryfall.getCategory(e.card) === 'commander')
-      .map((e) => e.card);
+    return this.designatedCommanders;
   },
 };

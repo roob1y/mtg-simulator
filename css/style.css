@@ -234,9 +234,6 @@ button:disabled {
   background: #2a1a1a;
   border: 1px solid #5a2a2a;
   color: #c88;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 #validation-msg.ok {
@@ -312,6 +309,27 @@ button:disabled {
 .remove-btn:hover {
   color: #c44;
   background: none;
+}
+
+.cmd-assign-btn {
+  background: #1a1a2a;
+  border: 1px solid #2a2a4a;
+  color: #6a6aaa;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.cmd-assign-btn:hover {
+  background: #222233;
+  color: #aaaaee;
+}
+.cmd-assign-btn.active {
+  background: #1a2a1a;
+  border-color: #2a4a2a;
+  color: #6aaa6a;
 }
 
 /* ── START GAME BUTTON ── */
