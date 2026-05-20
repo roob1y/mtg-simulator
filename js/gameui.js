@@ -104,7 +104,7 @@ const GameUI = {
         const { power, toughness } = game.opponent.getEffectivePT(perm);
         html += `
             <div class="permanent opp-permanent ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onPermanentClick('${perm.id}')" oncontextmenu="GameUI.onPermanentRightClick('${perm.id}', event)">
-            <div class="perm-name">${perm.card.name}</div>
+            <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
             <div class="perm-pt">${power}/${toughness}</div>
             ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(', ')}</div>` : ''}
           </div>`;
@@ -146,8 +146,8 @@ const GameUI = {
       otherPerms.forEach((perm) => {
         html += `
           <div class="permanent other-perm ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onArtifactClick('${perm.id}')">
-            <div class="perm-name">${perm.card.name}</div>
-            <div class="perm-type">${perm.card.type_line || ''}</div>
+            <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
+            <div class="perm-type">${Scryfall.getFrontFace(perm.card).type_line || ''}</div>
           </div>`;
       });
       html += `</div>`;
@@ -167,7 +167,7 @@ const GameUI = {
             ${isAttacker ? 'attacking' : ''}
             ${combatMode && canAttack ? 'can-attack' : ''}"
             onclick="GameUI.onPermanentClick('${perm.id}')" oncontextmenu="GameUI.onPermanentRightClick('${perm.id}', event)">
-            <div class="perm-name">${perm.card.name}</div>
+            <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
             <div class="perm-pt">${power}/${toughness}</div>
             ${perm.summoningSick ? '<div class="sick-label">Sick</div>' : ''}
             ${perm.isCommander ? '<div class="cmd-label">CMD</div>' : ''}
@@ -215,7 +215,8 @@ const GameUI = {
       .map((card, idx) => {
         const imgUrl = Scryfall.getArtUrl(card);
         const cost = Scryfall.formatManaCost(Scryfall.getManaCost(card));
-        const type = card.type_line || '';
+        const face = Scryfall.getFrontFace(card);
+        const type = face.type_line || '';
         const isSelected = this.selectedCard === idx;
         const cmc = card.cmc || 0;
         const canAfford = Game.canAffordCard(card);
@@ -225,7 +226,7 @@ const GameUI = {
           onclick="GameUI.onHandCardClick(${idx})">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
           <div class="hand-card-info">
-            <div class="hand-card-name">${card.name}</div>
+            <div class="hand-card-name">${face.name}</div>
             <div class="hand-card-meta">${type} ${cost ? '· ' + cost : ''}</div>
           </div>
         </div>`;
@@ -691,6 +692,7 @@ const GameUI = {
       this.previewGameCard(perm.card);
     }
   },
+
   untapLand(permanentId) {
     const id = isNaN(permanentId) ? permanentId : Number(permanentId);
     const perm = Game.human.battlefield.find((p) => p.id === id);
@@ -698,10 +700,9 @@ const GameUI = {
     perm.tapped = false;
     perm.canUntap = false;
     // Remove the mana that was added
-    const colors = Game.getLandColors(perm.card);
-    if (colors.length === 1) {
-      Game.human.manaPool[colors[0]] = Math.max(0, Game.human.manaPool[colors[0]] - 1);
-    }
+    const colorToRemove = perm.chosenColor || Game.getLandColors(perm.card)[0];
+    Game.human.manaPool[colorToRemove] = Math.max(0, Game.human.manaPool[colorToRemove] - 1);
+    perm.chosenColor = null;
     const manaChoice = document.getElementById('mana-choice');
     if (manaChoice) manaChoice.classList.add('hidden');
     this.pendingManaChoice = null;

@@ -15,7 +15,7 @@ const Game = {
 
   // ── INIT ──
 
-  async init(deckCards, commanders) {
+  async init(deckCards, commanders, aiCards = null) {
     // Set up human player
     this.human = new Player('You', true);
     // FIX: load library cards and commanders separately
@@ -23,7 +23,7 @@ const Game = {
     this.human.loadCommanders([...commanders]);
 
     // Set up AI opponent
-    this.opponent = await AI.init('Opponent');
+    this.opponent = await AI.init('Opponent', aiCards);
     // Reset state
     this.turn = 1;
     this.isHumanTurn = true;
@@ -387,6 +387,9 @@ const Game = {
     if (!perm) return;
 
     this.human.tap(id); // pass coerced id
+    perm.chosenColor = color;
+    if (Settings.get('beginnerMode')) perm.canUntap = true;
+
     this.human.addMana(color);
     GameLog.add(`Tapped ${perm.card.name} for {${color}}.`, 'action');
     GameUI.renderGame(this);
@@ -481,7 +484,8 @@ const Game = {
   },
 
   canAffordCard(card) {
-    const cost = card.mana_cost || '';
+    const face = Scryfall.getFrontFace(card);
+    const cost = face.mana_cost || '';
     const pool = { ...this.human.manaPool };
 
     // Check specific colour pips first

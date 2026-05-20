@@ -334,7 +334,7 @@ class Player {
 
   // Get effective power/toughness accounting for -1/-1 counters
   getEffectivePT(permanent) {
-    const card = permanent.card;
+    const card = Scryfall.getFrontFace(permanent.card);
     const basePower = parseInt(card.power) || 0;
     const baseToughness = parseInt(card.toughness) || 0;
     const negCounters = permanent.counters.filter((c) => c === '-1/-1').length;

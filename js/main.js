@@ -98,6 +98,14 @@ async function addCardById(id) {
   }
   if (!card) return;
 
+  // Add to AI deck if opponent tab is active, otherwise player deck
+  const isOpponentTab = !document.getElementById('view-opponent').classList.contains('hidden');
+
+  if (isOpponentTab) {
+    AIDeck.add(card);
+    return;
+  }
+
   const added = Deck.add(card);
   if (!added) {
     const rows = document.querySelectorAll('.deck-card-row');
@@ -220,64 +228,162 @@ async function runImport() {
 
   const progressEl = document.getElementById('import-progress');
   const lines = text.split('\n').filter((l) => l.trim());
-  let loaded = 0;
-  let failed = [];
 
   const cardRequests = [];
   for (const line of lines) {
-    const match = line.trim().match(/^(\d+)x?\s+(.+)$/);
+    const match = line.trim().match(/^(\d+)x?\s+([^(]+?)(?:\s*\(([^)]+)\)\s*(\d+))?$/);
     if (!match) continue;
-    const [, qty, name] = match;
-    cardRequests.push({ qty: parseInt(qty), name: name.trim() });
+    const [, qty, name, setCode, collectorNumber] = match;
+    const cleanName = name.trim().split(' / ')[0].trim();
+    cardRequests.push({
+      qty: parseInt(qty),
+      name: cleanName,
+      set: setCode ? setCode.toLowerCase() : null,
+      collectorNumber: collectorNumber || null,
+    });
   }
 
-  progressEl.textContent = `Fetching ${cardRequests.length} cards...`;
+  progressEl.textContent = `Fetching cards...`;
 
-  const batchSize = 10;
+  const failed = [];
+  const batchSize = 75;
+
   for (let i = 0; i < cardRequests.length; i += batchSize) {
     const batch = cardRequests.slice(i, i + batchSize);
-
-    const results = await Promise.all(
-      batch.map(async ({ qty, name }) => {
-        const card = await Scryfall.getByName(name);
-        return { card, qty, name };
-      })
-    );
-
-    for (const { card, qty, name } of results) {
-      if (card) {
-        cardCache[card.id] = card;
-        const isBasic = Deck.isBasicLand(card);
-        if (isBasic) {
-          for (let j = 0; j < qty; j++) {
-            Deck.add(card);
-          }
-        } else {
-          Deck.add(card);
-        }
-        loaded++;
-      } else {
-        failed.push(name);
+    const identifiers = batch.map((e) => {
+      if (e.set && e.collectorNumber) {
+        return { set: e.set, collector_number: e.collectorNumber };
       }
-    }
+      return { name: e.name };
+    });
 
-    progressEl.textContent = `Loading ${loaded} / ${cardRequests.length}...`;
+    const res = await fetch('https://api.scryfall.com/cards/collection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifiers }),
+    });
+    const data = await res.json();
+    const fetched = data.data || [];
+    const notFound = (data.not_found || []).map((n) => n.name);
+    failed.push(...notFound);
 
-    if (i + batchSize < cardRequests.length) {
-      await delay(100);
-    }
+    batch.forEach(({ qty, name, set, collectorNumber }) => {
+      const card =
+        set && collectorNumber
+          ? fetched.find((c) => c.set === set && c.collector_number === collectorNumber)
+          : fetched.find((c) => c.name.toLowerCase() === name.toLowerCase());
+      if (!card) return;
+      cardCache[card.id] = card;
+      const isBasic = Deck.isBasicLand(card);
+      if (isBasic) {
+        for (let j = 0; j < qty; j++) Deck.add(card);
+      } else {
+        Deck.add(card);
+      }
+    });
+
+    progressEl.textContent = `Loading batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(cardRequests.length / batchSize)}...`;
+    if (i + batchSize < cardRequests.length) await delay(200);
   }
 
   if (failed.length === 0) {
-    progressEl.textContent = `✓ Imported ${loaded} cards successfully!`;
+    progressEl.textContent = `✓ Imported ${cardRequests.length} cards successfully!`;
   } else {
-    progressEl.textContent = `✓ Imported ${loaded} cards. Failed: ${failed.join(', ')}`;
+    progressEl.textContent = `✓ Imported ${cardRequests.length - failed.length} cards. Failed: ${failed.join(', ')}`;
+  }
+}
+
+async function runAIImport() {
+  const text = document.getElementById('ai-import-text').value.trim();
+  if (!text) return;
+
+  const progressEl = document.getElementById('ai-import-progress');
+  const lines = text.split('\n').filter((l) => l.trim());
+
+  const cardRequests = [];
+  for (const line of lines) {
+    const match = line.trim().match(/^(\d+)x?\s+([^(]+?)(?:\s*\(([^)]+)\)\s*(\d+))?$/);
+    if (!match) continue;
+    const [, qty, name, setCode, collectorNumber] = match;
+    const cleanName = name.trim().split(' / ')[0].trim();
+    cardRequests.push({
+      qty: parseInt(qty),
+      name: cleanName,
+      set: setCode ? setCode.toLowerCase() : null,
+      collectorNumber: collectorNumber || null,
+    });
+  }
+
+  progressEl.textContent = `Fetching cards...`;
+  AIDeck.clear();
+
+  const failed = [];
+  const batchSize = 75;
+
+  for (let i = 0; i < cardRequests.length; i += batchSize) {
+    const batch = cardRequests.slice(i, i + batchSize);
+    const identifiers = batch.map((e) => {
+      if (e.set && e.collectorNumber) {
+        return { set: e.set, collector_number: e.collectorNumber };
+      }
+      return { name: e.name };
+    });
+
+    const res = await fetch('https://api.scryfall.com/cards/collection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifiers }),
+    });
+    const data = await res.json();
+    const fetched = data.data || [];
+    const notFound = (data.not_found || []).map((n) => n.name);
+    failed.push(...notFound);
+
+    batch.forEach(({ qty, name, set, collectorNumber }) => {
+      const card =
+        set && collectorNumber
+          ? fetched.find((c) => c.set === set && c.collector_number === collectorNumber)
+          : fetched.find((c) => c.name.toLowerCase() === name.toLowerCase());
+      if (!card) return;
+      cardCache[card.id] = card;
+      const isBasic = Deck.isBasicLand(card);
+      if (isBasic) {
+        for (let j = 0; j < qty; j++) AIDeck.add(card);
+      } else {
+        AIDeck.add(card);
+      }
+    });
+
+    progressEl.textContent = `Loading batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(cardRequests.length / batchSize)}...`;
+    if (i + batchSize < cardRequests.length) await delay(200);
+  }
+
+  if (failed.length === 0) {
+    progressEl.textContent = `✓ Imported ${cardRequests.length} cards successfully!`;
+  } else {
+    progressEl.textContent = `✓ Imported ${cardRequests.length - failed.length} cards. Failed: ${failed.join(', ')}`;
   }
 }
 
 document.addEventListener('click', (e) => {
   const modal = document.getElementById('import-modal');
   if (modal && e.target === modal) closeImportModal();
+});
+
+function showAIImportModal() {
+  document.getElementById('ai-import-modal').classList.remove('hidden');
+}
+
+function closeAIImportModal() {
+  document.getElementById('ai-import-modal').classList.add('hidden');
+  document.getElementById('ai-import-progress').textContent = '';
+  document.getElementById('ai-import-text').value = '';
+}
+
+// Close AI import modal on backdrop click
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('ai-import-modal');
+  if (modal && e.target === modal) closeAIImportModal();
 });
 
 // ── START GAME ──
@@ -299,8 +405,8 @@ async function startGame() {
   btn.disabled = true;
 
   // FIX: init game BEFORE showing game page
-  await Game.init(deckCards, commanders);
-
+  const aiCards = AIDeck.totalCards() > 0 ? AIDeck.getFlatDeck() : null;
+  await Game.init(deckCards, commanders, aiCards);
   // Show game page
   showPage('game');
 
@@ -323,4 +429,109 @@ function toggleAutoTap() {
   const val = Settings.toggle('autoTap');
   const el = document.getElementById('auto-tap-toggle');
   if (el) el.checked = val;
+}
+
+// ── DECK TABS ──
+
+let aiDeckInitialised = false;
+
+function switchDeckTab(tab) {
+  document.getElementById('view-your-deck').classList.toggle('hidden', tab !== 'your-deck');
+  document.getElementById('view-opponent').classList.toggle('hidden', tab !== 'opponent');
+  document.getElementById('tab-your-deck').classList.toggle('active', tab === 'your-deck');
+  document.getElementById('tab-opponent').classList.toggle('active', tab === 'opponent');
+
+  // Load default deck first time opponent tab is opened
+  if (tab === 'opponent' && !aiDeckInitialised) {
+    aiDeckInitialised = true;
+    AIDeck.loadFromList(AI.opponent.getDeckList());
+  }
+}
+
+// ── STRATEGY SELECTOR ──
+
+function selectStrategy(strategy) {
+  document.querySelectorAll('.strategy-btn').forEach((b) => b.classList.remove('active'));
+  document.getElementById(`strategy-${strategy}`).classList.add('active');
+
+  const opponents = { aggro: OpponentAggro, control: OpponentControl, midrange: OpponentMidrange };
+  AI.setOpponent(opponents[strategy]);
+
+  // Auto-populate AI deck with strategy's default list
+  AIDeck.loadFromList(AI.opponent.getDeckList());
+}
+
+// ── AI DECK CONTROLS ──
+
+function saveAIDeck() {
+  const name = document.getElementById('ai-deck-name-input').value.trim() || 'Opponent Deck';
+  AIDeck.name = name;
+
+  const saved = JSON.parse(localStorage.getItem('mtg_ai_decks') || '{}');
+  saved[name] = {
+    name,
+    cards: AIDeck.cards.map((e) => ({ cardData: e.card, qty: e.qty })),
+    savedAt: new Date().toISOString(),
+  };
+  localStorage.setItem('mtg_ai_decks', JSON.stringify(saved));
+  alert(`AI deck "${name}" saved!`);
+}
+
+function loadAIDeckMenu() {
+  const saved = JSON.parse(localStorage.getItem('mtg_ai_decks') || '{}');
+  const keys = Object.keys(saved);
+
+  const listEl = document.getElementById('ai-saved-decks-list');
+  if (keys.length === 0) {
+    listEl.innerHTML = '<p class="muted">No saved AI decks.</p>';
+  } else {
+    listEl.innerHTML = keys
+      .map((name) => {
+        const deck = saved[name];
+        const count = deck.cards.reduce((s, e) => s + e.qty, 0);
+        return `
+        <div class="saved-deck-item">
+          <div>
+            <div class="saved-deck-name">${name}</div>
+            <div class="saved-deck-count">${count} cards</div>
+          </div>
+          <div class="saved-deck-actions">
+            <button onclick="loadAIDeck('${name.replace(/'/g, "\\'")}')">Load</button>
+            <button onclick="deleteAIDeck('${name.replace(/'/g, "\\'")}')">Delete</button>
+          </div>
+        </div>`;
+      })
+      .join('');
+  }
+
+  document.getElementById('ai-load-modal').classList.remove('hidden');
+}
+
+function loadAIDeck(name) {
+  const saved = JSON.parse(localStorage.getItem('mtg_ai_decks') || '{}');
+  const deck = saved[name];
+  if (!deck) return;
+
+  AIDeck.cards = deck.cards.map((e) => ({ card: e.cardData, qty: e.qty }));
+  AIDeck.name = deck.name;
+  AIDeck.cards.forEach((e) => {
+    if (e.card.id) cardCache[e.card.id] = e.card;
+  });
+
+  document.getElementById('ai-deck-name-input').value = deck.name;
+  AIDeck.render();
+  AIDeck.updateStats();
+  document.getElementById('ai-load-modal').classList.add('hidden');
+}
+
+function deleteAIDeck(name) {
+  if (!confirm(`Delete "${name}"?`)) return;
+  const saved = JSON.parse(localStorage.getItem('mtg_ai_decks') || '{}');
+  delete saved[name];
+  localStorage.setItem('mtg_ai_decks', JSON.stringify(saved));
+  loadAIDeckMenu();
+}
+
+function clearAIDeck() {
+  AIDeck.clear();
 }

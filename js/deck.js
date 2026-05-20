@@ -353,3 +353,165 @@ ${
     return this.designatedCommanders;
   },
 };
+
+// ── AI DECK ──
+// Simpler deck manager for the opponent — no commander validation, no 100 card limit.
+
+const AIDeck = {
+  cards: [],
+  name: 'Opponent Deck',
+
+  add(card) {
+    const existing = this.cards.find((e) => e.card.name === card.name);
+    if (card.id && typeof cardCache !== 'undefined') {
+      cardCache[card.id] = card;
+    }
+    if (existing) {
+      if (Deck.isBasicLand(card)) {
+        existing.qty++;
+      } else {
+        return false;
+      }
+    } else {
+      this.cards.push({ card, qty: 1 });
+    }
+    this.render();
+    this.updateStats();
+    return true;
+  },
+
+  remove(cardName) {
+    const idx = this.cards.findIndex((e) => e.card.name === cardName);
+    if (idx === -1) return;
+    if (this.cards[idx].qty > 1) {
+      this.cards[idx].qty--;
+    } else {
+      this.cards.splice(idx, 1);
+    }
+    this.render();
+    this.updateStats();
+  },
+
+  clear() {
+    this.cards = [];
+    this.render();
+    this.updateStats();
+  },
+
+  totalCards() {
+    return this.cards.reduce((sum, e) => sum + e.qty, 0);
+  },
+
+  landCount() {
+    return this.cards
+      .filter((e) => Scryfall.getCategory(e.card) === 'land')
+      .reduce((sum, e) => sum + e.qty, 0);
+  },
+
+  // Load from a getDeckList() array by fetching cards from Scryfall
+  async loadFromList(list) {
+    this.cards = [];
+    const el = document.getElementById('ai-deck-list');
+    if (el) el.innerHTML = '<p class="muted" style="padding:8px">Loading deck...</p>';
+
+    const identifiers = list.map((e) => ({ name: e.name }));
+    const res = await fetch('https://api.scryfall.com/cards/collection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifiers }),
+    });
+    const data = await res.json();
+    const fetched = data.data || [];
+
+    list.forEach((entry) => {
+      const card = fetched.find((c) => c.name.toLowerCase() === entry.name.toLowerCase());
+      if (card) {
+        cardCache[card.id] = card;
+        if (Deck.isBasicLand(card)) {
+          for (let i = 0; i < entry.qty; i++) {
+            const existing = this.cards.find((e) => e.card.name === card.name);
+            if (existing) existing.qty++;
+            else this.cards.push({ card, qty: 1 });
+          }
+        } else {
+          this.cards.push({ card, qty: entry.qty });
+        }
+      }
+    });
+
+    this.render();
+    this.updateStats();
+  },
+
+  render() {
+    const el = document.getElementById('ai-deck-list');
+    if (!el) return;
+
+    if (this.cards.length === 0) {
+      el.innerHTML = '<p class="muted" style="padding:8px">No cards yet. Select a strategy or search for cards.</p>';
+      return;
+    }
+
+    const groups = {
+      creature: { label: 'Creatures', cards: [] },
+      instant: { label: 'Instants', cards: [] },
+      sorcery: { label: 'Sorceries', cards: [] },
+      enchantment: { label: 'Enchantments', cards: [] },
+      artifact: { label: 'Artifacts', cards: [] },
+      planeswalker: { label: 'Planeswalkers', cards: [] },
+      land: { label: 'Lands', cards: [] },
+      other: { label: 'Other', cards: [] },
+    };
+
+    this.cards.forEach((e) => {
+      const cat = Scryfall.getCategory(e.card);
+      const group = groups[cat] || groups.other;
+      group.cards.push(e);
+    });
+
+    let html = '';
+    Object.entries(groups).forEach(([cat, group]) => {
+      if (group.cards.length === 0) return;
+      const groupTotal = group.cards.reduce((s, e) => s + e.qty, 0);
+      html += `<div class="deck-section-header">${group.label} (${groupTotal})</div>`;
+      group.cards
+        .sort((a, b) => a.card.name.localeCompare(b.card.name))
+        .forEach((e) => {
+          const cost = Scryfall.formatManaCost(Scryfall.getManaCost(e.card));
+          html += `
+            <div class="deck-card-row" data-card-id="${e.card.id || ''}" onclick="handleDeckCardClick(this)">
+              <span class="deck-card-name ${cat === 'land' ? 'land' : ''}">${e.qty > 1 ? e.qty + 'x ' : ''}${e.card.name}</span>
+              <span class="deck-card-cost">${cost}</span>
+              <button class="remove-btn" onclick="event.stopPropagation(); AIDeck.remove('${e.card.name.replace(/'/g, "\\'")}')">✕</button>
+            </div>`;
+        });
+    });
+
+    el.innerHTML = html;
+
+    this.cards.forEach((e) => {
+      if (e.card && e.card.id && typeof cardCache !== 'undefined') {
+        cardCache[e.card.id] = e.card;
+      }
+    });
+  },
+
+  updateStats() {
+    const total = this.totalCards();
+    const lands = this.landCount();
+    const countEl = document.getElementById('ai-card-count');
+    const landEl = document.getElementById('ai-land-count');
+    if (countEl) countEl.textContent = `Cards: ${total}`;
+    if (landEl) landEl.textContent = `Lands: ${lands}`;
+  },
+
+  getFlatDeck() {
+    const flat = [];
+    this.cards.forEach((e) => {
+      for (let i = 0; i < e.qty; i++) {
+        flat.push({ ...e.card });
+      }
+    });
+    return flat;
+  },
+};

@@ -4,17 +4,26 @@
 
 const AI = {
   player: null,
+  opponent: OpponentAggro, // default
+
+  setOpponent(opponent) {
+    this.opponent = opponent;
+  },
 
   // Initialise AI with a pre-built deck
-  async init(name = 'Opponent') {
+  async init(name = 'Opponent', customDeck = null) {
     this.player = new Player(name, false);
     this.player.loadCommanders([]);
-    const list = this.getDeckList();
 
-    // Build identifiers array for collection endpoint
+    // Use custom deck if provided, otherwise fetch from default list
+    if (customDeck) {
+      this.player.loadDeck(customDeck);
+      return this.player;
+    }
+
+    const list = this.opponent.getDeckList();
     const identifiers = list.map((e) => ({ name: e.name }));
 
-    // Fetch all cards in one POST request
     const res = await fetch('https://api.scryfall.com/cards/collection', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -24,7 +33,6 @@ const AI = {
     const data = await res.json();
     const fetched = data.data || [];
 
-    // Build deck from results, matching back to quantities
     const cards = [];
     list.forEach((entry) => {
       const card = fetched.find((c) => c.name.toLowerCase() === entry.name.toLowerCase());
@@ -60,7 +68,7 @@ const AI = {
     this.castSpells();
 
     // FIX: Attack with blocking support
-    this.attack(humanPlayer);
+    this.opponent.attack(this.player, humanPlayer);
 
     if (Game.gameOver) return;
 
@@ -87,28 +95,68 @@ const AI = {
 
   // Cast creatures from hand if affordable
   castSpells() {
-    const sortedCreatures = this.player.hand
-      .filter((c) => c)
-      .map((card, idx) => ({ card, idx }))
-      .filter(({ card }) => {
-        if (!card) return false;
-        const type = (card.type_line || '').toLowerCase();
-        return type.includes('creature');
-      })
-      .sort((a, b) => (a.card?.cmc || 0) - (b.card?.cmc || 0));
-
-    if (sortedCreatures.length === 0) return;
+    const hand = this.player.hand.filter((c) => c);
+    if (hand.length === 0) return;
 
     // Count available mana without tapping yet
     const availableMana = this.player.getLands().filter((l) => !l.tapped).length;
-    const cheapest = sortedCreatures[0].card.cmc || 0;
-    if (availableMana < cheapest) return; // nothing affordable — don't tap any lands
+    if (availableMana === 0) return;
+
+    // Separate hand into creatures and non-creatures
+    const creatures = hand
+      .map((card, idx) => ({ card, idx }))
+      .filter(({ card }) => (card.type_line || '').toLowerCase().includes('creature'))
+      .sort((a, b) => (a.card?.cmc || 0) - (b.card?.cmc || 0));
+
+    const nonCreatures = hand
+      .map((card, idx) => ({ card, idx }))
+      .filter(({ card }) => {
+        const type = (card.type_line || '').toLowerCase();
+        return !type.includes('creature') && !type.includes('land');
+      })
+      .sort((a, b) => (a.card?.cmc || 0) - (b.card?.cmc || 0));
+
+    // Check if anything is affordable before tapping lands
+    const cheapestCreature = creatures[0]?.card.cmc || Infinity;
+    const cheapestNonCreature = nonCreatures[0]?.card.cmc || Infinity;
+    const cheapest = Math.min(cheapestCreature, cheapestNonCreature);
+    if (availableMana < cheapest) return;
 
     this.generateMana();
 
-    for (const { card } of sortedCreatures) {
+    // Cast creatures first (cheapest first)
+    for (const { card } of creatures) {
       if (!card) continue;
       const cmc = card.cmc || 0;
+      if (this.player.totalMana() >= cmc) {
+        this.spendGenericMana(cmc);
+        const handIdx = this.player.hand.findIndex((c) => c && c.name === card.name);
+        if (handIdx !== -1) {
+          this.player.castFromHand(handIdx);
+          GameLog.add(`${this.player.name} casts ${card.name}.`, 'action');
+        }
+      }
+    }
+
+    // Cast non-creature spells
+    for (const { card } of nonCreatures) {
+      if (!card) continue;
+      const cmc = card.cmc || 0;
+      const type = (card.type_line || '').toLowerCase();
+      const oracle = (card.oracle_text || '').toLowerCase();
+
+      // Board wipes — only cast if human has more creatures
+      const isBoardWipe =
+        oracle.includes('destroy all creatures') || oracle.includes('all creatures');
+      if (isBoardWipe) {
+        const humanCreatures = Game.human.getCreatures().length;
+        const aiCreatures = this.player.getCreatures().length;
+        if (humanCreatures <= aiCreatures) {
+          GameLog.add(`${this.player.name} holds ${card.name} — not the right moment.`, 'info');
+          continue;
+        }
+      }
+
       if (this.player.totalMana() >= cmc) {
         this.spendGenericMana(cmc);
         const handIdx = this.player.hand.findIndex((c) => c && c.name === card.name);
@@ -123,17 +171,36 @@ const AI = {
   // Generate mana from untapped lands
   generateMana() {
     this.player.clearManaPool();
-    this.player.getLands().forEach((land) => {
-      if (!land.tapped) {
-        const type = (land.card.type_line || '').toLowerCase();
-        if (type.includes('swamp')) this.player.addMana('B');
-        else if (type.includes('mountain')) this.player.addMana('R');
-        else if (type.includes('forest')) this.player.addMana('G');
-        else if (type.includes('plains')) this.player.addMana('W');
-        else if (type.includes('island')) this.player.addMana('U');
-        else this.player.addMana('C');
-        land.tapped = true;
+    this.player.battlefield.forEach((perm) => {
+      if (perm.tapped) return;
+      const type = (perm.card.type_line || '').toLowerCase();
+      const oracle = (perm.card.oracle_text || '').toLowerCase();
+
+      // Only tap permanents that can produce mana
+      const producesMana =
+        type.includes('land') || (oracle.includes('{t}') && oracle.includes('add {'));
+      if (!producesMana) return;
+
+      // Read colors from type line first, then oracle text
+      const colorSet = new Set();
+      if (type.includes('plains')) colorSet.add('W');
+      if (type.includes('island')) colorSet.add('U');
+      if (type.includes('swamp')) colorSet.add('B');
+      if (type.includes('mountain')) colorSet.add('R');
+      if (type.includes('forest')) colorSet.add('G');
+      if (oracle.includes('add {w}')) colorSet.add('W');
+      if (oracle.includes('add {u}')) colorSet.add('U');
+      if (oracle.includes('add {b}')) colorSet.add('B');
+      if (oracle.includes('add {r}')) colorSet.add('R');
+      if (oracle.includes('add {g}')) colorSet.add('G');
+
+      const colors = [...colorSet];
+      if (colors.length > 0) {
+        this.player.addMana(colors[0]); // pick first color for AI simplicity
+      } else {
+        this.player.addMana('C');
       }
+      perm.tapped = true;
     });
   },
 
@@ -147,109 +214,5 @@ const AI = {
       this.player.manaPool[color] -= spend;
       remaining -= spend;
     }
-  },
-
-  // FIX: Attack with human blocking — human's untapped creatures can block
-  attack(humanPlayer) {
-    const attackers = this.player.getUntappedCreatures();
-    if (attackers.length === 0) return;
-
-    GameLog.add(`${this.player.name} attacks with ${attackers.length} creature(s)!`, 'combat');
-
-    // Tap all attackers
-    attackers.forEach((perm) => {
-      perm.tapped = true;
-    });
-
-    // Human auto-blocks: assign best available blockers
-    const humanBlockers = humanPlayer.getUntappedCreatures();
-    const assignments = {}; // attackerId -> blockerId | null
-    const usedBlockers = new Set();
-
-    attackers.forEach((attacker) => {
-      const { power: atkPwr } = this.player.getEffectivePT(attacker);
-      // Find a blocker that trades favourably or survives
-      const blocker = humanBlockers.find((b) => {
-        if (usedBlockers.has(b.id)) return false;
-        const { power: blkPwr, toughness: blkTgh } = humanPlayer.getEffectivePT(b);
-        const { toughness: atkTgh } = this.player.getEffectivePT(attacker);
-        return blkPwr >= atkTgh || atkPwr < blkTgh; // kills attacker or blocker survives
-      });
-
-      if (blocker) {
-        assignments[attacker.id] = blocker.id;
-        usedBlockers.add(blocker.id);
-        GameLog.add(`You block ${attacker.card.name} with ${blocker.card.name}.`, 'combat');
-      } else {
-        assignments[attacker.id] = null;
-      }
-    });
-
-    // Resolve damage
-    let totalDamageToHuman = 0;
-
-    attackers.forEach((attacker) => {
-      const { power: atkPwr, toughness: atkTgh } = this.player.getEffectivePT(attacker);
-      const blockerId = assignments[attacker.id];
-
-      if (!blockerId) {
-        totalDamageToHuman += atkPwr;
-        GameLog.add(`${attacker.card.name} deals ${atkPwr} damage to you (unblocked).`, 'combat');
-      } else {
-        const blocker = humanPlayer.battlefield.find((p) => p.id === blockerId);
-        if (!blocker) {
-          totalDamageToHuman += atkPwr;
-          return;
-        }
-        const { power: blkPwr, toughness: blkTgh } = humanPlayer.getEffectivePT(blocker);
-
-        GameLog.add(
-          `${attacker.card.name} (${atkPwr}/${atkTgh}) vs ${blocker.card.name} (${blkPwr}/${blkTgh}).`,
-          'combat'
-        );
-
-        // Attacker dies?
-        if (blkPwr >= atkTgh) {
-          this.player.sendToGraveyard(attacker.id);
-          GameLog.add(`${attacker.card.name} dies.`, 'combat');
-        }
-        // Blocker dies?
-        if (atkPwr >= blkTgh) {
-          humanPlayer.sendToGraveyard(blockerId);
-          GameLog.add(`${blocker.card.name} dies.`, 'combat');
-        }
-      }
-    });
-
-    if (totalDamageToHuman > 0) {
-      humanPlayer.life -= totalDamageToHuman;
-      GameLog.add(
-        `You take ${totalDamageToHuman} damage. Your life: ${humanPlayer.life}.`,
-        'combat'
-      );
-    }
-
-    // FIX: check win condition immediately after AI attack
-    Game.checkWinCondition();
-  },
-
-  // Build a simple pre-constructed aggro deck for the AI
-  getDeckList() {
-    return [
-      { name: 'Llanowar Elves', qty: 3 },
-      { name: 'Elvish Mystic', qty: 3 },
-      { name: 'Runeclaw Bear', qty: 3 },
-      { name: 'Centaur Courser', qty: 3 },
-      { name: 'Kalonian Tusker', qty: 3 },
-      { name: 'Deadly Recluse', qty: 2 },
-      { name: 'Charging Rhino', qty: 2 },
-      { name: 'Serra Angel', qty: 2 },
-      { name: 'Silvercoat Lion', qty: 3 },
-      { name: 'Lone Missionary', qty: 3 },
-      { name: 'Attended Knight', qty: 2 },
-      { name: 'Siege Mastodon', qty: 2 },
-      { name: 'Forest', qty: 17 },
-      { name: 'Plains', qty: 16 },
-    ];
   },
 };
