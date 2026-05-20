@@ -212,23 +212,44 @@
   text-transform: uppercase;
 }
 
-/* ── LAYOUT — single column, no sidebar on mobile ── */
-.game-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - 110px);
+/* ── LAYOUT — fixed top/bottom HUD, scrollable battlefield ── */
+.game-layout { display: none; }
+.game-main { display: none; }
+
+.game-hud-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
-.game-main {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+.game-battlefield {
+  overflow-y: auto;
+  padding-bottom: 8px;
+  /* pushed down by top HUD, up by bottom HUD */
+  min-height: 200px;
 }
 
-/* Sidebar hidden always on mobile, shown on desktop */
-.game-sidebar {
-  display: none;
+.game-hud-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(6,5,3,0.97);
+  border-top: 1px solid rgba(200,168,75,0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-height: 55vh;
+  overflow-y: auto;
 }
+
+.hud-drawers {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar desktop only */
+.game-sidebar { display: none; }
 
 /* ── BATTLEFIELD ZONES ── */
 .game-zone {
@@ -1001,21 +1022,24 @@
 
 /* ── DESKTOP ── */
 @media (min-width: 769px) {
-  .game-layout {
-    display: grid;
-    grid-template-columns: 1fr 260px;
-    height: calc(100vh - 130px);
-    overflow: hidden;
-  }
-  .game-main {
-    overflow-y: auto;
-    border-right: 1px solid var(--border-subtle);
-  }
   .game-sidebar {
     display: flex;
     flex-direction: column;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    background: rgba(8,6,4,0.95);
+    border-left: 1px solid var(--border-subtle);
     overflow-y: auto;
-    background: rgba(8,6,4,0.9);
+    z-index: 40;
+  }
+  .game-battlefield {
+    margin-right: 260px;
+  }
+  .game-hud-bottom {
+    right: 260px;
   }
   .permanent {
     width: 90px;

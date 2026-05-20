@@ -235,43 +235,49 @@
 
       <!-- Game Board -->
       <div id="game-board" class="hidden">
-        <div id="phase-bar" class="phase-bar"></div>
 
-        <div class="game-header">
-          <div class="life-block">
-            <span class="life-label">Opponent</span>
-            <span class="life-total" id="opp-life">40</span>
-          </div>
-          <div class="turn-block">
-            <div id="turn-info">Turn 1 — Your Turn</div>
-          </div>
-          <div class="life-block">
-            <span class="life-label">You</span>
-            <span class="life-total" id="human-life">40</span>
+        <!-- TOP HUD — sticky -->
+        <div class="game-hud-top">
+          <div id="phase-bar" class="phase-bar"></div>
+          <div class="game-header">
+            <div class="life-block">
+              <span class="life-label">Opponent</span>
+              <span class="life-total" id="opp-life">40</span>
+            </div>
+            <div class="turn-block">
+              <div id="turn-info">Turn 1 — Your Turn</div>
+            </div>
+            <div class="life-block">
+              <span class="life-label">You</span>
+              <span class="life-total" id="human-life">40</span>
+            </div>
           </div>
         </div>
 
-        <div class="game-layout">
-          <div class="game-main">
-            <div class="game-zone opp-zone" id="opp-battlefield"></div>
-            <div class="drawer drawer--down" id="opp-graveyard-drawer">
-              <button class="drawer__tab" onclick="GameUI.toggleDrawer('opp-graveyard-drawer')">
-                Opp. Graveyard · <span id="opp-graveyard-count">0</span>
-              </button>
-              <div class="drawer__body" id="opp-graveyard-list"></div>
-            </div>
-            <div class="battlefield-divider">— Battlefield —</div>
-            <div class="game-zone human-zone" id="human-battlefield"></div>
-            <div class="mana-bar" id="mana-pool"></div>
-            <div class="action-bar" id="action-buttons"></div>
-            <div class="hand-zone">
-              <div class="zone-label">Your Hand</div>
-              <div class="hand-cards" id="human-hand"></div>
-            </div>
-            <div class="command-zone-area">
-              <div class="zone-label">Command Zone</div>
-              <div id="command-zone"></div>
-            </div>
+        <!-- BATTLEFIELD — scrollable middle -->
+        <div class="game-battlefield">
+          <div class="game-zone opp-zone" id="opp-battlefield"></div>
+          <div class="drawer drawer--down" id="opp-graveyard-drawer">
+            <button class="drawer__tab" onclick="GameUI.toggleDrawer('opp-graveyard-drawer')">
+              Opp. Graveyard · <span id="opp-graveyard-count">0</span>
+            </button>
+            <div class="drawer__body" id="opp-graveyard-list"></div>
+          </div>
+          <div class="battlefield-divider">— Battlefield —</div>
+          <div class="game-zone human-zone" id="human-battlefield"></div>
+        </div>
+
+        <!-- BOTTOM HUD — fixed -->
+        <div class="game-hud-bottom">
+          <div class="mana-bar" id="mana-pool"></div>
+          <div class="action-bar" id="action-buttons"></div>
+          <div class="hand-zone">
+            <div class="hand-cards" id="human-hand"></div>
+          </div>
+          <div class="command-zone-area">
+            <div id="command-zone"></div>
+          </div>
+          <div class="hud-drawers">
             <div class="drawer drawer--up" id="graveyard-drawer">
               <button class="drawer__tab" onclick="GameUI.toggleDrawer('graveyard-drawer')">
                 Graveyard · <span id="graveyard-count">0</span>
@@ -285,31 +291,32 @@
               <div class="drawer__body" id="exile-list"></div>
             </div>
           </div>
+        </div>
 
-          <div class="game-sidebar">
-            <div class="sidebar-section">
-              <div class="sidebar-label">Card Preview</div>
-              <div id="game-card-preview">
-                <p class="muted" style="font-size: 12px">Click a card to preview</p>
-              </div>
-            </div>
-            <div id="phase-tip" class="phase-tip hidden"></div>
-            <div id="trigger-reminder" class="trigger-reminder hidden"></div>
-            <div id="mana-choice" class="mana-choice hidden"></div>
-            <div class="sidebar-section">
-              <div class="sidebar-label">Game Log</div>
-              <div id="game-log-entries" class="game-log"></div>
+        <!-- Sidebar (desktop only) -->
+        <div class="game-sidebar">
+          <div class="sidebar-section">
+            <div class="sidebar-label">Card Preview</div>
+            <div id="game-card-preview">
+              <p class="muted" style="font-size: 12px">Click a card to preview</p>
             </div>
           </div>
-
-          <!-- Mobile log drawer -->
-          <div id="mobile-log-drawer" class="mobile-log-drawer hidden">
-            <div class="mobile-log-header" onclick="GameUI.toggleMobileLog()">
-              <span>Game Log</span>
-              <span id="mobile-log-toggle">▲</span>
-            </div>
-            <div id="mobile-log-entries" class="mobile-log-entries"></div>
+          <div id="phase-tip" class="phase-tip hidden"></div>
+          <div id="trigger-reminder" class="trigger-reminder hidden"></div>
+          <div id="mana-choice" class="mana-choice hidden"></div>
+          <div class="sidebar-section">
+            <div class="sidebar-label">Game Log</div>
+            <div id="game-log-entries" class="game-log"></div>
           </div>
+        </div>
+
+        <!-- Mobile log drawer -->
+        <div id="mobile-log-drawer" class="mobile-log-drawer hidden">
+          <div class="mobile-log-header" onclick="GameUI.toggleMobileLog()">
+            <span>Game Log</span>
+            <span id="mobile-log-toggle">▲</span>
+          </div>
+          <div id="mobile-log-entries" class="mobile-log-entries"></div>
         </div>
 
       </div>
