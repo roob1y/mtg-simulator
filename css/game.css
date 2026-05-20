@@ -118,18 +118,21 @@
 
 /* ── GAME ZONES ── */
 .game-zone {
-  min-height: 130px;
   padding: 10px;
   border-bottom: 1px solid var(--border-subtle);
+  overflow: visible;
 }
 
 .opp-zone {
   background: var(--bg-base);
+  height: auto;
+  overflow: visible;
 }
 
 .human-zone {
   background: var(--bg-base);
-  flex: 1;
+  flex: none;
+  height: auto;
 }
 
 .battlefield-divider {
@@ -158,11 +161,16 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
+  align-items: center;
+}
+
+.opp-zone .permanent.tapped {
+  margin: 10px 20px;
 }
 
 .lands-row .permanent {
-  width: 70px;
-  height: 98px;
+  width: 100px;
+  height: 140px;
 }
 
 .permanent {
@@ -194,7 +202,7 @@
 
 .permanent.tapped {
   transform: rotate(90deg);
-  margin: 16px 8px;
+  margin: 20px 20px;
   opacity: 0.8;
 }
 
@@ -813,8 +821,17 @@
   }
 
   .permanent {
-    width: 52px;
-    height: 72px;
+    width: 70px;
+    height: 98px;
+  }
+
+  .permanent.tapped {
+    margin: 14px 14px;
+  }
+
+  .lands-row .permanent {
+    width: 70px;
+    height: 98px;
   }
 
   .hand-card {
