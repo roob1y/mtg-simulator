@@ -25,16 +25,22 @@ function showPage(id) {
   const btn = document.querySelector(`.nav-btn[onclick="showPage('${id}')"]`);
   if (btn) btn.classList.add('active');
 
-  // Show/hide header and floating gear based on page
+  // Show/hide game HUDs
+  const topHud = document.getElementById('game-hud-top');
+  const botHud = document.getElementById('game-hud-bottom');
   const header = document.getElementById('main-header');
   const gear = document.getElementById('game-gear');
+
   if (id === 'game') {
+    if (topHud) topHud.style.display = 'block';
+    if (botHud) botHud.style.display = 'block';
     if (header) header.classList.add('hidden');
     if (gear) gear.classList.remove('hidden');
   } else {
+    if (topHud) topHud.style.display = 'none';
+    if (botHud) botHud.style.display = 'none';
     if (header) header.classList.remove('hidden');
     if (gear) gear.classList.add('hidden');
-    // Close gear dropdown if open
     document.getElementById('game-settings-dropdown')?.classList.add('hidden');
   }
 }

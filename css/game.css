@@ -221,7 +221,6 @@
   min-height: 100vh;
 }
 
-/* TOP HUD — hidden until game active */
 .game-hud-top {
   display: none;
   position: fixed;
@@ -231,7 +230,6 @@
   z-index: 50;
 }
 
-/* BOTTOM HUD — hidden until game active */
 .game-hud-bottom {
   display: none;
   position: fixed;
@@ -247,22 +245,14 @@
   overflow-y: auto;
 }
 
-/* Show HUDs only when game board is visible */
-#game.active .game-hud-top,
-#game.active .game-hud-bottom {
-  display: block;
-}
-
-/* BATTLEFIELD — padded to fit between HUDs */
 .game-battlefield {
   padding-top: 130px;
   padding-bottom: 170px;
-  overflow-y: auto;
   min-height: 100vh;
+  overflow-y: auto;
 }
 
 .hud-drawers { display: flex; flex-direction: column; }
-
 .game-sidebar { display: none; }
 
 /* ── BATTLEFIELD ZONES ── */
