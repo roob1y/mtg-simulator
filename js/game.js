@@ -269,6 +269,7 @@ const Game = {
     const card = this.human.hand[cardIndex];
     if (!card) return false;
 
+    GameUI.flashHandCard(cardIndex, 'land');
     const success = this.human.playLand(cardIndex);
     if (success) {
       // Determine if land enters tapped
@@ -291,7 +292,7 @@ const Game = {
       this.checkTriggers('land_enters', card);
       this.processETB(card);
       this.checkWinCondition();
-      GameUI.renderGame(this);
+      setTimeout(() => GameUI.renderGame(this), 150);
     }
     return success;
   },
@@ -546,7 +547,7 @@ const Game = {
       return false;
     }
 
-    // FIX: Spend mana intelligently — parse mana cost to match colors
+    GameUI.flashHandCard(cardIndex, 'cast');
     this._spendManaCost(card);
 
     const result = this.human.castFromHand(cardIndex);
@@ -565,7 +566,7 @@ const Game = {
       // Check triggers
       this.checkTriggers('spell_cast', card);
       this.checkWinCondition();
-      GameUI.renderGame(this);
+      setTimeout(() => GameUI.renderGame(this), 150);
     }
 
     return !!result;

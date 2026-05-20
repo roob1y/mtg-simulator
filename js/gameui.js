@@ -674,12 +674,12 @@ const GameUI = {
     </button>`;
           }
         } else if (isLand && isMain && game.human.canPlayLand()) {
-          html += `<button class="action-btn land" onclick="GameUI.flashHandCard(${this.selectedCard},'land'); setTimeout(()=>Game.playLand(${this.selectedCard}),120)">
+          html += `<button class="action-btn land" onclick="Game.playLand(${this.selectedCard})">
     🌲 Play ${card.name}
   </button>`;
         } else if (!isLand && isMain) {
           const canAfford = Game.canAffordCard(card);
-          html += `<button class="action-btn cast" onclick="GameUI.flashHandCard(${this.selectedCard},'cast'); setTimeout(()=>Game.castSpell(${this.selectedCard}),120)" ${!canAfford ? 'disabled title="Not enough mana"' : ''}>
+          html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled title="Not enough mana"' : ''}>
     ✨ Cast ${card.name} (${card.cmc || 0} mana)${!canAfford ? ' 🔒' : ''}
   </button>`;
         }
