@@ -113,9 +113,11 @@ const GameUI = {
   summariseCounters(counters) {
     const tally = {};
     counters.forEach(c => { tally[c] = (tally[c] || 0) + 1; });
-    return Object.entries(tally)
-      .map(([type, count]) => count > 1 ? `${count}× ${type}` : type)
-      .join(', ');
+    return Object.entries(tally).map(([type, count]) => {
+      if (type === '+1/+1') return `+${count}/+${count}`;
+      if (type === '-1/-1') return `-${count}/-${count}`;
+      return count > 1 ? `${count}× ${type}` : type;
+    }).join(', ');
   },
 
   toggleDrawer(drawerId) {
