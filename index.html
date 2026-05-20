@@ -39,22 +39,92 @@
         </div>
 
         <div class="panel" id="deck-panel">
-          <h2>Deck List</h2>
-          <div class="deck-controls">
-            <input type="text" id="deck-name-input" placeholder="Deck name..." value="My Deck" />
-            <button onclick="saveDeck()">Save Deck</button>
-            <button onclick="loadDeckMenu()">Load Deck</button>
-            <button onclick="showImportModal()">Import List</button>
-            <button onclick="clearDeck()">Clear</button>
+          <!-- Toggle tabs -->
+          <div class="deck-tabs">
+            <button class="deck-tab active" id="tab-your-deck" onclick="switchDeckTab('your-deck')">
+              Your Deck
+            </button>
+            <button class="deck-tab" id="tab-opponent" onclick="switchDeckTab('opponent')">
+              Opponent
+            </button>
           </div>
-          <div class="deck-stats">
-            <span id="card-count">Cards: 0 / 100</span>
-            <span id="land-count">Lands: 0</span>
-            <span id="color-identity">Colors: —</span>
+
+          <!-- Your Deck view -->
+          <div id="view-your-deck">
+            <h2>Deck List</h2>
+            <div class="deck-controls">
+              <input type="text" id="deck-name-input" placeholder="Deck name..." value="My Deck" />
+              <button onclick="saveDeck()">Save Deck</button>
+              <button onclick="loadDeckMenu()">Load Deck</button>
+              <button onclick="showImportModal()">Import List</button>
+              <button onclick="clearDeck()">Clear</button>
+            </div>
+            <div class="deck-stats">
+              <span id="card-count">Cards: 0 / 100</span>
+              <span id="land-count">Lands: 0</span>
+              <span id="color-identity">Colors: —</span>
+            </div>
+            <div id="validation-msg"></div>
+            <div id="deck-list"></div>
+            <button id="start-game-btn" onclick="startGame()" disabled>▶ Start Game</button>
           </div>
-          <div id="validation-msg"></div>
-          <div id="deck-list"></div>
-          <button id="start-game-btn" onclick="startGame()" disabled>▶ Start Game</button>
+
+          <!-- Opponent view -->
+          <div id="view-opponent" class="hidden">
+            <h2>Opponent</h2>
+
+            <!-- Strategy selector -->
+            <div class="strategy-selector">
+              <button
+                class="strategy-btn active"
+                id="strategy-aggro"
+                onclick="selectStrategy('aggro')"
+              >
+                <div class="strategy-name">⚔ Aggro</div>
+                <div class="strategy-desc">
+                  Floods the board with cheap creatures and attacks every turn.
+                </div>
+              </button>
+              <button
+                class="strategy-btn"
+                id="strategy-control"
+                onclick="selectStrategy('control')"
+              >
+                <div class="strategy-name">🛡 Control</div>
+                <div class="strategy-desc">
+                  Plays defensively, removes threats, attacks only when ahead.
+                </div>
+              </button>
+              <button
+                class="strategy-btn"
+                id="strategy-midrange"
+                onclick="selectStrategy('midrange')"
+              >
+                <div class="strategy-name">⚖ Midrange</div>
+                <div class="strategy-desc">
+                  Plays efficient threats and trades resources carefully.
+                </div>
+              </button>
+            </div>
+
+            <div class="deck-controls">
+              <input
+                type="text"
+                id="ai-deck-name-input"
+                placeholder="AI deck name..."
+                value="Opponent Deck"
+              />
+              <button onclick="saveAIDeck()">Save</button>
+              <button onclick="loadAIDeckMenu()">Load</button>
+              <button onclick="showAIImportModal()">Import List</button>
+              <button onclick="clearAIDeck()">Clear</button>
+            </div>
+            <div class="deck-stats">
+              <span id="ai-card-count">Cards: 0</span>
+              <span id="ai-land-count">Lands: 0</span>
+            </div>
+            <div id="ai-deck-list"></div>
+          </div>
         </div>
 
         <div class="panel" id="preview-panel">
@@ -98,6 +168,42 @@
             <button onclick="runImport()">Import</button>
             <button onclick="closeImportModal()">Cancel</button>
           </div>
+        </div>
+      </div>
+      <div id="ai-import-modal" class="modal hidden">
+        <div class="modal-inner">
+          <h3>Import AI Decklist</h3>
+          <p class="muted">Paste your decklist below. One card per line: quantity name</p>
+          <p class="muted">Example: 1 Sol Ring</p>
+          <textarea
+            id="ai-import-text"
+            style="
+              width: 100%;
+              height: 300px;
+              background: #2a2a2a;
+              border: 1px solid #444;
+              color: #e0e0e0;
+              padding: 10px;
+              font-family: monospace;
+              font-size: 13px;
+              resize: vertical;
+            "
+            placeholder="1 Lightning Bolt&#10;4 Mountain"
+          ></textarea>
+          <div id="ai-import-progress" class="muted"></div>
+          <div style="display: flex; gap: 8px">
+            <button onclick="runAIImport()">Import</button>
+            <button onclick="closeAIImportModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div id="ai-load-modal" class="modal hidden">
+        <div class="modal-inner">
+          <h3>Saved AI Decks</h3>
+          <div id="ai-saved-decks-list"></div>
+          <button onclick="document.getElementById('ai-load-modal').classList.add('hidden')">
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -200,6 +306,9 @@
     </div>
 
     <script src="js/scryfall.js"></script>
+    <script src="js/opponents/aggro.js"></script>
+    <script src="js/opponents/control.js"></script>
+    <script src="js/opponents/midrange.js"></script>
     <script src="js/deck.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/gamelog.js"></script>

@@ -68,9 +68,11 @@ nav {
 /* ── DECK BUILDER LAYOUT ── */
 .deck-builder-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr 280px;
+  grid-template-columns: 260px 1fr 260px;
   gap: 0;
   height: calc(100vh - 45px);
+  max-width: 1080px;
+  margin: 0 auto;
 }
 
 .panel {
@@ -241,6 +243,84 @@ button:disabled {
   background: #1a2a1a;
   border: 1px solid #2a5a2a;
   color: #8c8;
+}
+
+/* ── DECK TABS ── */
+.deck-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #333;
+  margin-bottom: 10px;
+}
+
+.deck-tab {
+  flex: 1;
+  padding: 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-bottom: none;
+  color: #666;
+  font-family: monospace;
+  font-size: 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.deck-tab:hover {
+  color: #aaa;
+  background: #222;
+}
+
+.deck-tab.active {
+  background: #2a2a2a;
+  color: #fff;
+  border-color: #555;
+}
+
+/* ── STRATEGY SELECTOR ── */
+.strategy-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.strategy-btn {
+  text-align: left;
+  padding: 8px 10px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #888;
+  font-family: monospace;
+  cursor: pointer;
+}
+
+.strategy-btn:hover {
+  background: #222;
+  border-color: #555;
+  color: #ccc;
+}
+
+.strategy-btn.active {
+  background: #111a28;
+  border-color: #446;
+  color: #aaf;
+}
+
+.strategy-name {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.strategy-desc {
+  font-size: 11px;
+  color: #666;
+}
+
+.strategy-btn.active .strategy-desc {
+  color: #88a;
 }
 
 /* ── DECK LIST ── */

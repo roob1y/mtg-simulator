@@ -32,15 +32,24 @@ const Scryfall = {
 
   // Get a single card by exact name
   async getByName(name) {
-    try {
-      const encoded = encodeURIComponent(name);
-      const res = await fetch(`${this.BASE}/cards/named?fuzzy=${encoded}`);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.error('Scryfall getByName error:', e);
-      return null;
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        const encoded = encodeURIComponent(name);
+        const res = await fetch(`${this.BASE}/cards/named?fuzzy=${encoded}`);
+        if (res.status === 429) {
+          await new Promise((r) => setTimeout(r, 1000));
+          attempts++;
+          continue;
+        }
+        if (!res.ok) return null;
+        return await res.json();
+      } catch (e) {
+        console.error('Scryfall getByName error:', e);
+        return null;
+      }
     }
+    return null;
   },
 
   // Get card image URL from a card object
@@ -78,6 +87,13 @@ const Scryfall = {
       return card.card_faces[0].mana_cost;
     }
     return '';
+  },
+
+  getFrontFace(card) {
+    if (card.card_faces && card.card_faces[0]) {
+      return { ...card, ...card.card_faces[0] };
+    }
+    return card;
   },
 
   // Extract color identity as array of letter codes
