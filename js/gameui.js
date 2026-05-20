@@ -72,13 +72,38 @@ const GameUI = {
 
   // ── LIFE TOTALS ──
 
+  _prevHumanLife: null,
+  _prevOppLife: null,
+
   renderLifeTotals(game) {
     const humanLife = document.getElementById('human-life');
     const oppLife = document.getElementById('opp-life');
     const turnInfo = document.getElementById('turn-info');
 
-    if (humanLife) humanLife.textContent = game.human.life;
-    if (oppLife) oppLife.textContent = game.opponent.life;
+    if (humanLife) {
+      const prev = this._prevHumanLife;
+      humanLife.textContent = game.human.life;
+      if (prev !== null && prev !== game.human.life) {
+        humanLife.classList.remove('life-flash-damage', 'life-flash-gain');
+        void humanLife.offsetWidth;
+        humanLife.classList.add(game.human.life < prev ? 'life-flash-damage' : 'life-flash-gain');
+        setTimeout(() => humanLife.classList.remove('life-flash-damage', 'life-flash-gain'), 600);
+      }
+      this._prevHumanLife = game.human.life;
+    }
+
+    if (oppLife) {
+      const prev = this._prevOppLife;
+      oppLife.textContent = game.opponent.life;
+      if (prev !== null && prev !== game.opponent.life) {
+        oppLife.classList.remove('life-flash-damage', 'life-flash-gain');
+        void oppLife.offsetWidth;
+        oppLife.classList.add(game.opponent.life < prev ? 'life-flash-damage' : 'life-flash-gain');
+        setTimeout(() => oppLife.classList.remove('life-flash-damage', 'life-flash-gain'), 600);
+      }
+      this._prevOppLife = game.opponent.life;
+    }
+
     if (turnInfo)
       turnInfo.textContent = `Turn ${game.turn} — ${game.isHumanTurn ? 'Your Turn' : "Opponent's Turn"}`;
   },
@@ -334,8 +359,10 @@ const GameUI = {
         const cmc = card.cmc || 0;
         const canAfford = Game.canAffordCard(card);
 
+        const isLand = (face.type_line || '').toLowerCase().includes('land');
+        const affordClass = canAfford && !isLand && ['main1','main2'].includes(Game.currentPhase) ? 'can-afford' : '';
         return `
-        <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''}"
+        <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''} ${affordClass}"
           onclick="GameUI.handleHandCardTap(${idx})"
           oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])"
           onmousedown="GameUI.startHandLongPress(${idx})"
@@ -647,12 +674,12 @@ const GameUI = {
     </button>`;
           }
         } else if (isLand && isMain && game.human.canPlayLand()) {
-          html += `<button class="action-btn land" onclick="Game.playLand(${this.selectedCard})">
+          html += `<button class="action-btn land" onclick="GameUI.flashHandCard(${this.selectedCard},'land'); setTimeout(()=>Game.playLand(${this.selectedCard}),120)">
     🌲 Play ${card.name}
   </button>`;
         } else if (!isLand && isMain) {
           const canAfford = Game.canAffordCard(card);
-          html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled title="Not enough mana"' : ''}>
+          html += `<button class="action-btn cast" onclick="GameUI.flashHandCard(${this.selectedCard},'cast'); setTimeout(()=>Game.castSpell(${this.selectedCard}),120)" ${!canAfford ? 'disabled title="Not enough mana"' : ''}>
     ✨ Cast ${card.name} (${card.cmc || 0} mana)${!canAfford ? ' 🔒' : ''}
   </button>`;
         }
@@ -1078,6 +1105,21 @@ const GameUI = {
       this._lastTap = now;
       this._lastTapIdx = idx;
       this.onHandCardClick(idx);
+    }
+  },
+
+  flashHandCard(idx, type) {
+    // type: 'cast' (blue) or 'land' (green)
+    const handCards = document.querySelectorAll('#human-hand .hand-card');
+    const el = handCards[idx];
+    if (!el) return;
+    const color = type === 'land' ? 'rgba(68,170,102,0.8)' : 'rgba(68,136,204,0.8)';
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo(el,
+        { boxShadow: `0 0 0 2px ${color}`, scale: 1 },
+        { boxShadow: `0 0 40px 10px ${color.replace('0.8','0')}`, scale: 0.92, opacity: 0,
+          duration: 0.25, ease: 'power2.in' }
+      );
     }
   },
   startPermanentLongPress(permanentId, event) {

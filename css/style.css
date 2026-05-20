@@ -741,3 +741,214 @@ button:disabled {
     padding: 16px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   DECK BUILDER OVERHAUL — Arcane aesthetic
+══════════════════════════════════════════════════════ */
+
+body {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(200,168,75,0.04) 0%, transparent 50%),
+    #0a0807;
+}
+
+header {
+  background: rgba(8,6,4,0.95);
+  border-bottom: 1px solid rgba(200,168,75,0.12);
+  backdrop-filter: blur(8px);
+}
+
+header h1 {
+  font-size: 16px;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 20px rgba(200,168,75,0.3);
+}
+
+.nav-btn {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 14px;
+  border-radius: 3px;
+}
+.nav-btn.active {
+  text-shadow: 0 0 10px rgba(200,168,75,0.4);
+}
+
+.panel {
+  background: rgba(10,8,5,0.6);
+  border-right: 1px solid rgba(255,255,255,0.04);
+}
+
+.panel h2 {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: rgba(200,168,75,0.6);
+  border-bottom-color: rgba(200,168,75,0.08);
+}
+
+input[type='text'] {
+  background: rgba(20,15,8,0.8);
+  border-color: rgba(200,168,75,0.15);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+input[type='text']:focus {
+  border-color: rgba(200,168,75,0.4);
+  box-shadow: 0 0 0 2px rgba(200,168,75,0.06);
+}
+
+button {
+  background: rgba(25,20,12,0.9);
+  border-color: rgba(200,168,75,0.15);
+  color: rgba(200,168,75,0.6);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  transition: all 0.15s ease;
+}
+button:hover {
+  background: rgba(200,168,75,0.08);
+  border-color: rgba(200,168,75,0.35);
+  color: var(--accent);
+}
+
+.search-result-item {
+  background: rgba(18,14,8,0.8);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+.search-result-item:hover {
+  background: rgba(200,168,75,0.06);
+  border-color: rgba(200,168,75,0.2);
+}
+
+.result-name { color: var(--text-primary); font-family: var(--font-display); font-size: 12px; }
+.result-meta { color: rgba(255,255,255,0.25); }
+
+.add-btn {
+  background: rgba(40,60,30,0.8);
+  border-color: rgba(68,170,102,0.25);
+  color: rgba(100,200,120,0.8);
+}
+.add-btn:hover {
+  background: rgba(68,170,102,0.12);
+  border-color: rgba(68,170,102,0.5);
+  color: #88ddaa;
+}
+
+.deck-stats {
+  background: rgba(12,10,6,0.8);
+  border-color: rgba(255,255,255,0.05);
+  color: rgba(200,168,75,0.4);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.deck-section-header {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: rgba(200,168,75,0.4);
+  border-bottom-color: rgba(200,168,75,0.08);
+  padding: 8px 4px 4px;
+}
+
+.deck-card-row {
+  background: rgba(15,12,7,0.7);
+  border-radius: 2px;
+  transition: background 0.1s;
+}
+.deck-card-row:hover { background: rgba(200,168,75,0.06); }
+
+.deck-card-name { font-size: 12px; color: var(--text-secondary); }
+.deck-card-name.commander { color: var(--accent); }
+.deck-card-name.land { color: #68b878; }
+.deck-card-cost { color: rgba(255,255,255,0.2); }
+
+.deck-tabs {
+  border-bottom-color: rgba(200,168,75,0.1);
+}
+.deck-tab {
+  background: rgba(12,10,6,0.8);
+  border-color: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.25);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.deck-tab:hover { color: rgba(200,168,75,0.6); background: rgba(200,168,75,0.04); }
+.deck-tab.active {
+  background: rgba(200,168,75,0.08);
+  color: var(--accent);
+  border-color: rgba(200,168,75,0.2);
+}
+
+.strategy-btn {
+  background: rgba(15,12,8,0.8);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s;
+}
+.strategy-btn:hover {
+  background: rgba(200,168,75,0.05);
+  border-color: rgba(200,168,75,0.2);
+}
+.strategy-btn.active {
+  background: rgba(200,168,75,0.08);
+  border-color: rgba(200,168,75,0.3);
+}
+.strategy-name { color: var(--accent); font-family: var(--font-display); font-size: 12px; letter-spacing: 0.06em; }
+.strategy-desc { color: rgba(255,255,255,0.25); font-size: 11px; }
+.strategy-btn.active .strategy-desc { color: rgba(200,168,75,0.5); }
+
+#start-game-btn {
+  background: rgba(30,50,25,0.9);
+  border-color: rgba(68,170,102,0.3);
+  color: #88ddaa;
+  font-family: var(--font-display);
+  letter-spacing: 0.1em;
+  padding: 12px;
+  font-size: 12px;
+  box-shadow: 0 0 20px rgba(68,170,102,0.08);
+}
+#start-game-btn:hover:not(:disabled) {
+  background: rgba(68,170,102,0.12);
+  border-color: rgba(68,170,102,0.5);
+  box-shadow: 0 0 30px rgba(68,170,102,0.15);
+  color: #aaeebb;
+}
+
+.modal-inner {
+  background: rgba(16,12,7,0.97);
+  border-color: rgba(200,168,75,0.2);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(200,168,75,0.05);
+}
+.modal-inner h3 {
+  color: var(--accent);
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+}
+
+#validation-msg.error {
+  background: rgba(40,15,15,0.8);
+  border-color: rgba(200,80,80,0.3);
+  color: #cc8888;
+}
+#validation-msg.ok {
+  background: rgba(15,35,15,0.8);
+  border-color: rgba(68,170,102,0.3);
+  color: #88cc88;
+}
+
+.preview-img {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.8), 0 0 20px rgba(200,168,75,0.08);
+  border-color: rgba(200,168,75,0.15);
+}
+
+.preview-text {
+  background: rgba(12,10,6,0.9);
+  border-color: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.5);
+}
