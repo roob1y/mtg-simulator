@@ -65,11 +65,8 @@
    GAME BOARD — FULL SCREEN IMMERSIVE
 ══════════════════════════════════════════════════════ */
 #game-board {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
   position: relative;
+  min-height: 100vh;
 
   /* Arcane study background — layered CSS painting */
   background:
@@ -235,9 +232,8 @@
 
 /* BATTLEFIELD — scrolls in the space between HUDs */
 .game-battlefield {
-  /* top: phase bar ~28px + game header ~65px = ~93px */
-  /* bottom: hand ~160px */
-  padding-top: 93px;
+  /* phase ~28px + header ~65px + opp graveyard tab ~32px = ~125px */
+  padding-top: 125px;
   padding-bottom: 165px;
   overflow-y: auto;
 }
@@ -1122,13 +1118,13 @@
   animation: attackPulse 1s ease-in-out infinite;
 }
 
-/* Firelight breathe — subtle warm pulse on the whole board */
+/* Firelight breathe — subtle warm pulse on battlefield only */
 @keyframes firelightBreathe {
   0%, 100% { opacity: 1; }
   40%       { opacity: 0.88; }
   65%       { opacity: 0.94; }
 }
-#game-board {
+.game-battlefield {
   animation: firelightBreathe 5s ease-in-out infinite;
 }
 
