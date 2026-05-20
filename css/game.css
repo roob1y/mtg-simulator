@@ -247,7 +247,7 @@
 
 .game-battlefield {
   padding-top: 130px;
-  padding-bottom: 420px;
+  padding-bottom: 240px;
 }
 
 .hud-drawers { display: flex; flex-direction: column; }
@@ -598,7 +598,7 @@
 
 /* ── HAND ── */
 .hand-zone {
-  padding: 10px 8px 12px;
+  padding: 6px 8px 8px;
   background: rgba(6,5,3,0.88);
   border-bottom: 1px solid rgba(255,255,255,0.04);
   backdrop-filter: blur(6px);
@@ -606,13 +606,17 @@
 
 .hand-cards {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 6px;
+  gap: 5px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
 }
+.hand-cards::-webkit-scrollbar { display: none; }
 
 .hand-card {
-  width: 72px;
+  width: 60px;
+  flex-shrink: 0;
   touch-action: none;
   background: var(--bg-raised);
   border: 1px solid rgba(255,255,255,0.1);
@@ -649,26 +653,31 @@
 
 .hand-card-img {
   width: 100%;
-  height: 50px;
+  height: 84px;
   object-fit: cover;
   object-position: top;
   display: block;
 }
 
-.hand-card-info { padding: 4px; }
+.hand-card-info { padding: 3px 4px 4px; }
 
 .hand-card-name {
-  font-size: 8px;
+  font-size: 7px;
   color: var(--text-primary);
   line-height: 1.2;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: var(--font-display);
 }
 
 .hand-card-meta {
-  font-size: 7px;
+  font-size: 6px;
   color: rgba(255,255,255,0.3);
-  margin-top: 2px;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── COMMAND ZONE ── */
