@@ -401,10 +401,10 @@ const GameUI = {
     }
 
     el.innerHTML = humanPlayer.exile
-      .map((card) => {
+      .map((card, idx) => {
         const imgUrl = Scryfall.getArtUrl(card);
         return `
-        <div class="hand-card" onclick="GameUI.previewGameCard(${JSON.stringify(card).replace(/"/g, '&quot;')})">
+  <div class="hand-card" onclick="GameUI.previewGameCard(Game.human.exile[${idx}])">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${card.name}</div>
@@ -458,7 +458,7 @@ const GameUI = {
 
     // Combat buttons
     if (game.isHumanTurn) {
-      if ((isCombat && Combat.phase === null) || (isCombat && Combat.phase === undefined)) {
+      if (isCombat && Combat.phase === null) {
         html += `<button class="action-btn attack" onclick="Game.beginCombat()">
           ⚔ Declare Attackers
         </button>`;
