@@ -699,6 +699,11 @@ button:disabled {
     border-bottom: 1px solid var(--border-subtle);
   }
 
+  #deck-panel {
+    max-height: none;
+    min-height: calc(100vh - 200px);
+  }
+
   #preview-panel {
     display: none;
   }
