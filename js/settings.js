@@ -82,50 +82,35 @@ const PHASE_TIPS = {
 // Per-card reminders shown when relevant cards are on the battlefield
 
 const TRIGGER_REMINDERS = {
-  "Auntie Ool, Cursewretch": {
-    when: 'any_counter_placed',
-    reminder:
-      "🦂 Auntie Ool: If the counter went on YOUR creature, draw a card. If it went on an OPPONENT'S creature, they lose 1 life.",
-  },
-  'Hapatra, Vizier of Poisons': {
-    when: 'spell_places_counter',
-    reminder:
-      '🐍 Hapatra: You cast a spell that placed -1/-1 counters — create a 1/1 Snake token with deathtouch!',
-  },
-  'Blowfly Infestation': {
-    when: 'countered_creature_dies',
-    reminder:
-      '🪰 Blowfly Infestation: A creature with a -1/-1 counter died — put a -1/-1 counter on target creature.',
-  },
-  'Flourishing Defenses': {
-    when: 'any_counter_placed',
-    reminder: '🌿 Flourishing Defenses: A -1/-1 counter was placed — create a 1/1 Elf Warrior token!',
-  },
-  'The Scorpion God': {
-    when: 'countered_creature_dies',
-    reminder: '🦂 The Scorpion God: A creature with a -1/-1 counter died — draw a card!',
-  },
-  'Grave Venerations': {
-    when: 'creature_dies',
-    reminder:
-      '⚰️ Grave Venerations: A creature you control died — each opponent loses 1 life and you gain 1 life.',
-  },
-  'Midnight Banshee': {
-    when: 'upkeep',
-    reminder:
-      '👻 Midnight Banshee: Beginning of your upkeep — put a -1/-1 counter on each nonblack creature.',
-  },
-  'Sinister Gnarlbark': {
-    when: 'end_step',
-    reminder: '🌳 Sinister Gnarlbark: Beginning of your end step — draw a card and blight 1.',
-  },
-  'Evolution Sage': {
-    when: 'land_enters',
-    reminder: '🌱 Evolution Sage: A land entered under your control — proliferate!',
-  },
-  'Oft-Nabbed Goat': {
-    when: 'opponent_activates',
-    reminder:
-      '🐐 Oft-Nabbed Goat: Opponent paid {1} — they draw a card, gain control of the Goat, and put a -1/-1 counter on it.',
-  },
+  "Auntie Ool, Cursewretch": [
+    { when: 'any_counter_placed', reminder: "🦂 Auntie Ool: If the counter went on YOUR creature, draw a card. If it went on an OPPONENT'S creature, they lose 1 life." },
+  ],
+  'Hapatra, Vizier of Poisons': [
+    { when: 'any_counter_placed', reminder: '🐍 Hapatra: You cast a spell that placed -1/-1 counters — create a 1/1 Snake token with deathtouch!' },
+  ],
+  'Blowfly Infestation': [
+    { when: 'countered_creature_dies', reminder: '🪰 Blowfly Infestation: A creature with a -1/-1 counter died — put a -1/-1 counter on target creature.' },
+  ],
+  'Flourishing Defenses': [
+    { when: 'any_counter_placed', reminder: '🌿 Flourishing Defenses: A -1/-1 counter was placed — create a 1/1 Elf Warrior token!' },
+  ],
+  'The Scorpion God': [
+    { when: 'countered_creature_dies', reminder: '🦂 The Scorpion God: A creature with a -1/-1 counter died — draw a card!' },
+    { when: 'creature_dies', reminder: '🦂 The Scorpion God died — return it to your hand at the beginning of the next end step!' },
+  ],
+  'Grave Venerations': [
+    { when: 'creature_dies', reminder: '⚰️ Grave Venerations: A creature you control died — each opponent loses 1 life and you gain 1 life.' },
+  ],
+  'Midnight Banshee': [
+    { when: 'upkeep', reminder: '👻 Midnight Banshee: Beginning of your upkeep — put a -1/-1 counter on each nonblack creature.' },
+  ],
+  'Sinister Gnarlbark': [
+    { when: 'end_step', reminder: '🌳 Sinister Gnarlbark: Beginning of your end step — draw a card and blight 1.' },
+  ],
+  'Evolution Sage': [
+    { when: 'land_enters', reminder: '🌱 Evolution Sage: A land entered under your control — proliferate!' },
+  ],
+  'Oft-Nabbed Goat': [
+    { when: 'opponent_activates', reminder: '🐐 Oft-Nabbed Goat: Opponent paid {1} — they draw a card, gain control of the Goat, and put a -1/-1 counter on it.' },
+  ],
 };

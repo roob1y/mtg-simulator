@@ -76,11 +76,16 @@ const Game = {
   advancePhase() {
     if (this.gameOver) return;
 
+    // Clear any lingering UI state
+    const manaChoice = document.getElementById('mana-choice');
+    if (manaChoice) manaChoice.classList.add('hidden');
+    GameUI.pendingManaChoice = null;
+    GameUI.selectedCard = null;
+
     const currentIdx = PHASES.indexOf(this.currentPhase);
     const nextIdx = currentIdx + 1;
 
     if (nextIdx >= PHASES.length) {
-      // End of turn
       this.endTurn();
       return;
     }
@@ -330,10 +335,6 @@ const Game = {
       GameLog.add('That permanent is already tapped.', 'warning');
       return;
     }
-    if (GameUI.selectedCard === null) {
-      GameLog.add('Select a card to cast first, then tap lands for mana.', 'warning');
-      return;
-    }
 
     const colors = this.getLandColors(perm.card);
 
@@ -355,6 +356,9 @@ const Game = {
             GameLog.add(`Tapped ${perm.card.name} for {${needed}} (auto).`, 'action');
             if (Settings.get('beginnerMode')) perm.canUntap = true;
             GameUI.renderGame(this);
+            const manaEl = document.getElementById('mana-choice');
+            if (manaEl) manaEl.classList.add('hidden');
+            GameUI.pendingManaChoice = null;
             return;
           }
         }
@@ -629,6 +633,8 @@ const Game = {
 
     this.checkTriggers('spell_cast', commander);
     this.checkWinCondition();
+    this.human.battlefield.forEach((p) => (p.canUntap = false));
+
     GameUI.renderGame(this);
   },
 
@@ -648,11 +654,13 @@ const Game = {
     if (!Settings.get('beginnerMode')) return;
 
     this.human.battlefield.forEach((perm) => {
-      const reminder = TRIGGER_REMINDERS[perm.card.name];
-      if (!reminder) return;
-      if (reminder.when === event) {
-        GameUI.showTriggerReminder(reminder.reminder);
-      }
+      const reminders = TRIGGER_REMINDERS[perm.card.name];
+      if (!reminders) return;
+      reminders.forEach((r) => {
+        if (r.when === event) {
+          GameUI.showTriggerReminder(r.reminder);
+        }
+      });
     });
   },
 
