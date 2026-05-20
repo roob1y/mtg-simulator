@@ -24,6 +24,43 @@ function showPage(id) {
 
   const btn = document.querySelector(`.nav-btn[onclick="showPage('${id}')"]`);
   if (btn) btn.classList.add('active');
+
+  // Show/hide header and floating gear based on page
+  const header = document.getElementById('main-header');
+  const gear = document.getElementById('game-gear');
+  if (id === 'game') {
+    if (header) header.classList.add('hidden');
+    if (gear) gear.classList.remove('hidden');
+  } else {
+    if (header) header.classList.remove('hidden');
+    if (gear) gear.classList.add('hidden');
+    // Close gear dropdown if open
+    document.getElementById('game-settings-dropdown')?.classList.add('hidden');
+  }
+}
+
+function exitToDeckBuilder() {
+  document.getElementById('game-settings-dropdown')?.classList.add('hidden');
+  // Show resume banner on deck builder
+  const banner = document.getElementById('game-in-progress-banner');
+  if (banner) banner.classList.remove('hidden');
+  showPage('deck-builder');
+}
+
+function abandonGame() {
+  if (!confirm('Abandon this game? This cannot be undone.')) return;
+  document.getElementById('game-settings-dropdown')?.classList.add('hidden');
+  const banner = document.getElementById('game-in-progress-banner');
+  if (banner) banner.classList.add('hidden');
+  // Reset game state
+  const boardEl = document.getElementById('game-board');
+  const mulliganEl = document.getElementById('mulligan-screen');
+  if (boardEl) boardEl.classList.add('hidden');
+  if (mulliganEl) mulliganEl.classList.add('hidden');
+  // Disable play btn until new game started
+  const playBtn = document.getElementById('play-btn');
+  if (playBtn) playBtn.disabled = true;
+  showPage('deck-builder');
 }
 
 // ── CARD SEARCH ──

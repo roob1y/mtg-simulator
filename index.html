@@ -8,29 +8,38 @@
     <link rel="stylesheet" href="css/game.css" />
   </head>
   <body>
-    <header>
+    <header id="main-header">
       <h1>MTG Simulator</h1>
       <nav>
         <button class="nav-btn active" onclick="showPage('deck-builder')">Deck Builder</button>
         <button class="nav-btn" onclick="showPage('game')" id="play-btn" disabled>Play</button>
       </nav>
-      <div id="settings-bar">
-        <button class="gear-btn" onclick="document.getElementById('settings-dropdown').classList.toggle('hidden')" title="Settings">⚙</button>
-        <div id="settings-dropdown" class="hidden">
-          <label class="setting-toggle">
-            <input type="checkbox" id="beginner-mode-toggle" onchange="toggleBeginnerMode()" />
-            Beginner Mode
-          </label>
-          <label class="setting-toggle">
-            <input type="checkbox" id="auto-tap-toggle" onchange="toggleAutoTap()" />
-            Auto-tap
-          </label>
-        </div>
-      </div>
     </header>
+
+    <!-- Floating gear — only visible on game page -->
+    <div id="game-gear" class="hidden">
+      <button class="gear-btn" onclick="document.getElementById('game-settings-dropdown').classList.toggle('hidden')" title="Settings">⚙</button>
+      <div id="game-settings-dropdown" class="hidden">
+        <label class="setting-toggle">
+          <input type="checkbox" id="beginner-mode-toggle" onchange="toggleBeginnerMode()" />
+          Beginner Mode
+        </label>
+        <label class="setting-toggle">
+          <input type="checkbox" id="auto-tap-toggle" onchange="toggleAutoTap()" />
+          Auto-tap
+        </label>
+        <hr style="border-color: rgba(200,168,75,0.15); margin: 4px 0;">
+        <button class="gear-menu-btn" onclick="exitToDeckBuilder()">← Deck Builder</button>
+        <button class="gear-menu-btn danger" onclick="abandonGame()">✕ Abandon Game</button>
+      </div>
+    </div>
 
     <!-- DECK BUILDER PAGE -->
     <div id="deck-builder" class="page active">
+      <div id="game-in-progress-banner" class="hidden">
+        <span>⚔ Game in progress</span>
+        <button onclick="showPage('game')">Resume →</button>
+      </div>
       <div class="deck-builder-layout">
         <div class="panel" id="search-panel">
           <h2>Card Search</h2>
@@ -326,8 +335,8 @@
     <script src="js/main.js"></script>
     <script>
       document.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('settings-dropdown');
-        const gearBtn = document.querySelector('.gear-btn');
+        const dropdown = document.getElementById('game-settings-dropdown');
+        const gearBtn = document.querySelector('#game-gear .gear-btn');
         if (dropdown && !dropdown.classList.contains('hidden')) {
           if (!dropdown.contains(e.target) && e.target !== gearBtn) {
             dropdown.classList.add('hidden');

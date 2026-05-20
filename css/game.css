@@ -1103,3 +1103,87 @@
 .battlefield-divider {
   animation: dividerShimmer 3s ease-in-out infinite;
 }
+
+/* ── FLOATING GEAR (game board only) ── */
+#game-gear {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 500;
+}
+#game-gear.hidden { display: none; }
+
+#game-settings-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: rgba(16,12,7,0.97);
+  border: 1px solid rgba(200,168,75,0.2);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+  min-width: 180px;
+}
+#game-settings-dropdown.hidden { display: none !important; }
+
+.gear-menu-btn {
+  background: rgba(30,22,10,0.9);
+  border: 1px solid rgba(200,168,75,0.2);
+  color: rgba(200,168,75,0.7);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  width: 100%;
+}
+.gear-menu-btn:hover {
+  background: rgba(200,168,75,0.1);
+  border-color: rgba(200,168,75,0.4);
+  color: var(--accent);
+}
+.gear-menu-btn.danger {
+  border-color: rgba(200,80,80,0.2);
+  color: rgba(220,100,100,0.7);
+}
+.gear-menu-btn.danger:hover {
+  background: rgba(200,60,60,0.1);
+  border-color: rgba(200,80,80,0.5);
+  color: #ff8888;
+}
+
+/* ── GAME IN PROGRESS BANNER ── */
+#game-in-progress-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(200,168,75,0.08), rgba(200,168,75,0.04));
+  border-bottom: 1px solid rgba(200,168,75,0.2);
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+#game-in-progress-banner button {
+  background: rgba(200,168,75,0.12);
+  border: 1px solid rgba(200,168,75,0.3);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 6px 14px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+#game-in-progress-banner button:hover {
+  background: rgba(200,168,75,0.2);
+  border-color: var(--accent);
+}
