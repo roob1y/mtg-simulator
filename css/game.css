@@ -611,13 +611,15 @@
   overflow-x: auto;
   padding-bottom: 4px;
   scrollbar-width: none;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
 }
 .hand-cards::-webkit-scrollbar { display: none; }
 
 .hand-card {
   width: 60px;
   flex-shrink: 0;
-  touch-action: none;
+  touch-action: pan-x;
   background: var(--bg-raised);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius-md);
