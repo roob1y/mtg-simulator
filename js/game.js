@@ -548,28 +548,23 @@ const Game = {
     }
 
     GameUI.flashHandCard(cardIndex, 'cast');
-    this._spendManaCost(card);
 
-    const result = this.human.castFromHand(cardIndex);
-    if (result) {
-      GameLog.add(`You cast ${card.name}.`, 'action');
+    // Delay actual cast so flash animation is visible
+    setTimeout(() => {
+      this._spendManaCost(card);
+      const result = this.human.castFromHand(cardIndex);
+      if (result) {
+        GameLog.add(`You cast ${card.name}.`, 'action');
+        this.processETB(card);
+        GameUI.selectedCard = null;
+        this.human.battlefield.forEach((p) => { p.canUntap = false; });
+        this.checkTriggers('spell_cast', card);
+        this.checkWinCondition();
+        GameUI.renderGame(this);
+      }
+    }, 300);
 
-      this.processETB(card);
-
-      // FIX: deselect only on success
-      GameUI.selectedCard = null;
-
-      this.human.battlefield.forEach((p) => {
-        p.canUntap = false;
-      });
-
-      // Check triggers
-      this.checkTriggers('spell_cast', card);
-      this.checkWinCondition();
-      setTimeout(() => GameUI.renderGame(this), 300);
-    }
-
-    return !!result;
+    return true;
   },
 
   // FIX: Parse mana cost string and spend matching colors before generic
