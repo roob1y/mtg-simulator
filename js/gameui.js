@@ -14,7 +14,7 @@ const GameUI = {
     this.renderLifeTotals(game);
     this.renderManaPool(game);
     this.renderOpponentArea(game);
-    this.renderBattlefield(game.human, false);
+    this.renderBattlefield(game.human, Combat.phase === 'declare_attackers');
     this.renderHand(game.human);
     this.renderCommandZone(game.human);
     this.renderActionButtons(game);
@@ -458,7 +458,7 @@ const GameUI = {
 
     // Combat buttons
     if (game.isHumanTurn) {
-      if (isCombat && Combat.phase === null) {
+      if ((isCombat && Combat.phase === null) || (isCombat && Combat.phase === undefined)) {
         html += `<button class="action-btn attack" onclick="Game.beginCombat()">
           ⚔ Declare Attackers
         </button>`;
@@ -873,7 +873,11 @@ const GameUI = {
   // ── DISCARD PROMPT ──
 
   showDiscardPrompt() {
-    GameLog.add('Select a card in your hand and click Discard to reduce to 7.', 'warning');
+    const over = Game.human.hand.length - Game.human.maxHandSize;
+    GameLog.add(
+      `⚠ You have ${Game.human.hand.length} cards — discard ${over} card${over > 1 ? 's' : ''} before ending your turn. Click a card in your hand then click Discard.`,
+      'warning'
+    );
   },
 
   // ── GAME OVER ──
