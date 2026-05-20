@@ -206,17 +206,6 @@
           </button>
         </div>
       </div>
-      <div id="card-preview-modal" class="modal hidden">
-        <div class="modal-inner" onclick="event.stopPropagation()">
-          <div id="card-preview-modal-content"></div>
-          <button
-            onclick="document.getElementById('card-preview-modal').classList.add('hidden')"
-            style="width: 100%; margin-top: 8px"
-          >
-            Close
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- GAME PAGE -->
@@ -330,4 +319,16 @@
     <script src="js/gameui.js"></script>
     <script src="js/main.js"></script>
   </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <div id="card-preview-modal" class="modal hidden">
+    <div class="modal-inner" onclick="event.stopPropagation()">
+      <div id="card-preview-modal-content"></div>
+      <button
+        onclick="document.getElementById('card-preview-modal').classList.add('hidden')"
+        style="width: 100%; margin-top: 8px"
+      >
+        Close
+      </button>
+    </div>
+  </div>
 </html>

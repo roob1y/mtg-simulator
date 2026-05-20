@@ -21,7 +21,6 @@ const Deck = {
         existing.qty++;
       } else {
         // Non-basic, non-commander: max 1 copy in Commander format
-        console.log('Already in deck (Commander format: 1 copy max)');
         return false;
       }
     } else {

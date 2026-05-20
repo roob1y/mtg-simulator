@@ -5,6 +5,7 @@ const GameUI = {
   selectedCard: null, // card index in hand currently selected
   pendingManaChoice: null, // { permanentId, colors }
   pendingDraw: false,
+  _lastHandKey: null,
 
   // ── MAIN RENDER ──
 
@@ -159,6 +160,8 @@ const GameUI = {
         const { power, toughness } = humanPlayer.getEffectivePT(perm);
         const isAttacker = combatMode && Combat.attackers.includes(perm.id);
         const canAttack = !perm.tapped && !perm.summoningSick;
+        const artUrl = Scryfall.getImageUrl(perm.card, 'normal');
+        const isCreature = (perm.card.type_line || '').toLowerCase().includes('creature');
 
         html += `
           <div class="permanent creature-perm 
@@ -167,8 +170,7 @@ const GameUI = {
             ${isAttacker ? 'attacking' : ''}
             ${combatMode && canAttack ? 'can-attack' : ''}"
             onclick="GameUI.onPermanentClick('${perm.id}')" oncontextmenu="GameUI.onPermanentRightClick('${perm.id}', event)">
-            <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
-            <div class="perm-pt">${power}/${toughness}</div>
+            ${artUrl ? `<img class="perm-art" src="${artUrl}" alt="${Scryfall.getFrontFace(perm.card).name}">` : ''}
             ${perm.summoningSick ? '<div class="sick-label">Sick</div>' : ''}
             ${perm.isCommander ? '<div class="cmd-label">CMD</div>' : ''}
             ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(' ')}</div>` : ''}
@@ -180,10 +182,11 @@ const GameUI = {
     if (lands.length > 0) {
       html += `<div class="permanent-row lands-row">`;
       lands.forEach((perm) => {
+        const landArt = Scryfall.getImageUrl(perm.card, 'normal');
         html += `
           <div class="permanent land-perm ${perm.tapped ? 'tapped' : ''}"
             onclick="GameUI.onLandClick('${perm.id}')">
-            <div class="perm-name">${perm.card.name}</div>
+            ${landArt ? `<img class="perm-art" src="${landArt}" alt="${perm.card.name}">` : ''}
             ${perm.canUntap && perm.tapped ? '<div class="sick-label" onclick="event.stopPropagation(); GameUI.untapLand(' + perm.id + ')">↺ Undo</div>' : ''}
           </div>`;
       });
@@ -198,6 +201,23 @@ const GameUI = {
     }
 
     el.innerHTML = html;
+
+    // Animate permanents in
+    const perms = el.querySelectorAll('.permanent');
+    if (perms.length > 0) {
+      gsap.fromTo(
+        perms,
+        { scale: 0, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.2,
+          stagger: 0.03,
+          ease: 'back.out(1.6)',
+          clearProps: 'transform',
+        }
+      );
+    }
   },
 
   // ── HAND ──
@@ -223,7 +243,7 @@ const GameUI = {
 
         return `
         <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''}"
-          onclick="GameUI.onHandCardClick(${idx})">
+          onclick="GameUI.handleHandCardTap(${idx})" oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${face.name}</div>
@@ -232,6 +252,35 @@ const GameUI = {
         </div>`;
       })
       .join('');
+
+    // Animate only newly added cards
+    const handKey = humanPlayer.hand.map((c) => c.id || c.name).join(',');
+    if (handKey !== this._lastHandKey) {
+      const lastCount = this._lastHandKey ? this._lastHandKey.split(',').length : 0;
+      const currentCount = humanPlayer.hand.length;
+      const handCards = el.querySelectorAll('.hand-card');
+
+      if (currentCount > lastCount) {
+        // Cards were added — animate only the new ones at the end
+        const newCards = Array.from(handCards).slice(lastCount);
+        if (newCards.length > 0) {
+          gsap.fromTo(
+            newCards,
+            { y: 40, opacity: 0, scale: 0.85 },
+            {
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 0.25,
+              stagger: 0.05,
+              ease: 'back.out(1.4)',
+              clearProps: 'transform',
+            }
+          );
+        }
+      }
+    }
+    this._lastHandKey = handKey;
   },
 
   // ── COMMAND ZONE ──
@@ -527,15 +576,11 @@ const GameUI = {
       this.selectedCard = null;
     } else {
       this.selectedCard = idx;
-
-      const card = Game.human.hand[idx];
-      if (card) this.previewGameCard(card);
     }
     GameUI.renderGame(Game);
   },
 
   onPermanentClick(permanentId) {
-    console.log('onPermanentClick called', permanentId);
     const id = isNaN(permanentId) ? permanentId : Number(permanentId);
 
     if (Combat.phase === 'declare_attackers' && Game.isHumanTurn) {
@@ -547,7 +592,6 @@ const GameUI = {
     const perm =
       Game.human.battlefield.find((p) => p.id === id) ||
       Game.opponent.battlefield.find((p) => p.id === id);
-    console.log('preview lookup', id, perm);
     if (perm) this.previewGameCard(perm.card);
   },
 
@@ -713,20 +757,31 @@ const GameUI = {
   // ── CARD PREVIEW IN GAME ──
 
   previewGameCard(card) {
-    const el = document.getElementById('game-card-preview');
-    console.log('preview el', el, 'imgUrl', Scryfall.getImageUrl(card, 'normal'));
-    if (!el) return;
+    const isMobile = window.innerWidth <= 768;
 
-    const imgUrl = Scryfall.getImageUrl(card, 'normal');
+    const imgUrl = Scryfall.getImageUrl(card, 'border_crop');
     const oracle = Scryfall.getOracleText(card);
+    const cost = Scryfall.formatManaCost(Scryfall.getManaCost(card));
+    const loyalty = card.loyalty ? `Loyalty: ${card.loyalty}` : '';
 
-    el.innerHTML = `
+    const html = `
       ${imgUrl ? `<img class="preview-img" src="${imgUrl}" alt="${card.name}">` : ''}
       <div class="preview-name">${card.name}</div>
       <div class="preview-type">${card.type_line || ''}</div>
+      ${cost ? `<div class="preview-cost">${cost}</div>` : ''}
       ${oracle ? `<div class="preview-text">${oracle.replace(/\n/g, '<br>')}</div>` : ''}
       ${card.power ? `<div class="preview-pt">${card.power} / ${card.toughness}</div>` : ''}
+      ${loyalty ? `<div class="preview-pt">${loyalty}</div>` : ''}
     `;
+
+    if (isMobile) {
+      document.getElementById('card-preview-modal-content').innerHTML = html;
+      document.getElementById('card-preview-modal').classList.remove('hidden');
+    } else {
+      const el = document.getElementById('game-card-preview');
+      if (!el) return;
+      el.innerHTML = html;
+    }
   },
 
   // ── DISCARD ──
@@ -895,5 +950,19 @@ const GameUI = {
       </div>
     `;
     el.classList.remove('hidden');
+  },
+  handleHandCardTap(idx) {
+    const now = Date.now();
+    if (this._lastTap && now - this._lastTap < 300 && this._lastTapIdx === idx) {
+      // Double tap — preview
+      const card = Game.human.hand[idx];
+      if (card) this.previewGameCard(card);
+      this._lastTap = null;
+    } else {
+      // Single tap — select
+      this._lastTap = now;
+      this._lastTapIdx = idx;
+      this.onHandCardClick(idx);
+    }
   },
 };
