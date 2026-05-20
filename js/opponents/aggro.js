@@ -28,6 +28,7 @@ const OpponentAggro = {
       if (blocker) {
         assignments[attacker.id] = blocker.id;
         usedBlockers.add(blocker.id);
+        humanPlayer.tap(blocker.id);
         GameLog.add(`You block ${attacker.card.name} with ${blocker.card.name}.`, 'combat');
       } else {
         assignments[attacker.id] = null;

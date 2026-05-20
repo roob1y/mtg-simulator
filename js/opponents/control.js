@@ -8,7 +8,9 @@ const OpponentControl = {
     if (attackers.length === 0) return;
 
     const totalAttackPower = attackers.reduce((sum, p) => sum + player.getEffectivePT(p).power, 0);
-    const humanTotalToughness = humanPlayer.getCreatures().reduce((sum, p) => sum + humanPlayer.getEffectivePT(p).toughness, 0);
+    const humanTotalToughness = humanPlayer
+      .getCreatures()
+      .reduce((sum, p) => sum + humanPlayer.getEffectivePT(p).toughness, 0);
 
     // Only attack if we can push through meaningful damage or human has no blockers
     const humanBlockers = humanPlayer.getUntappedCreatures();
@@ -38,6 +40,7 @@ const OpponentControl = {
       if (blocker) {
         assignments[attacker.id] = blocker.id;
         usedBlockers.add(blocker.id);
+        humanPlayer.tap(blocker.id);
         GameLog.add(`You block ${attacker.card.name} with ${blocker.card.name}.`, 'combat');
       } else {
         assignments[attacker.id] = null;
@@ -79,7 +82,10 @@ const OpponentControl = {
 
     if (totalDamageToHuman > 0) {
       humanPlayer.life -= totalDamageToHuman;
-      GameLog.add(`You take ${totalDamageToHuman} damage. Your life: ${humanPlayer.life}.`, 'combat');
+      GameLog.add(
+        `You take ${totalDamageToHuman} damage. Your life: ${humanPlayer.life}.`,
+        'combat'
+      );
     }
 
     Game.checkWinCondition();
@@ -89,7 +95,7 @@ const OpponentControl = {
     return [
       { name: 'Wall of Omens', qty: 3 },
       { name: 'Fog Bank', qty: 3 },
-      { name: 'Nevinyrral\'s Disk', qty: 2 },
+      { name: "Nevinyrral's Disk", qty: 2 },
       { name: 'Mulldrifter', qty: 3 },
       { name: 'Counterspell', qty: 3 },
       { name: 'Wrath of God', qty: 2 },
