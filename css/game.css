@@ -248,8 +248,6 @@
 .game-battlefield {
   padding-top: 130px;
   padding-bottom: 420px;
-  min-height: 100vh;
-  overflow-y: auto;
 }
 
 .hud-drawers { display: flex; flex-direction: column; }
@@ -1237,18 +1235,4 @@
   pointer-events: none;
 }
 
-/* Lock body scroll when game is active — fixed HUDs require this */
-body:has(#game.active) {
-  overflow: hidden;
-  height: 100vh;
-}
-
-#game.active {
-  overflow: hidden;
-  height: 100vh;
-}
-
-#game-board:not(.hidden) {
-  overflow: hidden;
-  height: 100vh;
-}
+/* Fixed HUDs work with natural page scroll on mobile */
