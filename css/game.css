@@ -1108,6 +1108,14 @@
   z-index: 2;
   border-radius: 50%;
   mix-blend-mode: screen;
+  display: none;
+}
+
+#game.active .candle-tl,
+#game.active .candle-tr,
+#game.active .candle-bl,
+#game.active .candle-br {
+  display: block;
 }
 
 .candle-tl {
