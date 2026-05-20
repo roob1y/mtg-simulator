@@ -1123,8 +1123,10 @@ const GameUI = {
     const el = handCards[idx];
     if (!el) return;
     const cls = type === 'land' ? 'flash-land' : 'flash-cast';
+    // Force reflow before adding class to ensure animation triggers fresh
+    el.classList.remove('flash-cast', 'flash-land');
+    void el.offsetWidth;
     el.classList.add(cls);
-    // Class removed by renderGame re-render naturally
   },
   startPermanentLongPress(permanentId, event) {
     this._longPressTimer = setTimeout(() => {
