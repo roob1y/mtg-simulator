@@ -65,8 +65,11 @@
    GAME BOARD — FULL SCREEN IMMERSIVE
 ══════════════════════════════════════════════════════ */
 #game-board {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
   position: relative;
-  min-height: calc(100vh - 45px);
 
   /* Arcane study background — layered CSS painting */
   background:
@@ -216,24 +219,26 @@
 .game-layout { display: none; }
 .game-main { display: none; }
 
+#game-board {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh);
+  overflow: hidden;
+}
+
 .game-hud-top {
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 50;
 }
 
 .game-battlefield {
+  flex: 1;
   overflow-y: auto;
-  padding-bottom: 8px;
-  /* pushed down by top HUD, up by bottom HUD */
-  min-height: 200px;
+  min-height: 0;
 }
 
 .game-hud-bottom {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  flex-shrink: 0;
   z-index: 50;
   background: rgba(6,5,3,0.97);
   border-top: 1px solid rgba(200,168,75,0.15);
