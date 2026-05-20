@@ -67,7 +67,6 @@
 #game-board {
   position: relative;
   min-height: calc(100vh - 45px);
-  overflow: hidden;
 
   /* Arcane study background — layered CSS painting */
   background:
@@ -1035,41 +1034,35 @@
    ANIMATIONS
 ══════════════════════════════════════════════════════ */
 
-/* Card cast flash */
-@keyframes castFlash {
-  0%   { box-shadow: 0 0 0 2px rgba(68,136,204,0), transform: scale(1); }
-  40%  { box-shadow: 0 0 30px 8px rgba(68,136,204,0.7); transform: scale(1.08); }
-  100% { box-shadow: 0 0 0 0 rgba(68,136,204,0); transform: scale(1); }
+/* Card cast flash — CSS only, no GSAP needed */
+@keyframes flashCast {
+  0%   { box-shadow: 0 4px 10px rgba(0,0,0,0.7); transform: scale(1); opacity: 1; }
+  30%  { box-shadow: 0 0 0 4px rgba(100,160,255,0.9), 0 0 40px 12px rgba(100,160,255,0.7); transform: scale(1.12); opacity: 1; }
+  100% { box-shadow: 0 0 0 0 rgba(100,160,255,0); transform: scale(0.85); opacity: 0; }
 }
-@keyframes landFlash {
-  0%   { box-shadow: 0 0 0 2px rgba(68,170,102,0); }
-  40%  { box-shadow: 0 0 30px 8px rgba(68,170,102,0.7); }
-  100% { box-shadow: 0 0 0 0 rgba(68,170,102,0); }
+@keyframes flashLand {
+  0%   { box-shadow: 0 4px 10px rgba(0,0,0,0.7); transform: scale(1); opacity: 1; }
+  30%  { box-shadow: 0 0 0 4px rgba(68,170,102,0.9), 0 0 40px 12px rgba(68,170,102,0.7); transform: scale(1.12); opacity: 1; }
+  100% { box-shadow: 0 0 0 0 rgba(68,170,102,0); transform: scale(0.85); opacity: 0; }
 }
-@keyframes permLand {
-  0%   { opacity: 0; transform: translateY(-18px) scale(0.85); }
-  70%  { opacity: 1; transform: translateY(2px) scale(1.04); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-.perm-entering {
-  animation: permLand 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
+.hand-card.flash-cast { animation: flashCast 0.35s ease-in forwards; }
+.hand-card.flash-land { animation: flashLand 0.35s ease-in forwards; }
 
 /* Life total damage flash */
 @keyframes lifeDamage {
-  0%   { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); transform: scale(1); }
-  25%  { color: #ff4444; text-shadow: 0 0 40px rgba(255,60,60,0.9), 0 0 80px rgba(255,0,0,0.4); transform: scale(1.25); }
-  60%  { color: #ff8888; text-shadow: 0 0 20px rgba(255,100,100,0.5); transform: scale(1.05); }
-  100% { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); transform: scale(1); }
+  0%   { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); }
+  25%  { color: #ff3333; text-shadow: 0 0 50px rgba(255,50,50,1), 0 0 100px rgba(255,0,0,0.5); }
+  60%  { color: #ff7777; text-shadow: 0 0 20px rgba(255,100,100,0.5); }
+  100% { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); }
 }
 @keyframes lifeGain {
-  0%   { color: #f0e8d0; transform: scale(1); }
-  25%  { color: #44ff88; text-shadow: 0 0 40px rgba(60,255,120,0.8); transform: scale(1.2); }
-  60%  { color: #88ffaa; transform: scale(1.05); }
-  100% { color: #f0e8d0; transform: scale(1); }
+  0%   { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); }
+  25%  { color: #33ff88; text-shadow: 0 0 50px rgba(50,255,120,0.9); }
+  60%  { color: #88ffaa; }
+  100% { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); }
 }
-.life-flash-damage { animation: lifeDamage 0.7s ease forwards; }
-.life-flash-gain   { animation: lifeGain 0.7s ease forwards; }
+.life-flash-damage { animation: lifeDamage 0.8s ease forwards !important; }
+.life-flash-gain   { animation: lifeGain 0.8s ease forwards !important; }
 
 /* Can-afford pulse on hand cards */
 @keyframes affordPulse {

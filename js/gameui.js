@@ -1112,13 +1112,9 @@ const GameUI = {
     const handCards = document.querySelectorAll('#human-hand .hand-card');
     const el = handCards[idx];
     if (!el) return;
-    const color = type === 'land' ? 'rgba(68,170,102,0.9)' : 'rgba(100,160,255,0.9)';
-    const colorFade = type === 'land' ? 'rgba(68,170,102,0)' : 'rgba(100,160,255,0)';
-    if (typeof gsap !== 'undefined') {
-      gsap.timeline()
-        .to(el, { boxShadow: `0 0 0 3px ${color}, 0 0 30px 8px ${color}`, scale: 1.1, duration: 0.15, ease: 'power2.out' })
-        .to(el, { boxShadow: `0 0 0 0px ${colorFade}, 0 0 60px 20px ${colorFade}`, scale: 0.88, opacity: 0, duration: 0.25, ease: 'power2.in' });
-    }
+    const cls = type === 'land' ? 'flash-land' : 'flash-cast';
+    el.classList.add(cls);
+    // Class removed by renderGame re-render naturally
   },
   startPermanentLongPress(permanentId, event) {
     this._longPressTimer = setTimeout(() => {
