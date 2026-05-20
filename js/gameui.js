@@ -4,6 +4,7 @@
 const GameUI = {
   selectedCard: null, // card index in hand currently selected
   pendingManaChoice: null, // { permanentId, colors }
+  pendingDraw: false,
 
   // ── MAIN RENDER ──
 
@@ -102,7 +103,7 @@ const GameUI = {
       creatures.forEach((perm) => {
         const { power, toughness } = game.opponent.getEffectivePT(perm);
         html += `
-            <div class="permanent opp-permanent ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onPermanentClick('${perm.id}')">
+            <div class="permanent opp-permanent ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onPermanentClick('${perm.id}')" oncontextmenu="GameUI.onPermanentRightClick('${perm.id}', event)">
             <div class="perm-name">${perm.card.name}</div>
             <div class="perm-pt">${power}/${toughness}</div>
             ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(', ')}</div>` : ''}
@@ -165,7 +166,7 @@ const GameUI = {
             ${perm.summoningSick ? 'sick' : ''}
             ${isAttacker ? 'attacking' : ''}
             ${combatMode && canAttack ? 'can-attack' : ''}"
-            onclick="GameUI.onPermanentClick('${perm.id}')">
+            onclick="GameUI.onPermanentClick('${perm.id}')" oncontextmenu="GameUI.onPermanentRightClick('${perm.id}', event)">
             <div class="perm-name">${perm.card.name}</div>
             <div class="perm-pt">${power}/${toughness}</div>
             ${perm.summoningSick ? '<div class="sick-label">Sick</div>' : ''}
@@ -272,16 +273,32 @@ const GameUI = {
         el.innerHTML = '<p class="muted" style="font-size:12px">Empty.</p>';
       } else {
         el.innerHTML = humanPlayer.graveyard
-          .map((card) => {
+          .map((card, idx) => {
             const imgUrl = Scryfall.getArtUrl(card);
+            const safeName = card.name.replace(/'/g, "\\'");
             return `
-            <div class="hand-card" onclick="GameUI.previewGameCard(${JSON.stringify(card).replace(/"/g, '&quot;')})">
-              ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
-              <div class="hand-card-info">
-                <div class="hand-card-name">${card.name}</div>
-                <div class="hand-card-meta">${card.type_line || ''}</div>
-              </div>
-            </div>`;
+          <div class="hand-card" onclick="GameUI.previewGameCard(Game.human.graveyard[${idx}])">
+            ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+            <div class="hand-card-info">
+              <div class="hand-card-name">${card.name}</div>
+              <div class="hand-card-meta">${card.type_line || ''}</div>
+              ${
+                ['main1', 'main2', 'end'].includes(Game.currentPhase)
+                  ? `
+              <div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap;">
+                <button onclick="event.stopPropagation(); GameUI.returnToHand(${idx})" 
+                  style="font-size:9px; padding:2px 6px; background:#0a1a0a; border:1px solid #2a4a2a; color:#8c8; cursor:pointer; font-family:monospace;">
+                  ↩ Hand
+                </button>
+                <button onclick="event.stopPropagation(); GameUI.returnToBattlefield(${idx})"
+                  style="font-size:9px; padding:2px 6px; background:#0a0a1a; border:1px solid #2a2a4a; color:#88c; cursor:pointer; font-family:monospace;">
+                  ↑ Battlefield
+                </button>
+              </div>`
+                  : ''
+              }
+            </div>
+          </div>`;
           })
           .join('');
       }
@@ -296,20 +313,64 @@ const GameUI = {
         oppEl.innerHTML = '<p class="muted" style="font-size:12px">Empty.</p>';
       } else {
         oppEl.innerHTML = opponent.graveyard
-          .map((card) => {
+          .map((card, idx) => {
             const imgUrl = Scryfall.getArtUrl(card);
             return `
-            <div class="hand-card" onclick="GameUI.previewGameCard(${JSON.stringify(card).replace(/"/g, '&quot;')})">
-              ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
-              <div class="hand-card-info">
-                <div class="hand-card-name">${card.name}</div>
-                <div class="hand-card-meta">${card.type_line || ''}</div>
-              </div>
-            </div>`;
+          <div class="hand-card" onclick="GameUI.previewGameCard(Game.opponent.graveyard[${idx}])">
+            ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+            <div class="hand-card-info">
+              <div class="hand-card-name">${card.name}</div>
+              <div class="hand-card-meta">${card.type_line || ''}</div>
+            </div>
+          </div>`;
           })
           .join('');
       }
     }
+  },
+
+  returnToHand(graveyardIdx) {
+    const card = Game.human.graveyard[graveyardIdx];
+    if (!card) return;
+
+    const confirmed = confirm(
+      `Return ${card.name} to your hand?\n\n` +
+        `⚠️ Only do this if you have a spell or ability that allows it (e.g. Scorpion God's death trigger).`
+    );
+
+    if (!confirmed) return;
+
+    Game.human.graveyard.splice(graveyardIdx, 1);
+    Game.human.hand.push(card);
+    GameLog.add(`${card.name} returned to hand from graveyard.`, 'action');
+    GameUI.renderGame(Game);
+  },
+
+  returnToBattlefield(graveyardIdx) {
+    const card = Game.human.graveyard[graveyardIdx];
+    if (!card) return;
+
+    const type = (card.type_line || '').toLowerCase();
+    const isCreature = type.includes('creature');
+
+    const confirmed = confirm(
+      `Return ${card.name} to the battlefield?\n\n` +
+        `⚠️ Only do this if you have a spell or ability that allows it (e.g. a reanimate spell).\n\n` +
+        `${isCreature ? '📋 Note: This creature will have summoning sickness and cannot attack this turn.' : ''}`
+    );
+
+    if (!confirmed) return;
+
+    Game.human.graveyard.splice(graveyardIdx, 1);
+    Game.human.battlefield.push({
+      card,
+      tapped: false,
+      counters: [],
+      summoningSick: isCreature,
+      id: nextPermId(),
+    });
+    GameLog.add(`${card.name} returned to battlefield from graveyard.`, 'action');
+    GameUI.renderGame(Game);
   },
 
   renderExile(humanPlayer) {
@@ -373,6 +434,11 @@ const GameUI = {
       html += `<button class="action-btn primary" onclick="Game.advancePhase()">
         ${currentLabel} → ${nextLabel}
       </button>`;
+      if (this.pendingDraw) {
+        html += `<button class="action-btn" onclick="Game.human.draw(1); GameLog.add('You draw a card (triggered effect).', 'action'); GameUI.pendingDraw = false; GameUI.renderGame(Game);">
+    🃏 Draw a Card
+  </button>`;
+      }
     }
 
     // Combat buttons
@@ -465,6 +531,108 @@ const GameUI = {
       Game.opponent.battlefield.find((p) => p.id === id);
     console.log('preview lookup', id, perm);
     if (perm) this.previewGameCard(perm.card);
+  },
+
+  onPermanentRightClick(permanentId, event) {
+    event.preventDefault();
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+    const perm =
+      Game.human.battlefield.find((p) => p.id === id) ||
+      Game.opponent.battlefield.find((p) => p.id === id);
+    if (!perm) return;
+
+    this.showCounterMenu(perm, id);
+  },
+
+  showCounterMenu(perm, id) {
+    // Remove any existing menu
+    const existing = document.getElementById('counter-menu');
+    if (existing) existing.remove();
+
+    const menu = document.createElement('div');
+    menu.id = 'counter-menu';
+    menu.style.cssText = `
+    position: fixed;
+    background: #1a1a2a;
+    border: 1px solid #4a4a8a;
+    border-radius: 4px;
+    padding: 8px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  `;
+
+    const counters = perm.counters || [];
+    const negCount = counters.filter((c) => c === '-1/-1').length;
+    const posCount = counters.filter((c) => c === '+1/+1').length;
+
+    menu.innerHTML = `
+    <div style="color:#888; margin-bottom:4px; font-size:11px">
+      ${perm.card.name}<br>
+      Counters: ${posCount > 0 ? posCount + 'x +1/+1 ' : ''}${negCount > 0 ? negCount + 'x -1/-1' : ''}${posCount === 0 && negCount === 0 ? 'none' : ''}
+    </div>
+    <button onclick="GameUI.placeCounter(${id}, '+1/+1')" style="background:#0a1a0a;border:1px solid #2a4a2a;color:#8c8;padding:6px;cursor:pointer;font-family:monospace">+ Place +1/+1</button>
+    <button onclick="GameUI.placeCounter(${id}, '-1/-1')" style="background:#1a0a0a;border:1px solid #4a2a2a;color:#c88;padding:6px;cursor:pointer;font-family:monospace">− Place -1/-1</button>
+    ${counters.length > 0 ? `<button onclick="GameUI.removeLastCounter(${id})" style="background:#1a1a1a;border:1px solid #333;color:#888;padding:6px;cursor:pointer;font-family:monospace">✕ Remove last counter</button>` : ''}
+    <button onclick="document.getElementById('counter-menu').remove()" style="background:#111;border:1px solid #222;color:#555;padding:4px;cursor:pointer;font-family:monospace;margin-top:2px">Cancel</button>
+  `;
+
+    document.body.appendChild(menu);
+
+    // Close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', function handler(e) {
+        if (!menu.contains(e.target)) {
+          menu.remove();
+          document.removeEventListener('click', handler);
+        }
+      });
+    }, 0);
+  },
+
+  placeCounter(permanentId, counterType) {
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+    const perm =
+      Game.human.battlefield.find((p) => p.id === id) ||
+      Game.opponent.battlefield.find((p) => p.id === id);
+    if (!perm) return;
+
+    perm.counters.push(counterType);
+    GameLog.add(`Placed ${counterType} counter on ${perm.card.name}.`, 'action');
+
+    const existing = document.getElementById('counter-menu');
+    if (existing) existing.remove();
+
+    // Check if creature dies
+    const owner = Game.human.battlefield.find((p) => p.id === id) ? Game.human : Game.opponent;
+    owner.checkStateBasedActions();
+
+    // Fire trigger reminders
+    Game.checkTriggers('any_counter_placed');
+
+    GameUI.renderGame(Game);
+  },
+
+  removeLastCounter(permanentId) {
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+    const perm =
+      Game.human.battlefield.find((p) => p.id === id) ||
+      Game.opponent.battlefield.find((p) => p.id === id);
+    if (!perm || perm.counters.length === 0) return;
+
+    const removed = perm.counters.pop();
+    GameLog.add(`Removed ${removed} counter from ${perm.card.name}.`, 'action');
+
+    const existing = document.getElementById('counter-menu');
+    if (existing) existing.remove();
+
+    GameUI.renderGame(Game);
   },
 
   onLandClick(permanentId) {
@@ -629,10 +797,22 @@ const GameUI = {
     const el = document.getElementById('trigger-reminder');
     if (!el) return;
 
-    el.textContent = message;
-    el.classList.remove('hidden');
+    if (message.toLowerCase().includes('draw a card')) {
+      GameUI.pendingDraw = true;
+    }
 
-    setTimeout(() => el.classList.add('hidden'), 6000);
+    const entry = document.createElement('div');
+    entry.style.cssText =
+      'padding: 6px 0; border-bottom: 1px solid #3a3a1a; display:flex; justify-content:space-between; align-items:flex-start; gap:8px;';
+    entry.innerHTML = `
+    <span style="flex:1; line-height:1.5">${message}</span>
+    <button onclick="this.parentElement.remove(); const el=document.getElementById('trigger-reminder'); if(el.children.length===0) el.classList.add('hidden'); GameUI.renderGame(Game);"
+      style="background:none; border:none; color:#555; cursor:pointer; font-size:14px; padding:0; flex-shrink:0;">✕</button>
+  `;
+
+    el.classList.remove('hidden');
+    el.appendChild(entry);
+    GameUI.renderGame(Game);
   },
 
   // ── MANA CHOICE ──

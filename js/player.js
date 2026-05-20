@@ -201,6 +201,19 @@ class Player {
     if (idx === -1) return false;
     const [perm] = this.battlefield.splice(idx, 1);
     this.graveyard.push(perm.card);
+
+    // Fire countered_creature_dies trigger if it had -1/-1 counters
+    const hadNegCounters = perm.counters.some((c) => c === '-1/-1');
+    const isCreature = (perm.card.type_line || '').toLowerCase().includes('creature');
+    if (hadNegCounters && isCreature) {
+      Game.checkTriggers('countered_creature_dies');
+    }
+
+    // Fire creature_dies trigger for Grave Venerations etc.
+    if (isCreature) {
+      Game.checkTriggers('creature_dies');
+    }
+
     return perm.card;
   }
 
@@ -261,9 +274,7 @@ class Player {
   // Return commander to command zone (from battlefield or graveyard)
   returnCommanderToZone(commanderName) {
     // Check battlefield
-    const bfIdx = this.battlefield.findIndex(
-      (p) => p.isCommander && p.card.name === commanderName
-    );
+    const bfIdx = this.battlefield.findIndex((p) => p.isCommander && p.card.name === commanderName);
     if (bfIdx !== -1) {
       this.battlefield.splice(bfIdx, 1);
       GameLog.add(`${commanderName} returned to the command zone.`, 'info');

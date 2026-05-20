@@ -648,11 +648,13 @@ const Game = {
     if (!Settings.get('beginnerMode')) return;
 
     this.human.battlefield.forEach((perm) => {
-      const reminder = TRIGGER_REMINDERS[perm.card.name];
-      if (!reminder) return;
-      if (reminder.when === event) {
-        GameUI.showTriggerReminder(reminder.reminder);
-      }
+      const reminders = TRIGGER_REMINDERS[perm.card.name];
+      if (!reminders) return;
+      reminders.forEach((r) => {
+        if (r.when === event) {
+          GameUI.showTriggerReminder(r.reminder);
+        }
+      });
     });
   },
 
