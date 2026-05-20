@@ -215,30 +215,39 @@
   text-transform: uppercase;
 }
 
-/* ── LAYOUT — fixed top/bottom HUD, scrollable battlefield ── */
+/* ── LAYOUT ── */
 .game-layout { display: none; }
 .game-main { display: none; }
 
 #game-board {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh);
-  overflow: hidden;
+  position: relative;
+  min-height: 100vh;
 }
 
+/* TOP HUD — always visible */
 .game-hud-top {
-  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
 }
 
+/* BATTLEFIELD — scrolls in the space between HUDs */
 .game-battlefield {
-  flex: 1;
+  /* top: phase bar ~28px + game header ~65px = ~93px */
+  /* bottom: hand ~160px */
+  padding-top: 93px;
+  padding-bottom: 165px;
   overflow-y: auto;
-  min-height: 0;
 }
 
+/* BOTTOM HUD — always visible */
 .game-hud-bottom {
-  flex-shrink: 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   background: rgba(6,5,3,0.97);
   border-top: 1px solid rgba(200,168,75,0.15);
@@ -248,12 +257,8 @@
   overflow-y: auto;
 }
 
-.hud-drawers {
-  display: flex;
-  flex-direction: column;
-}
+.hud-drawers { display: flex; flex-direction: column; }
 
-/* Sidebar desktop only */
 .game-sidebar { display: none; }
 
 /* ── BATTLEFIELD ZONES ── */
