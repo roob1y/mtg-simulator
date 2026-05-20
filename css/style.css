@@ -701,7 +701,23 @@ button:disabled {
 
   #deck-panel {
     max-height: none;
-    min-height: calc(100vh - 200px);
+    min-height: calc(100vh - 180px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  #view-your-deck,
+  #view-opponent {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  #deck-list,
+  #ai-deck-list {
+    flex: 1;
+    max-height: none;
+    overflow-y: visible;
   }
 
   #preview-panel {
