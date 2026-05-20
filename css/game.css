@@ -7,6 +7,7 @@
   gap: 16px;
   margin-left: auto;
   align-items: center;
+  position: relative;
 }
 
 .setting-toggle {
@@ -918,4 +919,397 @@
 
 .drawer.is-open .drawer__body {
   display: block;
+}
+
+/* ══════════════════════════════════════════
+   GEAR / SETTINGS OVERLAY
+══════════════════════════════════════════ */
+#settings-bar {
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.gear-btn {
+  background: none;
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  line-height: 1;
+  padding: 0;
+}
+.gear-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+#settings-dropdown {
+  position: absolute;
+  top: 44px;
+  right: 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  min-width: 160px;
+}
+#settings-dropdown.hidden { display: none !important; }
+
+/* ══════════════════════════════════════════
+   GAME ATMOSPHERE — FULL BLEED BG
+══════════════════════════════════════════ */
+#game-board {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(200,168,75,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 100%, rgba(60,40,100,0.08) 0%, transparent 60%),
+    var(--bg-base);
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════
+   PHASE BAR — HUD STYLE
+══════════════════════════════════════════ */
+.phase-bar {
+  background: rgba(10,10,14,0.95);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(4px);
+}
+
+.phase-pip {
+  color: var(--text-muted);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.phase-pip.active {
+  background: transparent;
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+  text-shadow: 0 0 12px rgba(200,168,75,0.5);
+}
+
+/* ══════════════════════════════════════════
+   GAME HEADER — DRAMATIC LIFE TOTALS
+══════════════════════════════════════════ */
+.game-header {
+  background: linear-gradient(180deg, rgba(30,20,10,0.9) 0%, rgba(13,13,15,0.95) 100%);
+  border-bottom: 1px solid rgba(200,168,75,0.15);
+  padding: 8px 16px;
+}
+
+.life-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.life-total {
+  font-size: 40px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+  text-shadow: 0 0 20px rgba(200,168,75,0.25), 0 2px 4px rgba(0,0,0,0.8);
+  letter-spacing: -0.02em;
+}
+
+.life-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--accent-dim);
+  text-transform: uppercase;
+  font-family: var(--font-display);
+}
+
+.turn-block {
+  text-align: center;
+}
+
+#turn-info {
+  font-size: 11px;
+  font-family: var(--font-display);
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 10px rgba(200,168,75,0.3);
+}
+
+/* ══════════════════════════════════════════
+   BATTLEFIELD — TABLE FEEL
+══════════════════════════════════════════ */
+.opp-zone {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(80,60,120,0.08) 0%, transparent 70%),
+    linear-gradient(180deg, #0a0a10 0%, var(--bg-base) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  min-height: 120px;
+}
+
+.human-zone {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(40,80,50,0.1) 0%, transparent 70%),
+    linear-gradient(0deg, #0a100a 0%, var(--bg-base) 100%);
+  min-height: 120px;
+}
+
+.battlefield-divider {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(200,168,75,0.08) 20%,
+    rgba(200,168,75,0.15) 50%,
+    rgba(200,168,75,0.08) 80%,
+    transparent 100%
+  );
+  border-top: 1px solid rgba(200,168,75,0.12);
+  border-bottom: 1px solid rgba(200,168,75,0.12);
+  color: rgba(200,168,75,0.4);
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  padding: 4px;
+}
+
+/* ══════════════════════════════════════════
+   PERMANENTS — PHYSICAL CARD FEEL
+══════════════════════════════════════════ */
+.permanent {
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(255,255,255,0.04) inset;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.15s ease;
+}
+
+.permanent:hover {
+  box-shadow:
+    0 6px 16px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(255,255,255,0.08) inset;
+  transform: translateY(-2px) scale(1.02);
+}
+
+.permanent.tapped {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  opacity: 0.75;
+}
+
+.permanent.can-attack {
+  box-shadow:
+    0 0 0 1px var(--color-land),
+    0 0 12px rgba(68,170,102,0.3),
+    0 4px 12px rgba(0,0,0,0.6);
+}
+
+.permanent.attacking {
+  box-shadow:
+    0 0 0 1px var(--color-attack),
+    0 0 16px rgba(204,68,68,0.4),
+    0 4px 12px rgba(0,0,0,0.6);
+}
+
+/* ══════════════════════════════════════════
+   ACTION BAR — GAME CONTROLS
+══════════════════════════════════════════ */
+.action-bar {
+  background: linear-gradient(180deg, rgba(13,13,15,0.0) 0%, rgba(13,13,15,0.95) 100%);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+.action-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+}
+
+.action-btn:active {
+  transform: translateY(0px);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.action-btn.primary {
+  background: linear-gradient(180deg, rgba(200,168,75,0.25) 0%, rgba(200,168,75,0.12) 100%);
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(200,168,75,0.2), 0 0 0 1px rgba(200,168,75,0.1) inset;
+}
+.action-btn.primary:hover {
+  background: linear-gradient(180deg, rgba(200,168,75,0.35) 0%, rgba(200,168,75,0.18) 100%);
+  box-shadow: 0 4px 16px rgba(200,168,75,0.3), 0 0 0 1px rgba(200,168,75,0.15) inset;
+  border-color: var(--accent);
+}
+
+.action-btn.land {
+  background: linear-gradient(180deg, rgba(68,170,102,0.18) 0%, rgba(68,170,102,0.08) 100%);
+  border-color: #2a5a3a;
+  color: #88ddaa;
+  box-shadow: 0 2px 8px rgba(68,170,102,0.15);
+}
+.action-btn.land:hover {
+  box-shadow: 0 4px 14px rgba(68,170,102,0.25);
+  border-color: var(--color-land);
+}
+
+.action-btn.cast {
+  background: linear-gradient(180deg, rgba(68,136,204,0.18) 0%, rgba(68,136,204,0.08) 100%);
+  border-color: #2a4a6a;
+  color: #88aadd;
+  box-shadow: 0 2px 8px rgba(68,136,204,0.15);
+}
+.action-btn.cast:hover {
+  box-shadow: 0 4px 14px rgba(68,136,204,0.25);
+  border-color: var(--color-cast);
+}
+
+.action-btn.attack {
+  background: linear-gradient(180deg, rgba(204,68,68,0.18) 0%, rgba(204,68,68,0.08) 100%);
+  border-color: #6a2a2a;
+  color: #ff9999;
+  box-shadow: 0 2px 8px rgba(204,68,68,0.15);
+}
+.action-btn.attack:hover {
+  box-shadow: 0 4px 14px rgba(204,68,68,0.3);
+  border-color: var(--color-attack);
+}
+
+/* ══════════════════════════════════════════
+   HAND CARDS — FLOATING FEEL
+══════════════════════════════════════════ */
+.hand-zone {
+  background: linear-gradient(0deg, rgba(10,8,6,0.95) 0%, rgba(13,13,15,0.8) 100%);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 10px 8px;
+}
+
+.hand-card {
+  box-shadow:
+    0 4px 8px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(255,255,255,0.04) inset;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.15s ease;
+}
+
+.hand-card:hover {
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(255,255,255,0.08) inset;
+  transform: translateY(-6px) scale(1.04);
+  border-color: var(--border-strong);
+}
+
+.hand-card.selected {
+  box-shadow:
+    0 8px 24px rgba(200,168,75,0.25),
+    0 0 0 1px rgba(200,168,75,0.2) inset;
+  transform: translateY(-8px) scale(1.04);
+  border-color: var(--accent);
+}
+
+/* ══════════════════════════════════════════
+   MANA BAR
+══════════════════════════════════════════ */
+.mana-bar {
+  background: rgba(10,10,14,0.8);
+  border-bottom: 1px solid var(--border-subtle);
+  min-height: 34px;
+}
+
+.mana-label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent-dim);
+}
+
+/* ══════════════════════════════════════════
+   COMMAND ZONE
+══════════════════════════════════════════ */
+.command-zone-area {
+  background: linear-gradient(180deg, rgba(200,168,75,0.04) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(200,168,75,0.1);
+}
+
+.commander-card {
+  background: linear-gradient(135deg, rgba(200,168,75,0.08) 0%, rgba(13,13,15,0.9) 100%);
+  border-color: rgba(200,168,75,0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.commander-card:hover {
+  border-color: rgba(200,168,75,0.5);
+  box-shadow: 0 4px 16px rgba(200,168,75,0.15);
+}
+
+.cmd-name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+/* ══════════════════════════════════════════
+   ZONE LABELS
+══════════════════════════════════════════ */
+.zone-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.18);
+  text-transform: uppercase;
+  font-family: var(--font-display);
+  margin-bottom: 8px;
+}
+
+/* ══════════════════════════════════════════
+   MOBILE OVERRIDES
+══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  #settings-bar {
+    display: none;
+  }
+
+  .life-total {
+    font-size: 36px;
+  }
+
+  .game-header {
+    padding: 6px 12px;
+  }
+
+  .opp-zone { min-height: 100px; }
+  .human-zone { min-height: 100px; }
 }

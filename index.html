@@ -15,14 +15,17 @@
         <button class="nav-btn" onclick="showPage('game')" id="play-btn" disabled>Play</button>
       </nav>
       <div id="settings-bar">
-        <label class="setting-toggle">
-          <input type="checkbox" id="beginner-mode-toggle" onchange="toggleBeginnerMode()" />
-          Beginner Mode
-        </label>
-        <label class="setting-toggle">
-          <input type="checkbox" id="auto-tap-toggle" onchange="toggleAutoTap()" />
-          Auto-tap
-        </label>
+        <button class="gear-btn" onclick="document.getElementById('settings-dropdown').classList.toggle('hidden')" title="Settings">⚙</button>
+        <div id="settings-dropdown" class="hidden">
+          <label class="setting-toggle">
+            <input type="checkbox" id="beginner-mode-toggle" onchange="toggleBeginnerMode()" />
+            Beginner Mode
+          </label>
+          <label class="setting-toggle">
+            <input type="checkbox" id="auto-tap-toggle" onchange="toggleAutoTap()" />
+            Auto-tap
+          </label>
+        </div>
       </div>
     </header>
 
@@ -321,6 +324,17 @@
     <script src="js/game.js"></script>
     <script src="js/gameui.js"></script>
     <script src="js/main.js"></script>
+    <script>
+      document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('settings-dropdown');
+        const gearBtn = document.querySelector('.gear-btn');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+          if (!dropdown.contains(e.target) && e.target !== gearBtn) {
+            dropdown.classList.add('hidden');
+          }
+        }
+      });
+    </script>
   </body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <div id="card-preview-modal" class="modal hidden">
