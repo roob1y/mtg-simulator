@@ -262,11 +262,11 @@
 
 .opp-zone {
   border-bottom: none;
-  min-height: 80px;
+  min-height: 160px;
 }
 
 .human-zone {
-  min-height: 80px;
+  min-height: 160px;
 }
 
 /* Arcane circle divider */
