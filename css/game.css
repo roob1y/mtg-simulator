@@ -88,12 +88,6 @@
   letter-spacing: 0.06em;
 }
 
-.turn-block {
-  font-size: 12px;
-  color: #888;
-  text-align: center;
-}
-
 /* ── GAME LAYOUT ── */
 .game-layout {
   display: grid;
@@ -106,14 +100,14 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  border-right: 1px solid #222;
+  border-right: 1px solid var(--border-subtle);
 }
 
 .game-sidebar {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  background: #0e0e0e;
+  background: var(--bg-base);
 }
 
 /* ── GAME ZONES ── */
@@ -149,7 +143,7 @@
 
 .zone-label {
   font-size: 10px;
-  color: #555;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 6px;
@@ -325,21 +319,21 @@
   align-items: center;
   gap: 4px;
   padding: 6px 10px;
-  background: #111;
-  border-bottom: 1px solid #1a1a1a;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
   flex-wrap: wrap;
   min-height: 32px;
 }
 
 .mana-label {
   font-size: 11px;
-  color: #555;
+  color: var(--text-muted);
   margin-right: 4px;
 }
 
 .mana-empty {
   font-size: 11px;
-  color: #333;
+  color: var(--border-strong);
 }
 
 .mana-pip {
@@ -352,8 +346,8 @@
   display: flex;
   gap: 6px;
   padding: 6px 10px;
-  background: #111;
-  border-bottom: 1px solid #1a1a1a;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
   flex-wrap: wrap;
 }
 
@@ -426,8 +420,8 @@
 /* ── HAND ── */
 .hand-zone {
   padding: 8px;
-  border-bottom: 1px solid #1a1a1a;
-  background: #0a0a0a;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
 }
 
 .hand-cards {
@@ -480,22 +474,22 @@
 
 .hand-card-name {
   font-size: 9px;
-  color: #ccc;
+  color: var(--text-primary);
   line-height: 1.2;
   word-break: break-word;
 }
 
 .hand-card-meta {
   font-size: 8px;
-  color: #666;
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
 /* ── COMMAND ZONE ── */
 .command-zone-area {
   padding: 8px;
-  background: #0a0a0e;
-  border-bottom: 1px solid #1a1a1a;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .commander-card {
@@ -503,16 +497,16 @@
   align-items: center;
   gap: 8px;
   padding: 6px;
-  background: #14141e;
-  border: 1px solid #2a2a4a;
-  border-radius: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   cursor: pointer;
   margin-bottom: 4px;
 }
 
 .commander-card:hover {
-  border-color: #4a4a8a;
-  background: #181828;
+  border-color: var(--border-strong);
+  background: var(--bg-raised);
 }
 .commander-card.cant-afford {
   opacity: 0.5;
@@ -523,28 +517,28 @@
   height: 40px;
   object-fit: cover;
   object-position: top;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .cmd-name {
   font-size: 11px;
-  color: #ccccee;
+  color: var(--text-primary);
 }
 .cmd-cost {
   font-size: 10px;
-  color: #666;
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
 /* ── SIDEBAR ── */
 .sidebar-section {
   padding: 10px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .sidebar-label {
   font-size: 10px;
-  color: #555;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 6px;
@@ -553,15 +547,15 @@
 /* ── PHASE TIP ── */
 .phase-tip {
   margin: 8px;
-  background: #0a1a0a;
-  border: 1px solid #1a3a1a;
-  border-radius: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--color-land);
+  border-radius: var(--radius-md);
   padding: 10px;
   font-size: 12px;
 }
 
 .tip-title {
-  color: #6a9a6a;
+  color: var(--color-land);
   font-weight: bold;
   margin-bottom: 4px;
   font-size: 11px;
@@ -570,34 +564,34 @@
 }
 
 .tip-text {
-  color: #8a8a6a;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 /* ── TRIGGER REMINDER ── */
 .trigger-reminder {
   margin: 8px;
-  background: #1a1a0a;
-  border: 1px solid #3a3a1a;
-  border-radius: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
   padding: 10px;
   font-size: 12px;
-  color: #aaaa6a;
+  color: var(--color-warning);
   line-height: 1.6;
 }
 
 /* ── MANA CHOICE ── */
 .mana-choice {
   margin: 8px;
-  background: #0a0a1a;
-  border: 1px solid #2a2a4a;
-  border-radius: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   padding: 10px;
 }
 
 .mana-choice-title {
   font-size: 11px;
-  color: #666;
+  color: var(--text-muted);
   margin-bottom: 8px;
 }
 
@@ -605,19 +599,19 @@
   display: block;
   width: 100%;
   margin-bottom: 4px;
-  font-family: monospace;
+  font-family: var(--font-ui);
   font-size: 12px;
   padding: 6px;
-  background: #1a1a2a;
-  border: 1px solid #2a2a4a;
-  color: #aaa;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
   cursor: pointer;
   text-align: left;
 }
 
 .mana-choice-btn:hover {
-  background: #222233;
-  color: #fff;
+  background: var(--bg-overlay);
+  color: var(--text-primary);
 }
 
 /* ── GAME LOG ── */
@@ -635,16 +629,16 @@
   padding: 3px 4px;
   font-size: 11px;
   line-height: 1.4;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .log-icon {
-  color: #444;
+  color: var(--border-strong);
   flex-shrink: 0;
   width: 12px;
 }
 .log-msg {
-  color: #888;
+  color: var(--text-muted);
   flex: 1;
 }
 
@@ -699,9 +693,9 @@
 
 .mulligan-card {
   width: 90px;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 4px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -715,7 +709,7 @@
 
 .mulligan-card-name {
   font-size: 9px;
-  color: #aaa;
+  color: var(--text-secondary);
   padding: 4px;
   text-align: center;
   word-break: break-word;
@@ -741,22 +735,22 @@
 
 .game-over-inner {
   text-align: center;
-  background: #1a1a1a;
-  border: 1px solid #444;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
   padding: 40px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .game-over-title {
   font-size: 32px;
-  color: #e0e0e0;
+  color: var(--accent);
   margin-bottom: 10px;
-  font-family: monospace;
+  font-family: var(--font-display);
 }
 
 .game-over-text {
   font-size: 14px;
-  color: #888;
+  color: var(--text-secondary);
   margin-bottom: 20px;
 }
 
@@ -816,7 +810,7 @@
   }
 
   .game-sidebar {
-    border-top: 1px solid #222;
+    border-top: 1px solid var(--border-subtle);
     max-height: 400px;
   }
 
