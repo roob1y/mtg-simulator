@@ -1238,3 +1238,19 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.6);
   pointer-events: none;
 }
+
+/* Lock body scroll when game is active — fixed HUDs require this */
+body:has(#game.active) {
+  overflow: hidden;
+  height: 100vh;
+}
+
+#game.active {
+  overflow: hidden;
+  height: 100vh;
+}
+
+#game-board:not(.hidden) {
+  overflow: hidden;
+  height: 100vh;
+}
