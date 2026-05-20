@@ -990,3 +990,13 @@ button:hover {
   border-color: rgba(255,255,255,0.05);
   color: rgba(255,255,255,0.5);
 }
+
+@media (max-width: 900px) {
+  #start-game-btn {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-top: auto;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+  }
+}
