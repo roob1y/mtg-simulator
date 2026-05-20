@@ -244,15 +244,27 @@ const GameUI = {
       return;
     }
 
-    el.innerHTML = humanPlayer.commanders
+    // Sort: main commanders first, backgrounds last
+    const sorted = [...humanPlayer.commanders].sort((a, b) => {
+      const aIsBackground = (a.type_line || '').toLowerCase().includes('background');
+      const bIsBackground = (b.type_line || '').toLowerCase().includes('background');
+      if (aIsBackground && !bIsBackground) return 1;
+      if (!aIsBackground && bIsBackground) return -1;
+      return 0;
+    });
+
+    el.innerHTML = sorted
       .map((commander, idx) => {
+        // Find real index for casting
+        const realIdx = humanPlayer.commanders.indexOf(commander);
         const imgUrl = Scryfall.getArtUrl(commander);
         const tax = humanPlayer.commanderTax(commander.name);
         const totalCost = (commander.cmc || 0) + tax;
-        const canAfford = Game.canAffordCard(commander);
+        const canAfford = Game.human.totalMana() >= totalCost;
+
         return `
         <div class="commander-card ${!canAfford ? 'cant-afford' : ''}"
-          onclick="Game.castCommander(${idx})">
+          onclick="Game.castCommander(${realIdx})">
           ${imgUrl ? `<img class="cmd-art" src="${imgUrl}" alt="${commander.name}" loading="lazy">` : ''}
           <div class="cmd-info">
             <div class="cmd-name">${commander.name}</div>
@@ -353,10 +365,12 @@ const GameUI = {
     const type = (card.type_line || '').toLowerCase();
     const isCreature = type.includes('creature');
 
+    const isCommander = Game.human.commanderNames.has(card.name);
     const confirmed = confirm(
       `Return ${card.name} to the battlefield?\n\n` +
         `⚠️ Only do this if you have a spell or ability that allows it (e.g. a reanimate spell).\n\n` +
-        `${isCreature ? '📋 Note: This creature will have summoning sickness and cannot attack this turn.' : ''}`
+        `${isCreature ? '📋 Note: This creature will have summoning sickness and cannot attack this turn.\n\n' : ''}` +
+        `${isCommander ? '👑 Commander note: Reanimating from graveyard does NOT count as casting from the command zone — no commander tax applies. However your tax counter still increases next time you cast from the command zone.' : ''}`
     );
 
     if (!confirmed) return;
@@ -367,6 +381,7 @@ const GameUI = {
       tapped: false,
       counters: [],
       summoningSick: isCreature,
+      isCommander: Game.human.commanderNames.has(card.name),
       id: nextPermId(),
     });
     GameLog.add(`${card.name} returned to battlefield from graveyard.`, 'action');
@@ -476,8 +491,9 @@ const GameUI = {
           }
           if (spellFace) {
             const cmc = card.cmc || 0;
-            html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})">
-      ✨ Cast ${spellFace.name} (${cmc} mana)
+            const canAffordMDFC = Game.canAffordCard(card);
+            html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAffordMDFC ? 'disabled title="Not enough mana"' : ''}>
+      ✨ Cast ${spellFace.name} (${cmc} mana)${!canAffordMDFC ? ' 🔒' : ''}
     </button>`;
           }
         } else if (isLand && isMain && game.human.canPlayLand()) {
@@ -485,8 +501,9 @@ const GameUI = {
     🌲 Play ${card.name}
   </button>`;
         } else if (!isLand && isMain) {
-          html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})">
-    ✨ Cast ${card.name} (${card.cmc || 0} mana)
+          const canAfford = Game.canAffordCard(card);
+          html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled title="Not enough mana"' : ''}>
+    ✨ Cast ${card.name} (${card.cmc || 0} mana)${!canAfford ? ' 🔒' : ''}
   </button>`;
         }
 
@@ -685,6 +702,9 @@ const GameUI = {
     if (colors.length === 1) {
       Game.human.manaPool[colors[0]] = Math.max(0, Game.human.manaPool[colors[0]] - 1);
     }
+    const manaChoice = document.getElementById('mana-choice');
+    if (manaChoice) manaChoice.classList.add('hidden');
+    this.pendingManaChoice = null;
     GameLog.add(`Untapped ${perm.card.name} (undo).`, 'action');
     GameUI.renderGame(Game);
   },

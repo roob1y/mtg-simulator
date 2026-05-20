@@ -16,7 +16,8 @@ class Player {
     this.graveyard = [];
     this.exile = [];
     this.commanders = []; // commander zone
-    this.commanderCastCount = {}; // tracks commander tax
+    this.commanderNames = new Set();
+    this.commanderCastCount = {};
     this.manaPool = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
     this.landsPlayedThisTurn = 0;
     this.hasDrawnThisTurn = false;
@@ -35,6 +36,7 @@ class Player {
   // Set commanders directly (called from Game.init)
   loadCommanders(commanders) {
     this.commanders = [...commanders];
+    commanders.forEach((c) => this.commanderNames.add(c.name));
   }
 
   shuffle() {
@@ -200,11 +202,34 @@ class Player {
     const idx = this.battlefield.findIndex((p) => p.id === permanentId);
     if (idx === -1) return false;
     const [perm] = this.battlefield.splice(idx, 1);
+
+    const isCreature = (perm.card.type_line || '').toLowerCase().includes('creature');
+
+    this.battlefield.forEach((p) => (p.canUntap = false));
+
+    // Commander replacement effect
+    if (perm.isCommander && this.isHuman) {
+      const toCommandZone = confirm(
+        `${perm.card.name} would go to the graveyard.\n\n` +
+          `As a commander, you may return it to the command zone instead.\n\n` +
+          `Send to command zone? (Cancel = graveyard)`
+      );
+      if (toCommandZone) {
+        GameLog.add(`${perm.card.name} returned to the command zone.`, 'info');
+        this.commanders.unshift(perm.card);
+        // Fire triggers before leaving
+        const hadNegCounters = perm.counters.some((c) => c === '-1/-1');
+        if (hadNegCounters && isCreature) Game.checkTriggers('countered_creature_dies');
+        if (isCreature) Game.checkTriggers('creature_dies');
+        GameUI.renderGame(Game);
+        return perm.card;
+      }
+    }
+
     this.graveyard.push(perm.card);
 
     // Fire countered_creature_dies trigger if it had -1/-1 counters
     const hadNegCounters = perm.counters.some((c) => c === '-1/-1');
-    const isCreature = (perm.card.type_line || '').toLowerCase().includes('creature');
     if (hadNegCounters && isCreature) {
       Game.checkTriggers('countered_creature_dies');
     }
@@ -253,6 +278,9 @@ class Player {
     const name = commander.name;
     const castCount = this.commanderCastCount[name] || 0;
     this.commanderCastCount[name] = castCount + 1;
+
+    // Remove from command zone
+    this.commanders.splice(commanderIndex, 1);
 
     this.battlefield.push({
       card: commander,
