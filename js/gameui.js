@@ -41,14 +41,23 @@ const GameUI = {
     this.renderActionButtons(game);
     this.renderGraveyard(game.human, game.opponent);
     this.renderExile(game.human);
-    // Recalculate battlefield padding based on actual HUD heights
+    // Recalculate battlefield padding and zone heights based on actual HUD heights
     requestAnimationFrame(() => {
       const topHud = document.getElementById('game-hud-top');
       const botHud = document.getElementById('game-hud-bottom');
       const bf = document.querySelector('.game-battlefield');
+      const oppZone = document.getElementById('opp-battlefield');
+      const humanZone = document.getElementById('human-battlefield');
       if (bf && topHud && botHud) {
-        bf.style.paddingTop = (topHud.offsetHeight + 4) + 'px';
-        bf.style.paddingBottom = (botHud.offsetHeight + 16) + 'px';
+        const topH = topHud.offsetHeight;
+        const botH = botHud.offsetHeight;
+        bf.style.paddingTop = topH + 'px';
+        bf.style.paddingBottom = botH + 'px';
+        // Each zone gets half the remaining viewport space
+        const available = window.innerHeight - topH - botH;
+        const zoneH = Math.max(160, Math.floor(available / 2) - 20);
+        if (oppZone) oppZone.style.minHeight = zoneH + 'px';
+        if (humanZone) humanZone.style.minHeight = zoneH + 'px';
       }
     });
     document
