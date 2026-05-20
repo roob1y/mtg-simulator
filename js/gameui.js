@@ -2,14 +2,35 @@
 // Renders the game board and handles game UI interactions.
 
 const GameUI = {
-  selectedCard: null, // card index in hand currently selected
-  pendingManaChoice: null, // { permanentId, colors }
+  selectedCard: null,
+  pendingManaChoice: null,
   pendingDraw: false,
+  _lastHandKey: null,
+  _lastBfKey: null,
+  _lastOppBfKey: null,
+  _contextMenuSuppressed: false,
 
   // ── MAIN RENDER ──
 
   renderGame(game) {
     if (!game) return;
+
+    // Suppress context menu on touch devices globally for game board
+    if (!this._contextMenuSuppressed) {
+      const board = document.getElementById('game-board');
+      if (board) {
+        board.addEventListener(
+          'contextmenu',
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          },
+          { passive: false, capture: true }
+        );
+        this._contextMenuSuppressed = true;
+      }
+    }
     this.renderPhaseBar(game);
     this.renderLifeTotals(game);
     this.renderManaPool(game);
@@ -20,6 +41,9 @@ const GameUI = {
     this.renderActionButtons(game);
     this.renderGraveyard(game.human, game.opponent);
     this.renderExile(game.human);
+    document
+      .getElementById('game-board')
+      ?.addEventListener('contextmenu', (e) => e.preventDefault());
   },
 
   // ── PHASE BAR ──
@@ -102,10 +126,22 @@ const GameUI = {
       html += `<div class="permanent-row">`;
       creatures.forEach((perm) => {
         const { power, toughness } = game.opponent.getEffectivePT(perm);
+        const artUrl = Scryfall.getImageUrl(perm.card, 'normal');
         html += `
-            <div class="permanent opp-permanent ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onPermanentClick('${perm.id}')" oncontextmenu="GameUI.onPermanentRightClick('${perm.id}', event)">
-            <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
-            <div class="perm-pt">${power}/${toughness}</div>
+          <div class="permanent opp-permanent ${perm.tapped ? 'tapped' : ''}"
+            onclick="GameUI.onPermanentClick('${perm.id}')"
+            oncontextmenu="event.preventDefault()"
+            onmousedown="GameUI.startPermanentLongPress('${perm.id}', event)"
+            onmouseup="GameUI.cancelLongPress()"
+            onmouseleave="GameUI.cancelLongPress()"
+            ontouchstart="GameUI.startPermanentLongPress('${perm.id}', event)"
+            ontouchend="GameUI.cancelLongPress()"
+            ontouchmove="GameUI.cancelLongPress()">
+            ${artUrl ? `<img class="perm-art" src="${artUrl}" alt="${Scryfall.getFrontFace(perm.card).name}">` : ''}
+            <div class="perm-overlay">
+              <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
+              <div class="perm-pt">${power}/${toughness}</div>
+            </div>
             ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(', ')}</div>` : ''}
           </div>`;
       });
@@ -115,15 +151,50 @@ const GameUI = {
     if (lands.length > 0) {
       html += `<div class="permanent-row lands-row">`;
       lands.forEach((perm) => {
+        const landArt = Scryfall.getImageUrl(perm.card, 'normal');
         html += `
-            <div class="permanent land-perm opp-land ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onPermanentClick('${perm.id}')">
-            <div class="perm-name">${perm.card.name}</div>
+          <div class="permanent land-perm opp-land ${perm.tapped ? 'tapped' : ''}"
+            onclick="GameUI.onPermanentClick('${perm.id}')"
+            oncontextmenu="event.preventDefault()"
+            onmousedown="GameUI.startPermanentLongPress('${perm.id}', event)"
+            onmouseup="GameUI.cancelLongPress()"
+            onmouseleave="GameUI.cancelLongPress()"
+            ontouchstart="GameUI.startPermanentLongPress('${perm.id}', event)"
+            ontouchend="GameUI.cancelLongPress()"
+            ontouchmove="GameUI.cancelLongPress()">
+            ${landArt ? `<img class="perm-art" src="${landArt}" alt="${perm.card.name}">` : ''}
+            <div class="perm-overlay">
+              <div class="perm-name">${perm.card.name}</div>
+            </div>
           </div>`;
       });
       html += `</div>`;
     }
 
     el.innerHTML = html;
+
+    // Animate new permanents in
+    const oppBfKey = game.opponent.battlefield.map((p) => p.id).join(',');
+    if (oppBfKey !== this._lastOppBfKey) {
+      const lastCount = this._lastOppBfKey ? this._lastOppBfKey.split(',').length : 0;
+      const perms = el.querySelectorAll('.permanent');
+      const newPerms = Array.from(perms).slice(lastCount);
+      if (newPerms.length > 0) {
+        gsap.fromTo(
+          newPerms,
+          { scale: 0, opacity: 0 },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.2,
+            stagger: 0.03,
+            ease: 'back.out(1.6)',
+            clearProps: 'transform',
+          }
+        );
+      }
+    }
+    this._lastOppBfKey = oppBfKey;
   },
 
   // ── HUMAN BATTLEFIELD ──
@@ -159,6 +230,8 @@ const GameUI = {
         const { power, toughness } = humanPlayer.getEffectivePT(perm);
         const isAttacker = combatMode && Combat.attackers.includes(perm.id);
         const canAttack = !perm.tapped && !perm.summoningSick;
+        const artUrl = Scryfall.getImageUrl(perm.card, 'normal');
+        const isCreature = (perm.card.type_line || '').toLowerCase().includes('creature');
 
         html += `
           <div class="permanent creature-perm 
@@ -166,9 +239,8 @@ const GameUI = {
             ${perm.summoningSick ? 'sick' : ''}
             ${isAttacker ? 'attacking' : ''}
             ${combatMode && canAttack ? 'can-attack' : ''}"
-            onclick="GameUI.onPermanentClick('${perm.id}')" oncontextmenu="GameUI.onPermanentRightClick('${perm.id}', event)">
-            <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
-            <div class="perm-pt">${power}/${toughness}</div>
+            onclick="GameUI.onPermanentClick('${perm.id}')" oncontextmenu="event.preventDefault()" onmousedown="GameUI.startPermanentLongPress('${perm.id}', event)" onmouseup="GameUI.cancelLongPress()" onmouseleave="GameUI.cancelLongPress()" ontouchstart="GameUI.startPermanentLongPress('${perm.id}', event)" ontouchend="GameUI.cancelLongPress()" ontouchmove="GameUI.cancelLongPress()">
+            ${artUrl ? `<img class="perm-art" src="${artUrl}" alt="${Scryfall.getFrontFace(perm.card).name}">` : ''}
             ${perm.summoningSick ? '<div class="sick-label">Sick</div>' : ''}
             ${perm.isCommander ? '<div class="cmd-label">CMD</div>' : ''}
             ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(' ')}</div>` : ''}
@@ -180,11 +252,22 @@ const GameUI = {
     if (lands.length > 0) {
       html += `<div class="permanent-row lands-row">`;
       lands.forEach((perm) => {
+        const landArt = Scryfall.getImageUrl(perm.card, 'normal');
         html += `
           <div class="permanent land-perm ${perm.tapped ? 'tapped' : ''}"
-            onclick="GameUI.onLandClick('${perm.id}')">
-            <div class="perm-name">${perm.card.name}</div>
-            ${perm.canUntap && perm.tapped ? '<div class="sick-label" onclick="event.stopPropagation(); GameUI.untapLand(' + perm.id + ')">↺ Undo</div>' : ''}
+            onclick="GameUI.onLandClick('${perm.id}')"
+            oncontextmenu="event.preventDefault()"
+            onmousedown="GameUI._landPressStart = Date.now(); GameUI.startPermanentLongPress('${perm.id}', event)"
+            onmouseup="GameUI.cancelLongPress()"
+            onmouseleave="GameUI.cancelLongPress()"
+            ontouchstart="GameUI.startPermanentLongPress('${perm.id}', event)"
+            ontouchend="GameUI.cancelLongPress()"
+            ontouchmove="GameUI.cancelLongPress()">
+            ${landArt ? `<img class="perm-art" src="${landArt}" alt="${perm.card.name}">` : ''}
+            <div class="perm-overlay">
+              <div class="perm-name">${perm.card.name}</div>
+            </div>
+            ${perm.canUntap && perm.tapped ? `<div class="sick-label" onclick="event.stopPropagation(); GameUI.untapLand(${perm.id})">↺ Undo</div>` : ''}
           </div>`;
       });
       html += `</div>`;
@@ -198,6 +281,29 @@ const GameUI = {
     }
 
     el.innerHTML = html;
+
+    // Animate permanents in
+    const bfKey = Game.human.battlefield.map((p) => p.id).join(',');
+    if (bfKey !== this._lastBfKey) {
+      const lastCount = this._lastBfKey ? this._lastBfKey.split(',').length : 0;
+      const perms = el.querySelectorAll('.permanent');
+      const newPerms = Array.from(perms).slice(lastCount);
+      if (newPerms.length > 0) {
+        gsap.fromTo(
+          newPerms,
+          { scale: 0, opacity: 0 },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.2,
+            stagger: 0.03,
+            ease: 'back.out(1.6)',
+            clearProps: 'transform',
+          }
+        );
+      }
+    }
+    this._lastBfKey = bfKey;
   },
 
   // ── HAND ──
@@ -223,7 +329,14 @@ const GameUI = {
 
         return `
         <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''}"
-          onclick="GameUI.onHandCardClick(${idx})">
+          onclick="GameUI.handleHandCardTap(${idx})"
+          oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])"
+          onmousedown="GameUI.startHandLongPress(${idx})"
+          onmouseup="GameUI.cancelLongPress()"
+          onmouseleave="GameUI.cancelLongPress()"
+          ontouchstart="GameUI.startHandLongPress(${idx})"
+          ontouchend="GameUI.cancelLongPress()"
+          ontouchmove="GameUI.cancelLongPress()">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${face.name}</div>
@@ -232,6 +345,35 @@ const GameUI = {
         </div>`;
       })
       .join('');
+
+    // Animate only newly added cards
+    const handKey = humanPlayer.hand.map((c) => c.id || c.name).join(',');
+    if (handKey !== this._lastHandKey) {
+      const lastCount = this._lastHandKey ? this._lastHandKey.split(',').length : 0;
+      const currentCount = humanPlayer.hand.length;
+      const handCards = el.querySelectorAll('.hand-card');
+
+      if (currentCount > lastCount) {
+        // Cards were added — animate only the new ones at the end
+        const newCards = Array.from(handCards).slice(lastCount);
+        if (newCards.length > 0) {
+          gsap.fromTo(
+            newCards,
+            { y: 40, opacity: 0, scale: 0.85 },
+            {
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 0.25,
+              stagger: 0.05,
+              ease: 'back.out(1.4)',
+              clearProps: 'transform',
+            }
+          );
+        }
+      }
+    }
+    this._lastHandKey = handKey;
   },
 
   // ── COMMAND ZONE ──
@@ -516,6 +658,9 @@ const GameUI = {
         }
       }
     }
+    if (window.innerWidth <= 768) {
+      html += `<button class="action-btn" onclick="GameUI.toggleMobileLog()">📋 Log</button>`;
+    }
 
     el.innerHTML = html;
   },
@@ -527,15 +672,11 @@ const GameUI = {
       this.selectedCard = null;
     } else {
       this.selectedCard = idx;
-
-      const card = Game.human.hand[idx];
-      if (card) this.previewGameCard(card);
     }
     GameUI.renderGame(Game);
   },
 
   onPermanentClick(permanentId) {
-    console.log('onPermanentClick called', permanentId);
     const id = isNaN(permanentId) ? permanentId : Number(permanentId);
 
     if (Combat.phase === 'declare_attackers' && Game.isHumanTurn) {
@@ -543,75 +684,25 @@ const GameUI = {
       GameUI.renderGame(Game);
       return;
     }
-
-    const perm =
-      Game.human.battlefield.find((p) => p.id === id) ||
-      Game.opponent.battlefield.find((p) => p.id === id);
-    console.log('preview lookup', id, perm);
-    if (perm) this.previewGameCard(perm.card);
   },
 
   onPermanentRightClick(permanentId, event) {
     event.preventDefault();
+    event.stopPropagation();
+    if (window.innerWidth <= 768) return;
+
     const id = isNaN(permanentId) ? permanentId : Number(permanentId);
-    const perm =
-      Game.human.battlefield.find((p) => p.id === id) ||
-      Game.opponent.battlefield.find((p) => p.id === id);
-    if (!perm) return;
 
-    this.showCounterMenu(perm, id);
-  },
+    const oppPerm = Game.opponent.battlefield.find((p) => p.id === id);
+    if (oppPerm) {
+      this.previewGameCard(oppPerm.card);
+      return;
+    }
 
-  showCounterMenu(perm, id) {
-    // Remove any existing menu
-    const existing = document.getElementById('counter-menu');
-    if (existing) existing.remove();
-
-    const menu = document.createElement('div');
-    menu.id = 'counter-menu';
-    menu.style.cssText = `
-    position: fixed;
-    background: #1a1a2a;
-    border: 1px solid #4a4a8a;
-    border-radius: 4px;
-    padding: 8px;
-    z-index: 300;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-family: monospace;
-    font-size: 12px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  `;
-
-    const counters = perm.counters || [];
-    const negCount = counters.filter((c) => c === '-1/-1').length;
-    const posCount = counters.filter((c) => c === '+1/+1').length;
-
-    menu.innerHTML = `
-    <div style="color:#888; margin-bottom:4px; font-size:11px">
-      ${perm.card.name}<br>
-      Counters: ${posCount > 0 ? posCount + 'x +1/+1 ' : ''}${negCount > 0 ? negCount + 'x -1/-1' : ''}${posCount === 0 && negCount === 0 ? 'none' : ''}
-    </div>
-    <button onclick="GameUI.placeCounter(${id}, '+1/+1')" style="background:#0a1a0a;border:1px solid #2a4a2a;color:#8c8;padding:6px;cursor:pointer;font-family:monospace">+ Place +1/+1</button>
-    <button onclick="GameUI.placeCounter(${id}, '-1/-1')" style="background:#1a0a0a;border:1px solid #4a2a2a;color:#c88;padding:6px;cursor:pointer;font-family:monospace">− Place -1/-1</button>
-    ${counters.length > 0 ? `<button onclick="GameUI.removeLastCounter(${id})" style="background:#1a1a1a;border:1px solid #333;color:#888;padding:6px;cursor:pointer;font-family:monospace">✕ Remove last counter</button>` : ''}
-    <button onclick="document.getElementById('counter-menu').remove()" style="background:#111;border:1px solid #222;color:#555;padding:4px;cursor:pointer;font-family:monospace;margin-top:2px">Cancel</button>
-  `;
-
-    document.body.appendChild(menu);
-
-    // Close on outside click
-    setTimeout(() => {
-      document.addEventListener('click', function handler(e) {
-        if (!menu.contains(e.target)) {
-          menu.remove();
-          document.removeEventListener('click', handler);
-        }
-      });
-    }, 0);
+    const ownPerm = Game.human.battlefield.find((p) => p.id === id);
+    if (ownPerm) {
+      this.previewGameCard(ownPerm.card, id);
+    }
   },
 
   placeCounter(permanentId, counterType) {
@@ -622,38 +713,65 @@ const GameUI = {
     if (!perm) return;
 
     perm.counters.push(counterType);
-    GameLog.add(`Placed ${counterType} counter on ${perm.card.name}.`, 'action');
 
-    const existing = document.getElementById('counter-menu');
-    if (existing) existing.remove();
+    // MTG rule: +1/+1 and -1/-1 counters cancel each other out
+    let pos = perm.counters.filter((c) => c === '+1/+1').length;
+    let neg = perm.counters.filter((c) => c === '-1/-1').length;
+    if (pos > 0 && neg > 0) {
+      const cancel = Math.min(pos, neg);
+      for (let i = 0; i < cancel; i++) {
+        perm.counters.splice(perm.counters.indexOf('+1/+1'), 1);
+        perm.counters.splice(perm.counters.indexOf('-1/-1'), 1);
+      }
+      GameLog.add(
+        `${cancel} +1/+1 and -1/-1 counter(s) cancelled out on ${perm.card.name}.`,
+        'action'
+      );
+    } else {
+      GameLog.add(`Placed ${counterType} counter on ${perm.card.name}.`, 'action');
+    }
 
-    // Check if creature dies
-    const owner = Game.human.battlefield.find((p) => p.id === id) ? Game.human : Game.opponent;
-    owner.checkStateBasedActions();
-
-    // Fire trigger reminders
     Game.checkTriggers('any_counter_placed');
-
     GameUI.renderGame(Game);
+    this.previewGameCard(perm.card, id);
   },
 
-  removeLastCounter(permanentId) {
+  removeAllCounters(permanentId) {
     const id = isNaN(permanentId) ? permanentId : Number(permanentId);
     const perm =
       Game.human.battlefield.find((p) => p.id === id) ||
       Game.opponent.battlefield.find((p) => p.id === id);
     if (!perm || perm.counters.length === 0) return;
 
-    const removed = perm.counters.pop();
-    GameLog.add(`Removed ${removed} counter from ${perm.card.name}.`, 'action');
+    perm.counters = [];
+    GameLog.add(`Removed all counters from ${perm.card.name}.`, 'action');
 
-    const existing = document.getElementById('counter-menu');
-    if (existing) existing.remove();
+    GameUI.renderGame(Game);
+    this.previewGameCard(perm.card, id);
+  },
 
+  confirmCounters(permanentId) {
+    const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+    const owner = Game.human.battlefield.find((p) => p.id === id) ? Game.human : Game.opponent;
+    const perm = owner.battlefield.find((p) => p.id === id);
+
+    owner.checkStateBasedActions();
+
+    if (!owner.battlefield.find((p) => p.id === id)) {
+      GameLog.add(`${perm.card.name} died from counter effects.`, 'action');
+    }
+
+    document.getElementById('card-preview-modal').classList.add('hidden');
     GameUI.renderGame(Game);
   },
 
   onLandClick(permanentId) {
+    // If mouse was held for 300ms+ it was a long press — don't tap
+    if (this._landPressStart && Date.now() - this._landPressStart >= 300) {
+      this._landPressStart = null;
+      return;
+    }
+    this._landPressStart = null;
     const id = isNaN(permanentId) ? permanentId : Number(permanentId);
     const perm = Game.human.battlefield.find((p) => p.id === id);
 
@@ -712,21 +830,57 @@ const GameUI = {
 
   // ── CARD PREVIEW IN GAME ──
 
-  previewGameCard(card) {
-    const el = document.getElementById('game-card-preview');
-    console.log('preview el', el, 'imgUrl', Scryfall.getImageUrl(card, 'normal'));
-    if (!el) return;
+  previewGameCard(card, permanentId = null) {
+    const isMobile = window.innerWidth <= 768;
 
-    const imgUrl = Scryfall.getImageUrl(card, 'normal');
+    const imgUrl = Scryfall.getImageUrl(card, 'border_crop');
     const oracle = Scryfall.getOracleText(card);
+    const cost = Scryfall.formatManaCost(Scryfall.getManaCost(card));
+    const loyalty = card.loyalty ? `Loyalty: ${card.loyalty}` : '';
 
-    el.innerHTML = `
+    // Check if this is own permanent and build counter controls
+    let counterHtml = '';
+    if (permanentId !== null) {
+      const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+      const perm =
+        Game.human.battlefield.find((p) => p.id === id) ||
+        Game.opponent.battlefield.find((p) => p.id === id);
+      const isCreature = perm && (perm.card.type_line || '').toLowerCase().includes('creature');
+      if (perm && isCreature) {
+        const counters = perm.counters || [];
+        const negCount = counters.filter((c) => c === '-1/-1').length;
+        const posCount = counters.filter((c) => c === '+1/+1').length;
+        counterHtml = `
+          <div class="preview-counters">
+            <div class="preview-counter-label">${posCount === 0 && negCount === 0 ? 'No counters' : [posCount > 0 ? `+${posCount}/+${posCount}` : '', negCount > 0 ? `-${negCount}/-${negCount}` : ''].filter(Boolean).join(' · ')}</div>
+            <div class="preview-counter-btns">
+              <button onclick="GameUI.placeCounter(${id}, '+1/+1')">+ +1/+1</button>
+              <button onclick="GameUI.placeCounter(${id}, '-1/-1')">− -1/-1</button>
+              ${counters.length > 0 ? `<button onclick="GameUI.removeAllCounters(${id})">✕ Remove All</button>` : ''}
+              ${counters.length > 0 ? `<button onclick="GameUI.confirmCounters(${id})" style="border-color: var(--accent); color: var(--accent);">✓ Confirm</button>` : ''}
+            </div>
+          </div>`;
+      }
+    }
+
+    const html = `
       ${imgUrl ? `<img class="preview-img" src="${imgUrl}" alt="${card.name}">` : ''}
       <div class="preview-name">${card.name}</div>
       <div class="preview-type">${card.type_line || ''}</div>
+      ${cost ? `<div class="preview-cost">${cost}</div>` : ''}
       ${oracle ? `<div class="preview-text">${oracle.replace(/\n/g, '<br>')}</div>` : ''}
       ${card.power ? `<div class="preview-pt">${card.power} / ${card.toughness}</div>` : ''}
+      ${loyalty ? `<div class="preview-pt">${loyalty}</div>` : ''}
+      ${counterHtml}
     `;
+
+    document.getElementById('card-preview-modal-content').innerHTML = html;
+    document.getElementById('card-preview-modal').classList.remove('hidden');
+
+    if (!isMobile) {
+      const el = document.getElementById('game-card-preview');
+      if (el) el.innerHTML = html;
+    }
   },
 
   // ── DISCARD ──
@@ -840,13 +994,11 @@ const GameUI = {
 
   showManaChoice(permanentId, colors) {
     this.pendingManaChoice = { permanentId, colors };
-    const el = document.getElementById('mana-choice');
-    if (!el) return;
 
     const colorNames = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green', C: 'Colorless' };
     const colorSymbols = { W: '⬜', U: '🔵', B: '⚫', R: '🔴', G: '🟢', C: '◇' };
 
-    el.innerHTML = `
+    const html = `
       <div class="mana-choice-title">Choose mana color:</div>
       ${colors
         .map(
@@ -857,7 +1009,17 @@ const GameUI = {
         )
         .join('')}
     `;
-    el.classList.remove('hidden');
+
+    // Always use modal for mana choice
+    document.getElementById('card-preview-modal-content').innerHTML = html;
+    document.getElementById('card-preview-modal').classList.remove('hidden');
+
+    // Also update sidebar for desktop
+    const el = document.getElementById('mana-choice');
+    if (el) {
+      el.innerHTML = html;
+      el.classList.remove('hidden');
+    }
   },
 
   chooseMana(color) {
@@ -867,6 +1029,8 @@ const GameUI = {
 
     const el = document.getElementById('mana-choice');
     if (el) el.classList.add('hidden');
+
+    document.getElementById('card-preview-modal').classList.add('hidden');
 
     Game.tapLandForManaColor(permanentId, color);
   },
@@ -895,5 +1059,59 @@ const GameUI = {
       </div>
     `;
     el.classList.remove('hidden');
+  },
+  handleHandCardTap(idx) {
+    this.cancelLongPress();
+    const now = Date.now();
+    if (this._lastTap && now - this._lastTap < 300 && this._lastTapIdx === idx) {
+      const card = Game.human.hand[idx];
+      if (card) this.previewGameCard(card);
+      this._lastTap = null;
+    } else {
+      this._lastTap = now;
+      this._lastTapIdx = idx;
+      this.onHandCardClick(idx);
+    }
+  },
+  startPermanentLongPress(permanentId, event) {
+    this._longPressTimer = setTimeout(() => {
+      const id = isNaN(permanentId) ? permanentId : Number(permanentId);
+      const perm =
+        Game.human.battlefield.find((p) => p.id === id) ||
+        Game.opponent.battlefield.find((p) => p.id === id);
+      if (perm) this.previewGameCard(perm.card, id);
+    }, 300);
+  },
+
+  cancelLongPress() {
+    if (this._longPressTimer) {
+      clearTimeout(this._longPressTimer);
+      this._longPressTimer = null;
+    }
+  },
+  toggleMobileLog() {
+    const drawer = document.getElementById('mobile-log-drawer');
+    const toggle = document.getElementById('mobile-log-toggle');
+    if (!drawer) return;
+
+    const isHidden = drawer.classList.contains('hidden');
+    drawer.classList.toggle('hidden');
+    if (toggle) toggle.textContent = isHidden ? '▼' : '▲';
+
+    // Sync log entries
+    if (isHidden) {
+      const entries = document.getElementById('game-log-entries');
+      const mobileEntries = document.getElementById('mobile-log-entries');
+      if (entries && mobileEntries) {
+        mobileEntries.innerHTML = entries.innerHTML;
+        mobileEntries.scrollTop = mobileEntries.scrollHeight;
+      }
+    }
+  },
+  startHandLongPress(idx) {
+    this._longPressTimer = setTimeout(() => {
+      const card = Game.human.hand[idx];
+      if (card) this.previewGameCard(card);
+    }, 300);
   },
 };

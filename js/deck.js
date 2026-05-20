@@ -21,7 +21,6 @@ const Deck = {
         existing.qty++;
       } else {
         // Non-basic, non-commander: max 1 copy in Commander format
-        console.log('Already in deck (Commander format: 1 copy max)');
         return false;
       }
     } else {
@@ -341,6 +340,7 @@ ${
   getFlatDeck() {
     const flat = [];
     this.cards.forEach((e) => {
+      if (this.isCommander(e.card.name)) return;
       for (let i = 0; i < e.qty; i++) {
         flat.push({ ...e.card });
       }
@@ -509,7 +509,6 @@ const AIDeck = {
   getFlatDeck() {
     const flat = [];
     this.cards.forEach((e) => {
-      if (this.isCommander(e.card.name)) return;
       for (let i = 0; i < e.qty; i++) {
         flat.push({ ...e.card });
       }

@@ -299,6 +299,15 @@
               <div id="game-log-entries" class="game-log"></div>
             </div>
           </div>
+
+          <!-- Mobile log drawer -->
+          <div id="mobile-log-drawer" class="mobile-log-drawer hidden">
+            <div class="mobile-log-header" onclick="GameUI.toggleMobileLog()">
+              <span>Game Log</span>
+              <span id="mobile-log-toggle">▲</span>
+            </div>
+            <div id="mobile-log-entries" class="mobile-log-entries"></div>
+          </div>
         </div>
 
         <div id="game-over" class="game-over hidden"></div>
@@ -319,4 +328,16 @@
     <script src="js/gameui.js"></script>
     <script src="js/main.js"></script>
   </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <div id="card-preview-modal" class="modal hidden">
+    <div class="modal-inner" onclick="event.stopPropagation()">
+      <div id="card-preview-modal-content"></div>
+      <button
+        onclick="document.getElementById('card-preview-modal').classList.add('hidden')"
+        style="width: 100%; margin-top: 8px"
+      >
+        Close
+      </button>
+    </div>
+  </div>
 </html>
