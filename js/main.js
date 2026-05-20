@@ -48,16 +48,19 @@ function exitToDeckBuilder() {
 }
 
 function abandonGame() {
-  if (!confirm('Abandon this game? This cannot be undone.')) return;
+  if (document.getElementById('game-over') && !document.getElementById('game-over').classList.contains('hidden')) {
+    // Coming from game over screen — no confirm needed
+  } else if (!confirm('Abandon this game? This cannot be undone.')) {
+    return;
+  }
   document.getElementById('game-settings-dropdown')?.classList.add('hidden');
+  document.getElementById('game-over')?.classList.add('hidden');
   const banner = document.getElementById('game-in-progress-banner');
   if (banner) banner.classList.add('hidden');
-  // Reset game state
   const boardEl = document.getElementById('game-board');
   const mulliganEl = document.getElementById('mulligan-screen');
   if (boardEl) boardEl.classList.add('hidden');
   if (mulliganEl) mulliganEl.classList.add('hidden');
-  // Disable play btn until new game started
   const playBtn = document.getElementById('play-btn');
   if (playBtn) playBtn.disabled = true;
   showPage('deck-builder');

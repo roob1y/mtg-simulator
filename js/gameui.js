@@ -1089,7 +1089,7 @@ const GameUI = {
       <div class="game-over-inner">
         <div class="game-over-title">${won ? '🏆 You Win!' : '💀 You Lose'}</div>
         <div class="game-over-text">${won ? 'Congratulations!' : 'Better luck next time!'}</div>
-        <button onclick="showPage('deck-builder')">Back to Deck Builder</button>
+        <button onclick="abandonGame()">Back to Deck Builder</button>
       </div>
     `;
     el.classList.remove('hidden');
