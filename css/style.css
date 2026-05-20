@@ -691,6 +691,10 @@ button:disabled {
     grid-template-columns: 1fr;
     height: auto;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 50px);
+    overflow: hidden;
   }
 
   .panel {
@@ -698,17 +702,26 @@ button:disabled {
     border-bottom: 1px solid var(--border-subtle);
   }
 
+  #search-panel {
+    flex-shrink: 0;
+    max-height: 35vh;
+    overflow-y: auto;
+  }
+
   #deck-panel {
-    max-height: none;
-    height: calc(100vh - 60px);
+    flex: 1;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   #view-your-deck,
   #view-opponent {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     overflow: hidden;
   }
 
@@ -716,7 +729,6 @@ button:disabled {
   #ai-deck-list {
     flex: 1;
     overflow-y: auto;
-    max-height: none;
     min-height: 0;
   }
 
