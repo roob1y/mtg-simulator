@@ -1082,64 +1082,17 @@
   animation: attackPulse 1s ease-in-out infinite;
 }
 
-/* Corner candles — four fixed glows in screen corners */
-@keyframes candleFlicker {
-  0%   { opacity: 0.7; transform: scale(1); }
-  20%  { opacity: 0.5; transform: scale(0.92); }
-  40%  { opacity: 0.75; transform: scale(1.05); }
-  60%  { opacity: 0.55; transform: scale(0.95); }
-  80%  { opacity: 0.8; transform: scale(1.02); }
-  100% { opacity: 0.7; transform: scale(1); }
+/* Firelight breathe — subtle warm pulse on the whole board */
+@keyframes firelightBreathe {
+  0%, 100% { opacity: 1; }
+  40%       { opacity: 0.88; }
+  65%       { opacity: 0.94; }
+}
+#game-board {
+  animation: firelightBreathe 5s ease-in-out infinite;
 }
 
-@keyframes candleFlicker2 {
-  0%   { opacity: 0.65; transform: scale(1.02); }
-  30%  { opacity: 0.8; transform: scale(0.94); }
-  55%  { opacity: 0.6; transform: scale(1.06); }
-  75%  { opacity: 0.75; transform: scale(0.97); }
-  100% { opacity: 0.65; transform: scale(1.02); }
-}
-
-.candle-tl, .candle-tr, .candle-bl, .candle-br {
-  position: fixed;
-  width: 80px;
-  height: 80px;
-  pointer-events: none;
-  z-index: 2;
-  border-radius: 50%;
-  mix-blend-mode: screen;
-  display: none;
-}
-
-#game.active .candle-tl,
-#game.active .candle-tr,
-#game.active .candle-bl,
-#game.active .candle-br {
-  display: block;
-}
-
-.candle-tl {
-  top: 45px; left: 0;
-  background: radial-gradient(ellipse at 30% 30%, rgba(255,165,40,0.6) 0%, transparent 70%);
-  animation: candleFlicker 3.2s ease-in-out infinite;
-}
-.candle-tr {
-  top: 45px; left: calc(100vw - 80px);
-  background: radial-gradient(ellipse at 70% 30%, rgba(255,145,30,0.55) 0%, transparent 70%);
-  animation: candleFlicker2 2.8s ease-in-out infinite;
-}
-.candle-bl {
-  top: calc(100vh - 140px); left: 0;
-  background: radial-gradient(ellipse at 30% 70%, rgba(255,155,35,0.45) 0%, transparent 70%);
-  animation: candleFlicker 4.1s ease-in-out infinite 0.5s;
-}
-.candle-br {
-  top: calc(100vh - 140px); left: calc(100vw - 80px);
-  background: radial-gradient(ellipse at 70% 70%, rgba(255,170,45,0.5) 0%, transparent 70%);
-  animation: candleFlicker2 3.6s ease-in-out infinite 0.8s;
-}
-
-/* Remove old single candle */
+/* Remove old candle orbs */
 #game-board::after { display: none; }
 
 /* Divider shimmer */
