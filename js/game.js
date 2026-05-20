@@ -76,6 +76,14 @@ const Game = {
   advancePhase() {
     if (this.gameOver) return;
 
+    if (this.currentPhase === 'end' && this.isHumanTurn && this.human.mustDiscard()) {
+      GameLog.add(
+        `Discard down to ${this.human.maxHandSize} cards before ending your turn.`,
+        'warning'
+      );
+      return;
+    }
+
     // Clear any lingering UI state
     const manaChoice = document.getElementById('mana-choice');
     if (manaChoice) manaChoice.classList.add('hidden');
@@ -91,6 +99,8 @@ const Game = {
     }
 
     this.currentPhase = PHASES[nextIdx];
+    if (this.currentPhase !== 'combat') Combat.phase = null;
+    this.human.clearManaPool();
     this.processCurrentPhase();
   },
 
@@ -684,5 +694,18 @@ const Game = {
       return true;
     }
     return false;
+  },
+  checkDrawLoss(player) {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    if (player.isHuman) {
+      GameLog.add('💀 You tried to draw from an empty library. You lose.', 'phase');
+      GameUI.renderGame(this);
+      GameUI.showGameOver(false);
+    } else {
+      GameLog.add('🏆 Opponent tried to draw from an empty library. You win!', 'phase');
+      GameUI.renderGame(this);
+      GameUI.showGameOver(true);
+    }
   },
 };

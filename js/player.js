@@ -51,7 +51,8 @@ class Player {
     const drawn = [];
     for (let i = 0; i < n; i++) {
       if (this.library.length === 0) {
-        GameLog.add(`${this.name} has no cards left to draw!`, 'warning');
+        GameLog.add(`${this.name} has no cards left to draw — they lose!`, 'warning');
+        Game.checkDrawLoss(this);
         break;
       }
       const card = this.library.shift();
@@ -170,7 +171,10 @@ class Player {
   untapAll() {
     this.battlefield.forEach((p) => {
       p.tapped = false;
-      p.summoningSick = false;
+      const type = (p.card.type_line || '').toLowerCase();
+      if (type.includes('creature')) {
+        p.summoningSick = false;
+      }
     });
   }
 
@@ -366,6 +370,7 @@ class Player {
   }
 
   discardToHandSize() {
+    if (this.isHuman) return; // human discards manually via UI
     while (this.hand.length > this.maxHandSize) {
       const discarded = this.hand.pop();
       this.graveyard.push(discarded);
