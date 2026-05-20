@@ -19,7 +19,15 @@ const GameUI = {
     if (!this._contextMenuSuppressed) {
       const board = document.getElementById('game-board');
       if (board) {
-        board.addEventListener('contextmenu', (e) => e.preventDefault(), { passive: false });
+        board.addEventListener(
+          'contextmenu',
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          },
+          { passive: false, capture: true }
+        );
         this._contextMenuSuppressed = true;
       }
     }
@@ -247,9 +255,19 @@ const GameUI = {
         const landArt = Scryfall.getImageUrl(perm.card, 'normal');
         html += `
           <div class="permanent land-perm ${perm.tapped ? 'tapped' : ''}"
-            onclick="GameUI.onLandClick('${perm.id}')" oncontextmenu="event.preventDefault()" onmousedown="GameUI.startPermanentLongPress('${perm.id}', event)" onmouseup="GameUI.cancelLongPress()" onmouseleave="GameUI.cancelLongPress()" ontouchstart="GameUI.startPermanentLongPress('${perm.id}', event)" ontouchend="GameUI.cancelLongPress()" ontouchmove="GameUI.cancelLongPress()">
+            onclick="GameUI.onLandClick('${perm.id}')"
+            oncontextmenu="event.preventDefault()"
+            onmousedown="GameUI._landPressStart = Date.now(); GameUI.startPermanentLongPress('${perm.id}', event)"
+            onmouseup="GameUI.cancelLongPress()"
+            onmouseleave="GameUI.cancelLongPress()"
+            ontouchstart="GameUI.startPermanentLongPress('${perm.id}', event)"
+            ontouchend="GameUI.cancelLongPress()"
+            ontouchmove="GameUI.cancelLongPress()">
             ${landArt ? `<img class="perm-art" src="${landArt}" alt="${perm.card.name}">` : ''}
-            ${perm.canUntap && perm.tapped ? '<div class="sick-label" onclick="event.stopPropagation(); GameUI.untapLand(' + perm.id + ')">↺ Undo</div>' : ''}
+            <div class="perm-overlay">
+              <div class="perm-name">${perm.card.name}</div>
+            </div>
+            ${perm.canUntap && perm.tapped ? `<div class="sick-label" onclick="event.stopPropagation(); GameUI.untapLand(${perm.id})">↺ Undo</div>` : ''}
           </div>`;
       });
       html += `</div>`;
@@ -311,7 +329,14 @@ const GameUI = {
 
         return `
         <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''}"
-          onclick="GameUI.handleHandCardTap(${idx})" oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])">
+          onclick="GameUI.handleHandCardTap(${idx})"
+          oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])"
+          onmousedown="GameUI.startHandLongPress(${idx})"
+          onmouseup="GameUI.cancelLongPress()"
+          onmouseleave="GameUI.cancelLongPress()"
+          ontouchstart="GameUI.startHandLongPress(${idx})"
+          ontouchend="GameUI.cancelLongPress()"
+          ontouchmove="GameUI.cancelLongPress()">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${face.name}</div>
@@ -633,6 +658,9 @@ const GameUI = {
         }
       }
     }
+    if (window.innerWidth <= 768) {
+      html += `<button class="action-btn" onclick="GameUI.toggleMobileLog()">📋 Log</button>`;
+    }
 
     el.innerHTML = html;
   },
@@ -738,6 +766,12 @@ const GameUI = {
   },
 
   onLandClick(permanentId) {
+    // If mouse was held for 300ms+ it was a long press — don't tap
+    if (this._landPressStart && Date.now() - this._landPressStart >= 300) {
+      this._landPressStart = null;
+      return;
+    }
+    this._landPressStart = null;
     const id = isNaN(permanentId) ? permanentId : Number(permanentId);
     const perm = Game.human.battlefield.find((p) => p.id === id);
 
@@ -960,13 +994,11 @@ const GameUI = {
 
   showManaChoice(permanentId, colors) {
     this.pendingManaChoice = { permanentId, colors };
-    const el = document.getElementById('mana-choice');
-    if (!el) return;
 
     const colorNames = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green', C: 'Colorless' };
     const colorSymbols = { W: '⬜', U: '🔵', B: '⚫', R: '🔴', G: '🟢', C: '◇' };
 
-    el.innerHTML = `
+    const html = `
       <div class="mana-choice-title">Choose mana color:</div>
       ${colors
         .map(
@@ -977,7 +1009,17 @@ const GameUI = {
         )
         .join('')}
     `;
-    el.classList.remove('hidden');
+
+    // Always use modal for mana choice
+    document.getElementById('card-preview-modal-content').innerHTML = html;
+    document.getElementById('card-preview-modal').classList.remove('hidden');
+
+    // Also update sidebar for desktop
+    const el = document.getElementById('mana-choice');
+    if (el) {
+      el.innerHTML = html;
+      el.classList.remove('hidden');
+    }
   },
 
   chooseMana(color) {
@@ -987,6 +1029,8 @@ const GameUI = {
 
     const el = document.getElementById('mana-choice');
     if (el) el.classList.add('hidden');
+
+    document.getElementById('card-preview-modal').classList.add('hidden');
 
     Game.tapLandForManaColor(permanentId, color);
   },
@@ -1017,14 +1061,13 @@ const GameUI = {
     el.classList.remove('hidden');
   },
   handleHandCardTap(idx) {
+    this.cancelLongPress();
     const now = Date.now();
     if (this._lastTap && now - this._lastTap < 300 && this._lastTapIdx === idx) {
-      // Double tap — preview
       const card = Game.human.hand[idx];
       if (card) this.previewGameCard(card);
       this._lastTap = null;
     } else {
-      // Single tap — select
       this._lastTap = now;
       this._lastTapIdx = idx;
       this.onHandCardClick(idx);
@@ -1045,5 +1088,30 @@ const GameUI = {
       clearTimeout(this._longPressTimer);
       this._longPressTimer = null;
     }
+  },
+  toggleMobileLog() {
+    const drawer = document.getElementById('mobile-log-drawer');
+    const toggle = document.getElementById('mobile-log-toggle');
+    if (!drawer) return;
+
+    const isHidden = drawer.classList.contains('hidden');
+    drawer.classList.toggle('hidden');
+    if (toggle) toggle.textContent = isHidden ? '▼' : '▲';
+
+    // Sync log entries
+    if (isHidden) {
+      const entries = document.getElementById('game-log-entries');
+      const mobileEntries = document.getElementById('mobile-log-entries');
+      if (entries && mobileEntries) {
+        mobileEntries.innerHTML = entries.innerHTML;
+        mobileEntries.scrollTop = mobileEntries.scrollHeight;
+      }
+    }
+  },
+  startHandLongPress(idx) {
+    this._longPressTimer = setTimeout(() => {
+      const card = Game.human.hand[idx];
+      if (card) this.previewGameCard(card);
+    }, 300);
   },
 };
