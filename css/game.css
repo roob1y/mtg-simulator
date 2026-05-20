@@ -1057,17 +1057,19 @@
 
 /* Life total damage flash */
 @keyframes lifeDamage {
-  0%   { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); }
-  30%  { color: #ff6666; text-shadow: 0 0 30px rgba(255,80,80,0.7); }
-  100% { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); }
+  0%   { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); transform: scale(1); }
+  25%  { color: #ff4444; text-shadow: 0 0 40px rgba(255,60,60,0.9), 0 0 80px rgba(255,0,0,0.4); transform: scale(1.25); }
+  60%  { color: #ff8888; text-shadow: 0 0 20px rgba(255,100,100,0.5); transform: scale(1.05); }
+  100% { color: #f0e8d0; text-shadow: 0 0 30px rgba(200,168,75,0.3); transform: scale(1); }
 }
 @keyframes lifeGain {
-  0%   { color: #f0e8d0; }
-  30%  { color: #88ffaa; text-shadow: 0 0 20px rgba(100,255,140,0.6); }
-  100% { color: #f0e8d0; }
+  0%   { color: #f0e8d0; transform: scale(1); }
+  25%  { color: #44ff88; text-shadow: 0 0 40px rgba(60,255,120,0.8); transform: scale(1.2); }
+  60%  { color: #88ffaa; transform: scale(1.05); }
+  100% { color: #f0e8d0; transform: scale(1); }
 }
-.life-flash-damage { animation: lifeDamage 0.5s ease forwards; }
-.life-flash-gain   { animation: lifeGain 0.5s ease forwards; }
+.life-flash-damage { animation: lifeDamage 0.7s ease forwards; }
+.life-flash-gain   { animation: lifeGain 0.7s ease forwards; }
 
 /* Can-afford pulse on hand cards */
 @keyframes affordPulse {
@@ -1107,8 +1109,8 @@
 
 .candle-tl, .candle-tr, .candle-bl, .candle-br {
   position: fixed;
-  width: 120px;
-  height: 120px;
+  width: 80px;
+  height: 80px;
   pointer-events: none;
   z-index: 2;
   border-radius: 50%;
@@ -1116,23 +1118,23 @@
 }
 
 .candle-tl {
-  top: 40px; left: 0;
-  background: radial-gradient(ellipse at 40% 40%, rgba(255,165,40,0.55) 0%, transparent 70%);
+  top: 45px; left: -20px;
+  background: radial-gradient(ellipse at 60% 60%, rgba(255,165,40,0.6) 0%, transparent 70%);
   animation: candleFlicker 3.2s ease-in-out infinite;
 }
 .candle-tr {
-  top: 40px; right: 0;
-  background: radial-gradient(ellipse at 60% 40%, rgba(255,145,30,0.5) 0%, transparent 70%);
+  top: 45px; right: -20px;
+  background: radial-gradient(ellipse at 40% 60%, rgba(255,145,30,0.55) 0%, transparent 70%);
   animation: candleFlicker2 2.8s ease-in-out infinite;
 }
 .candle-bl {
-  bottom: 0; left: 0;
-  background: radial-gradient(ellipse at 40% 60%, rgba(255,155,35,0.4) 0%, transparent 70%);
+  bottom: 60px; left: -20px;
+  background: radial-gradient(ellipse at 60% 40%, rgba(255,155,35,0.45) 0%, transparent 70%);
   animation: candleFlicker 4.1s ease-in-out infinite 0.5s;
 }
 .candle-br {
-  bottom: 0; right: 0;
-  background: radial-gradient(ellipse at 60% 60%, rgba(255,170,45,0.45) 0%, transparent 70%);
+  bottom: 60px; right: -20px;
+  background: radial-gradient(ellipse at 40% 40%, rgba(255,170,45,0.5) 0%, transparent 70%);
   animation: candleFlicker2 3.6s ease-in-out infinite 0.8s;
 }
 

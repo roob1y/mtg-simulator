@@ -292,7 +292,7 @@ const Game = {
       this.checkTriggers('land_enters', card);
       this.processETB(card);
       this.checkWinCondition();
-      setTimeout(() => GameUI.renderGame(this), 150);
+      setTimeout(() => GameUI.renderGame(this), 300);
     }
     return success;
   },
@@ -566,7 +566,7 @@ const Game = {
       // Check triggers
       this.checkTriggers('spell_cast', card);
       this.checkWinCondition();
-      setTimeout(() => GameUI.renderGame(this), 150);
+      setTimeout(() => GameUI.renderGame(this), 300);
     }
 
     return !!result;
