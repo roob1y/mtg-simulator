@@ -265,16 +265,12 @@
 }
 
 .opp-zone {
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(80,50,140,0.18) 0%, transparent 65%),
-    rgba(0,0,0,0.15);
   border-bottom: none;
+  min-height: 80px;
 }
 
 .human-zone {
-  background:
-    radial-gradient(ellipse at 50% 100%, rgba(40,90,50,0.18) 0%, transparent 65%),
-    rgba(0,0,0,0.1);
+  min-height: 80px;
 }
 
 /* Arcane circle divider */
