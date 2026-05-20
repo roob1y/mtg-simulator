@@ -694,7 +694,6 @@ button:disabled {
   }
 
   .panel {
-    max-height: 60vh;
     border-right: none;
     border-bottom: 1px solid var(--border-subtle);
   }
