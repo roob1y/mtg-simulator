@@ -657,6 +657,34 @@ button:disabled {
   max-width: 340px;
 }
 
+/* ── PREVIEW COUNTERS ── */
+.preview-counters {
+  width: 100%;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.preview-counter-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.preview-counter-btns {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.preview-counter-btns button {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   .deck-builder-layout {
