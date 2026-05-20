@@ -110,6 +110,14 @@ const GameUI = {
 
   // ── DRAWERS ──
 
+  summariseCounters(counters) {
+    const tally = {};
+    counters.forEach(c => { tally[c] = (tally[c] || 0) + 1; });
+    return Object.entries(tally)
+      .map(([type, count]) => count > 1 ? `${count}× ${type}` : type)
+      .join(', ');
+  },
+
   toggleDrawer(drawerId) {
     const el = document.getElementById(drawerId);
     if (el) el.classList.toggle('is-open');
@@ -174,7 +182,7 @@ const GameUI = {
               <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
               <div class="perm-pt">${power}/${toughness}</div>
             </div>
-            ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(', ')}</div>` : ''}
+            ${perm.counters.length > 0 ? `<div class="perm-counters">${GameUI.summariseCounters(perm.counters)}</div>` : ''}
           </div>`;
       });
       html += `</div>`;
@@ -275,7 +283,7 @@ const GameUI = {
             ${artUrl ? `<img class="perm-art" src="${artUrl}" alt="${Scryfall.getFrontFace(perm.card).name}">` : ''}
             ${perm.summoningSick ? '<div class="sick-label">Sick</div>' : ''}
             ${perm.isCommander ? '<div class="cmd-label">CMD</div>' : ''}
-            ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(' ')}</div>` : ''}
+            ${perm.counters.length > 0 ? `<div class="perm-counters">${GameUI.summariseCounters(perm.counters)}</div>` : ''}
           </div>`;
       });
       html += `</div>`;
