@@ -341,6 +341,7 @@ ${
   getFlatDeck() {
     const flat = [];
     this.cards.forEach((e) => {
+      if (this.isCommander(e.card.name)) return;
       for (let i = 0; i < e.qty; i++) {
         flat.push({ ...e.card });
       }
@@ -509,7 +510,6 @@ const AIDeck = {
   getFlatDeck() {
     const flat = [];
     this.cards.forEach((e) => {
-      if (this.isCommander(e.card.name)) return;
       for (let i = 0; i < e.qty; i++) {
         flat.push({ ...e.card });
       }

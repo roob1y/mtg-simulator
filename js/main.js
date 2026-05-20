@@ -136,13 +136,13 @@ function previewCardObj(id, cardOverride) {
   const card = cardOverride || cardCache[id];
   if (!card) return;
 
-  const imgUrl = Scryfall.getImageUrl(card, 'normal');
+  const imgUrl = Scryfall.getImageUrl(card, 'border_crop');
   const cost = Scryfall.formatManaCost(Scryfall.getManaCost(card));
   const oracle = Scryfall.getOracleText(card);
   const pt = card.power ? `${card.power} / ${card.toughness}` : '';
   const loyalty = card.loyalty ? `Loyalty: ${card.loyalty}` : '';
 
-  document.getElementById('card-preview').innerHTML = `
+  const html = `
     ${imgUrl ? `<img class="preview-img" src="${imgUrl}" alt="${card.name}">` : ''}
     <div class="preview-name">${card.name}</div>
     <div class="preview-type">${card.type_line || ''}</div>
@@ -151,6 +151,15 @@ function previewCardObj(id, cardOverride) {
     ${pt ? `<div class="preview-pt">${pt}</div>` : ''}
     ${loyalty ? `<div class="preview-pt">${loyalty}</div>` : ''}
   `;
+
+  const isMobile = window.innerWidth <= 900;
+
+  if (isMobile) {
+    document.getElementById('card-preview-modal-content').innerHTML = html;
+    document.getElementById('card-preview-modal').classList.remove('hidden');
+  } else {
+    document.getElementById('card-preview').innerHTML = html;
+  }
 }
 
 // ── DECK CONTROLS ──

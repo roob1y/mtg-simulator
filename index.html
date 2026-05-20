@@ -206,6 +206,17 @@
           </button>
         </div>
       </div>
+      <div id="card-preview-modal" class="modal hidden">
+        <div class="modal-inner" onclick="event.stopPropagation()">
+          <div id="card-preview-modal-content"></div>
+          <button
+            onclick="document.getElementById('card-preview-modal').classList.add('hidden')"
+            style="width: 100%; margin-top: 8px"
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- GAME PAGE -->
