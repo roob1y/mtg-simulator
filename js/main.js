@@ -246,8 +246,13 @@ async function runImport() {
 
     for (const { card, qty, name } of results) {
       if (card) {
-        for (let j = 0; j < qty; j++) {
-          cardCache[card.id] = card;
+        cardCache[card.id] = card;
+        const isBasic = Deck.isBasicLand(card);
+        if (isBasic) {
+          for (let j = 0; j < qty; j++) {
+            Deck.add(card);
+          }
+        } else {
           Deck.add(card);
         }
         loaded++;
