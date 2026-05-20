@@ -218,6 +218,57 @@
 
     <!-- GAME PAGE -->
     <div id="game" class="page hidden">
+
+      <!-- TOP HUD — fixed, outside game-board -->
+      <div class="game-hud-top" id="game-hud-top">
+        <div id="phase-bar" class="phase-bar"></div>
+        <div class="game-header">
+          <div class="life-block">
+            <span class="life-label">Opponent</span>
+            <span class="life-total" id="opp-life">40</span>
+          </div>
+          <div class="turn-block">
+            <div id="turn-info">Turn 1 — Your Turn</div>
+          </div>
+          <div class="life-block">
+            <span class="life-label">You</span>
+            <span class="life-total" id="human-life">40</span>
+          </div>
+        </div>
+        <div class="drawer drawer--down" id="opp-graveyard-drawer">
+          <button class="drawer__tab" onclick="GameUI.toggleDrawer('opp-graveyard-drawer')">
+            Opp. Graveyard · <span id="opp-graveyard-count">0</span>
+          </button>
+          <div class="drawer__body" id="opp-graveyard-list"></div>
+        </div>
+      </div>
+
+      <!-- BOTTOM HUD — fixed, outside game-board -->
+      <div class="game-hud-bottom" id="game-hud-bottom">
+        <div class="mana-bar" id="mana-pool"></div>
+        <div class="action-bar" id="action-buttons"></div>
+        <div class="hand-zone">
+          <div class="hand-cards" id="human-hand"></div>
+        </div>
+        <div class="command-zone-area">
+          <div id="command-zone"></div>
+        </div>
+        <div class="hud-drawers">
+          <div class="drawer drawer--up" id="graveyard-drawer">
+            <button class="drawer__tab" onclick="GameUI.toggleDrawer('graveyard-drawer')">
+              Graveyard · <span id="graveyard-count">0</span>
+            </button>
+            <div class="drawer__body" id="graveyard-list"></div>
+          </div>
+          <div class="drawer drawer--up" id="exile-drawer">
+            <button class="drawer__tab" onclick="GameUI.toggleDrawer('exile-drawer')">
+              Exile · <span id="exile-count">0</span>
+            </button>
+            <div class="drawer__body" id="exile-list"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Mulligan Screen -->
       <div id="mulligan-screen" class="hidden">
         <div class="mulligan-inner">
@@ -233,64 +284,14 @@
         </div>
       </div>
 
-      <!-- Game Board -->
+      <!-- Game Board — scrollable battlefield only -->
       <div id="game-board" class="hidden">
 
-        <!-- TOP HUD — sticky -->
-        <div class="game-hud-top">
-          <div id="phase-bar" class="phase-bar"></div>
-          <div class="game-header">
-            <div class="life-block">
-              <span class="life-label">Opponent</span>
-              <span class="life-total" id="opp-life">40</span>
-            </div>
-            <div class="turn-block">
-              <div id="turn-info">Turn 1 — Your Turn</div>
-            </div>
-            <div class="life-block">
-              <span class="life-label">You</span>
-              <span class="life-total" id="human-life">40</span>
-            </div>
-          </div>
-          <div class="drawer drawer--down" id="opp-graveyard-drawer">
-            <button class="drawer__tab" onclick="GameUI.toggleDrawer('opp-graveyard-drawer')">
-              Opp. Graveyard · <span id="opp-graveyard-count">0</span>
-            </button>
-            <div class="drawer__body" id="opp-graveyard-list"></div>
-          </div>
-        </div>
-
-        <!-- BATTLEFIELD — scrollable middle -->
+        <!-- BATTLEFIELD -->
         <div class="game-battlefield">
           <div class="game-zone opp-zone" id="opp-battlefield"></div>
           <div class="battlefield-divider">— Battlefield —</div>
           <div class="game-zone human-zone" id="human-battlefield"></div>
-        </div>
-
-        <!-- BOTTOM HUD — fixed -->
-        <div class="game-hud-bottom">
-          <div class="mana-bar" id="mana-pool"></div>
-          <div class="action-bar" id="action-buttons"></div>
-          <div class="hand-zone">
-            <div class="hand-cards" id="human-hand"></div>
-          </div>
-          <div class="command-zone-area">
-            <div id="command-zone"></div>
-          </div>
-          <div class="hud-drawers">
-            <div class="drawer drawer--up" id="graveyard-drawer">
-              <button class="drawer__tab" onclick="GameUI.toggleDrawer('graveyard-drawer')">
-                Graveyard · <span id="graveyard-count">0</span>
-              </button>
-              <div class="drawer__body" id="graveyard-list"></div>
-            </div>
-            <div class="drawer drawer--up" id="exile-drawer">
-              <button class="drawer__tab" onclick="GameUI.toggleDrawer('exile-drawer')">
-                Exile · <span id="exile-count">0</span>
-              </button>
-              <div class="drawer__body" id="exile-list"></div>
-            </div>
-          </div>
         </div>
 
         <!-- Sidebar (desktop only) -->
