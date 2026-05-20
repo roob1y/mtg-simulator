@@ -246,13 +246,11 @@
         <div class="game-layout">
           <div class="game-main">
             <div class="game-zone opp-zone" id="opp-battlefield"></div>
-            <div class="graveyard-area">
-              <div class="zone-label">
-                Opponent Graveyard (
-                <span id="opp-graveyard-count">0</span>
-                )
-              </div>
-              <div id="opp-graveyard-list"></div>
+            <div class="drawer drawer--down" id="opp-graveyard-drawer">
+              <button class="drawer__tab" onclick="GameUI.toggleDrawer('opp-graveyard-drawer')">
+                Opp. Graveyard · <span id="opp-graveyard-count">0</span>
+              </button>
+              <div class="drawer__body" id="opp-graveyard-list"></div>
             </div>
             <div class="battlefield-divider">— Battlefield —</div>
             <div class="game-zone human-zone" id="human-battlefield"></div>
@@ -266,21 +264,17 @@
               <div class="zone-label">Command Zone</div>
               <div id="command-zone"></div>
             </div>
-            <div class="graveyard-area">
-              <div class="zone-label">
-                Graveyard (
-                <span id="graveyard-count">0</span>
-                )
-              </div>
-              <div id="graveyard-list"></div>
+            <div class="drawer drawer--up" id="graveyard-drawer">
+              <button class="drawer__tab" onclick="GameUI.toggleDrawer('graveyard-drawer')">
+                Graveyard · <span id="graveyard-count">0</span>
+              </button>
+              <div class="drawer__body" id="graveyard-list"></div>
             </div>
-            <div class="graveyard-area">
-              <div class="zone-label">
-                Exile (
-                <span id="exile-count">0</span>
-                )
-              </div>
-              <div id="exile-list"></div>
+            <div class="drawer drawer--up" id="exile-drawer">
+              <button class="drawer__tab" onclick="GameUI.toggleDrawer('exile-drawer')">
+                Exile · <span id="exile-count">0</span>
+              </button>
+              <div class="drawer__body" id="exile-list"></div>
             </div>
           </div>
 

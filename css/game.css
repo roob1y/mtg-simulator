@@ -849,3 +849,73 @@
 .hidden {
   display: none !important;
 }
+
+/* ── GRAVEYARD / EXILE DRAWERS ── */
+.drawer {
+  position: relative;
+}
+
+.drawer__tab {
+  width: 100%;
+  background: var(--bg-surface);
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.drawer__tab::before {
+  content: '▸';
+  font-size: 9px;
+  transition: transform 0.2s;
+}
+
+.drawer--down .drawer__tab {
+  border-top: none;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.drawer--down .drawer__tab::before {
+  content: '▾';
+}
+
+.drawer.is-open .drawer__tab {
+  color: var(--text-secondary);
+  background: var(--bg-raised);
+}
+
+.drawer.is-open .drawer__tab::before {
+  transform: rotate(90deg);
+}
+
+.drawer--down.is-open .drawer__tab::before {
+  transform: rotate(0deg);
+}
+
+.drawer__body {
+  display: none;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--bg-base);
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px;
+}
+
+.drawer--down .drawer__body {
+  border-top: none;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.drawer.is-open .drawer__body {
+  display: block;
+}

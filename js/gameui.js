@@ -83,6 +83,13 @@ const GameUI = {
       turnInfo.textContent = `Turn ${game.turn} — ${game.isHumanTurn ? 'Your Turn' : "Opponent's Turn"}`;
   },
 
+  // ── DRAWERS ──
+
+  toggleDrawer(drawerId) {
+    const el = document.getElementById(drawerId);
+    if (el) el.classList.toggle('is-open');
+  },
+
   // ── MANA POOL ──
 
   renderManaPool(game) {
