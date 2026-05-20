@@ -87,9 +87,6 @@ const AI = {
     if (landIdx === -1) return;
     const land = this.player.hand[landIdx];
     this.player.playLand(landIdx);
-    // AI lands enter untapped for simplicity
-    const newLand = this.player.battlefield[this.player.battlefield.length - 1];
-    if (newLand) newLand.tapped = false;
     GameLog.add(`${this.player.name} plays ${land.name}.`, 'action');
   },
 

@@ -221,10 +221,6 @@ class Player {
       if (toCommandZone) {
         GameLog.add(`${perm.card.name} returned to the command zone.`, 'info');
         this.commanders.unshift(perm.card);
-        // Fire triggers before leaving
-        const hadNegCounters = perm.counters.some((c) => c === '-1/-1');
-        if (hadNegCounters && isCreature) Game.checkTriggers('countered_creature_dies');
-        if (isCreature) Game.checkTriggers('creature_dies');
         GameUI.renderGame(Game);
         return perm.card;
       }

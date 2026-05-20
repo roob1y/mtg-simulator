@@ -448,7 +448,8 @@ const AIDeck = {
     if (!el) return;
 
     if (this.cards.length === 0) {
-      el.innerHTML = '<p class="muted" style="padding:8px">No cards yet. Select a strategy or search for cards.</p>';
+      el.innerHTML =
+        '<p class="muted" style="padding:8px">No cards yet. Select a strategy or search for cards.</p>';
       return;
     }
 
@@ -508,6 +509,7 @@ const AIDeck = {
   getFlatDeck() {
     const flat = [];
     this.cards.forEach((e) => {
+      if (this.isCommander(e.card.name)) return;
       for (let i = 0; i < e.qty; i++) {
         flat.push({ ...e.card });
       }
