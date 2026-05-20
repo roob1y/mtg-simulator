@@ -36,6 +36,16 @@ function showPage(id) {
     if (botHud) botHud.style.display = 'block';
     if (header) header.classList.add('hidden');
     if (gear) gear.classList.remove('hidden');
+    // Measure actual HUD heights and apply to battlefield
+    requestAnimationFrame(() => {
+      const topH = topHud ? topHud.offsetHeight : 130;
+      const botH = botHud ? botHud.offsetHeight : 240;
+      const bf = document.querySelector('.game-battlefield');
+      if (bf) {
+        bf.style.paddingTop = (topH + 4) + 'px';
+        bf.style.paddingBottom = (botH + 16) + 'px';
+      }
+    });
   } else {
     if (topHud) topHud.style.display = 'none';
     if (botHud) botHud.style.display = 'none';
