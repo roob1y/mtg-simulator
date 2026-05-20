@@ -401,10 +401,7 @@ const GameUI = {
           oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])"
           onmousedown="GameUI.startHandLongPress(${idx})"
           onmouseup="GameUI.cancelLongPress()"
-          onmouseleave="GameUI.cancelLongPress()"
-          ontouchstart="GameUI.startHandLongPress(${idx})"
-          ontouchend="GameUI.cancelLongPress()"
-          ontouchmove="GameUI.cancelLongPress()">
+          onmouseleave="GameUI.cancelLongPress()">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${face.name}</div>
