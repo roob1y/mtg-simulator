@@ -257,10 +257,24 @@ const GameUI = {
     if (otherPerms.length > 0) {
       html += `<div class="permanent-row">`;
       otherPerms.forEach((perm) => {
+        const artUrl = Scryfall.getImageUrl(perm.card, 'normal');
+        const loyalty = perm.card.loyalty || Scryfall.getFrontFace(perm.card).loyalty;
+        const isPlaneswalker = (perm.card.type_line || '').toLowerCase().includes('planeswalker');
         html += `
-          <div class="permanent other-perm ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onArtifactClick('${perm.id}')">
-            <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
-            <div class="perm-type">${Scryfall.getFrontFace(perm.card).type_line || ''}</div>
+          <div class="permanent other-perm ${perm.tapped ? 'tapped' : ''}"
+            onclick="GameUI.onArtifactClick('${perm.id}')"
+            onmousedown="GameUI.startPermanentLongPress('${perm.id}', event)"
+            onmouseup="GameUI.cancelLongPress()"
+            onmouseleave="GameUI.cancelLongPress()"
+            ontouchstart="GameUI.startPermanentLongPress('${perm.id}', event)"
+            ontouchend="GameUI.cancelLongPress()"
+            ontouchmove="GameUI.cancelLongPress()">
+            ${artUrl ? `<img class="perm-art" src="${artUrl}" alt="${Scryfall.getFrontFace(perm.card).name}">` : ''}
+            ${perm.counters.length > 0 ? `<div class="perm-counters">${GameUI.summariseCounters(perm.counters)}</div>` : ''}
+            ${isPlaneswalker && loyalty ? `<div class="perm-loyalty">${loyalty}</div>` : ''}
+            <div class="perm-overlay">
+              <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
+            </div>
           </div>`;
       });
       html += `</div>`;
