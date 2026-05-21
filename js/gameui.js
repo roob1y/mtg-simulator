@@ -363,7 +363,7 @@ const GameUI = {
       html ===
       `<div class="zone-label">YOUR PERMANENTS</div>`
     ) {
-      html += `<p class="muted" style="padding:8px; font-size:12px">No permanents in play yet.</p>`;
+      html += ``;
     }
 
     el.innerHTML = html;
