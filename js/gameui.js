@@ -716,54 +716,6 @@ const GameUI = {
     }
   },
 
-    // Actions for selected hand card
-    if (this.selectedCard !== null) {
-      const card = game.human.hand[this.selectedCard];
-      if (card) {
-        const type = (card.type_line || '').toLowerCase();
-        const isLand = type.includes('land');
-
-        if (Scryfall.isMDFC(card) && isMain) {
-          const landFace = Scryfall.getMDFCLandFace(card);
-          const spellFace = Scryfall.getMDFCSpellFace(card);
-          if (landFace && game.human.canPlayLand()) {
-            html += `<button class="action-btn land" onclick="Game.playMDFCLand(${this.selectedCard})">
-      🌲 Play ${landFace.name}
-    </button>`;
-          }
-          if (spellFace) {
-            const cmc = card.cmc || 0;
-            const canAffordMDFC = Game.canAffordCard(card);
-            html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAffordMDFC ? 'disabled title="Not enough mana"' : ''}>
-      ✨ Cast ${spellFace.name} (${cmc} mana)${!canAffordMDFC ? ' 🔒' : ''}
-    </button>`;
-          }
-        } else if (isLand && isMain && game.human.canPlayLand()) {
-          html += `<button class="action-btn land" onclick="Game.playLand(${this.selectedCard})">
-    🌲 Play ${card.name}
-  </button>`;
-        } else if (!isLand && isMain) {
-          const canAfford = Game.canAffordCard(card);
-          html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled title="Not enough mana"' : ''}>
-    ✨ Cast ${card.name} (${card.cmc || 0} mana)${!canAfford ? ' 🔒' : ''}
-  </button>`;
-        }
-
-        // FIX: use local phase variable, not Game.currentPhase
-        if (phase === 'end' && game.human.hand.length > game.human.maxHandSize) {
-          html += `<button class="action-btn discard" onclick="GameUI.discardCard(${this.selectedCard})">
-            🗑 Discard ${card.name}
-          </button>`;
-        }
-      }
-    }
-    if (window.innerWidth <= 768) {
-      html += `<button class="action-btn" onclick="GameUI.toggleMobileLog()">📋 Log</button>`;
-    }
-
-    el.innerHTML = html;
-  },
-
   // ── CLICK HANDLERS ──
 
   onHandCardClick(idx) {
