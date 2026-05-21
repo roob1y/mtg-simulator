@@ -321,8 +321,8 @@
 }
 
 .permanent {
-  width: 76px;
-  height: 108px;
+  width: 90px;
+  height: 126px;
   background: var(--bg-raised);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 14px;
@@ -360,8 +360,8 @@
 }
 
 .lands-row .permanent {
-  width: 76px;
-  height: 108px;
+  width: 90px;
+  height: 126px;
 }
 
 .permanent.sick {
