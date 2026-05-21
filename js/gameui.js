@@ -53,6 +53,7 @@ const GameUI = {
         const botH = botHud.offsetHeight;
         bf.style.paddingTop = topH + 'px';
         bf.style.paddingBottom = botH + 'px';
+        bf.style.minHeight = window.innerHeight + 'px';
         // Each zone gets half the remaining viewport space
         const available = window.innerHeight - topH - botH;
         const zoneH = Math.max(160, Math.floor(available / 2) - 20);

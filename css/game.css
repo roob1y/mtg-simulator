@@ -480,12 +480,12 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 5px 12px;
+  padding: 3px 12px;
   background: rgba(6,5,3,0.8);
   border-top: 1px solid rgba(255,255,255,0.04);
   border-bottom: 1px solid rgba(255,255,255,0.04);
   flex-wrap: wrap;
-  min-height: 30px;
+  min-height: 24px;
   backdrop-filter: blur(4px);
 }
 
@@ -684,7 +684,7 @@
 
 /* ── COMMAND ZONE ── */
 .command-zone-area {
-  padding: 8px 10px;
+  padding: 4px 10px;
   background: rgba(20,14,6,0.85);
   border-bottom: 1px solid rgba(200,168,75,0.08);
   backdrop-filter: blur(4px);
