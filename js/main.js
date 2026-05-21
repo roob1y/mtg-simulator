@@ -469,17 +469,19 @@ async function startGame() {
   btn.textContent = 'Loading opponent deck...';
   btn.disabled = true;
 
-  // FIX: init game BEFORE showing game page
-  const aiCards = AIDeck.totalCards() > 0 ? AIDeck.getFlatDeck() : null;
-  await Game.init(deckCards, commanders, aiCards);
-  // Show game page
-  showPage('game');
-
-  // Show mulligan screen, hide board
-  const mulliganEl = document.getElementById('mulligan-screen');
-  const boardEl = document.getElementById('game-board');
-  if (mulliganEl) mulliganEl.classList.remove('hidden');
-  if (boardEl) boardEl.classList.add('hidden');
+  try {
+    const aiCards = AIDeck.totalCards() > 0 ? AIDeck.getFlatDeck() : null;
+    await Game.init(deckCards, commanders, aiCards);
+    showPage('game');
+    const mulliganEl = document.getElementById('mulligan-screen');
+    const boardEl = document.getElementById('game-board');
+    if (mulliganEl) mulliganEl.classList.remove('hidden');
+    if (boardEl) boardEl.classList.add('hidden');
+  } catch (err) {
+    btn.textContent = '▶ Start Game';
+    btn.disabled = false;
+    alert('Failed to start game: ' + err.message);
+  }
 }
 
 // ── SETTINGS TOGGLES ──
