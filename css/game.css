@@ -124,35 +124,59 @@
 /* ── PHASE BAR — HUD strip ── */
 .phase-bar {
   display: flex;
+  align-items: center;
+  justify-content: space-around;
   background: rgba(8,6,4,0.88);
-  border-bottom: 1px solid rgba(200,168,75,0.1);
-  overflow-x: auto;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  scrollbar-width: none;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.07);
+  padding: 6px 8px;
+  gap: 4px;
 }
-.phase-bar::-webkit-scrollbar { display: none; }
 
 .phase-pip {
-  flex: 1;
-  text-align: center;
-  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.phase-icon {
+  font-size: 13px;
+  color: rgba(255,255,255,0.25);
+  line-height: 1;
+}
+
+.phase-card-icon {
+  display: inline-block;
+  width: 14px;
+  height: 18px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 3px;
+  background: transparent;
+}
+
+.phase-label {
   font-size: 8px;
   font-family: var(--font-display);
   letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.2);
-  border-right: 1px solid rgba(255,255,255,0.04);
+  color: var(--accent);
   white-space: nowrap;
-  min-width: 52px;
-  transition: all 0.2s ease;
   text-transform: uppercase;
 }
 
-.phase-pip.active {
+.phase-pip.active .phase-icon {
   color: var(--accent);
-  background: rgba(200,168,75,0.1);
-  border-bottom: 2px solid var(--accent);
-  text-shadow: 0 0 12px rgba(200,168,75,0.6);
+  text-shadow: 0 0 10px rgba(200,168,75,0.6);
+}
+
+.phase-pip.active .phase-card-icon {
+  border-color: var(--accent);
+  background: rgba(200,168,75,0.12);
+  box-shadow: 0 0 8px rgba(200,168,75,0.3);
 }
 
 /* ── GAME HEADER — Life totals ── */

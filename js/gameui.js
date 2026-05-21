@@ -70,24 +70,26 @@ const GameUI = {
 
   renderPhaseBar(game) {
     const phases = [
-      { id: 'untap', label: 'Untap' },
-      { id: 'upkeep', label: 'Upkeep' },
-      { id: 'draw', label: 'Draw' },
-      { id: 'main1', label: 'Main 1' },
-      { id: 'combat', label: 'Combat' },
-      { id: 'main2', label: 'Main 2' },
-      { id: 'end', label: 'End' },
+      { id: 'untap',  icon: '↺',  label: 'Untap' },
+      { id: 'upkeep', icon: '◆',  label: 'Upkeep' },
+      { id: 'draw',   icon: '⧗',  label: 'Draw' },
+      { id: 'main1',  icon: null, label: 'Main 1' },
+      { id: 'combat', icon: '✕',  label: 'Combat' },
+      { id: 'main2',  icon: null, label: 'Main 2' },
+      { id: 'end',    icon: '◆',  label: 'End' },
     ];
 
     const el = document.getElementById('phase-bar');
     if (!el) return;
 
-    el.innerHTML = phases
-      .map(
-        (p) =>
-          `<div class="phase-pip ${game.currentPhase === p.id ? 'active' : ''}">${p.label}</div>`
-      )
-      .join('');
+    el.innerHTML = phases.map(p => {
+      const isActive = game.currentPhase === p.id;
+      const isCard = p.icon === null; // main1 and main2 use card shape
+      return `<div class="phase-pip ${isActive ? 'active' : ''} ${isCard ? 'card-shape' : ''}">
+        ${isCard ? '<span class="phase-card-icon"></span>' : `<span class="phase-icon">${p.icon}</span>`}
+        ${isActive ? `<span class="phase-label">${p.label}</span>` : ''}
+      </div>`;
+    }).join('');
   },
 
   // ── LIFE TOTALS ──
