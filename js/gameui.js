@@ -426,9 +426,9 @@ const GameUI = {
           onmouseup="GameUI.cancelLongPress()"
           onmouseleave="GameUI.cancelLongPress()">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+          ${cost ? `<div class="hand-card-cost">${cost}</div>` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${face.name}</div>
-            <div class="hand-card-meta">${type} ${cost ? '· ' + cost : ''}</div>
           </div>
         </div>`;
       })
