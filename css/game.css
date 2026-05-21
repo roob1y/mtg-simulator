@@ -1310,3 +1310,118 @@
   text-transform: uppercase;
   padding: 4px 0 2px;
 }
+
+/* ── NEW BOTTOM HUD LAYOUT ── */
+.hud-hand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 4px;
+}
+
+.hud-hand-label {
+  font-size: 9px;
+  font-family: var(--font-display);
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+}
+
+.hud-mana-label {
+  font-size: 9px;
+  font-family: var(--font-display);
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hud-mana-label .mana-label {
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.hud-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  gap: 8px;
+}
+
+.hud-pills-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px 10px;
+  gap: 8px;
+}
+
+.hud-pills-left {
+  display: flex;
+  gap: 8px;
+}
+
+.hud-pill {
+  background: rgba(10,8,5,0.9);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.5);
+  font-family: var(--font-display);
+  font-size: 11px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hud-pill:hover {
+  border-color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.8);
+}
+
+.hud-pill:first-child {
+  color: var(--accent-dim);
+  border-color: rgba(200,168,75,0.2);
+}
+
+.hud-log-btn {
+  background: rgba(10,8,5,0.9);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.5);
+  font-family: var(--font-display);
+  font-size: 11px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hud-log-btn:hover {
+  border-color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.8);
+}
+
+.hud-combat-btn {
+  background: rgba(20,16,6,0.9);
+  border: 1.5px solid var(--accent-dim);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 12px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.hud-combat-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(200,168,75,0.2);
+}
+
+.hud-combat-btn.attack {
+  border-color: rgba(204,68,68,0.4);
+  color: #ff9999;
+}

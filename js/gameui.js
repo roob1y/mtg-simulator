@@ -155,7 +155,7 @@ const GameUI = {
     const colorSymbols = { W: '⬜', U: '🔵', B: '⚫', R: '🔴', G: '🟢', C: '◇' };
     const total = game.human.totalMana();
 
-    let html = `<span class="mana-label">Mana:</span>`;
+    let html = `<span class="mana-label">Mana:</span> `;
 
     if (total === 0) {
       html += `<span class="mana-empty">Empty</span>`;
@@ -163,7 +163,7 @@ const GameUI = {
       for (const [color, amount] of Object.entries(pool)) {
         if (amount > 0) {
           for (let i = 0; i < amount; i++) {
-            html += `<span class="mana-pip" title="${color}">${colorSymbols[color]}</span>`;
+            html += `<span class="mana-pip">${colorSymbols[color]}</span>`;
           }
         }
       }
@@ -648,23 +648,17 @@ const GameUI = {
 
   renderActionButtons(game) {
     const el = document.getElementById('action-buttons');
+    const combatArea = document.getElementById('combat-btn-area');
     if (!el) return;
 
-    // FIX: use local `phase` variable consistently — no Game.currentPhase reference
     const phase = game.currentPhase;
     const isMain = ['main1', 'main2'].includes(phase);
     const isCombat = phase === 'combat';
 
-    let html = '';
-
     const phaseNames = {
-      untap: 'Untap',
-      upkeep: 'Upkeep',
-      draw: 'Draw',
-      main1: 'Main Phase 1',
-      combat: 'Combat',
-      main2: 'Main Phase 2',
-      end: 'End Step',
+      untap: 'Untap', upkeep: 'Upkeep', draw: 'Draw',
+      main1: 'Main Phase 1', combat: 'Combat',
+      main2: 'Main Phase 2', end: 'End Step',
     };
 
     const phases = ['untap', 'upkeep', 'draw', 'main1', 'combat', 'main2', 'end'];
@@ -673,35 +667,54 @@ const GameUI = {
     const nextLabel = nextPhase ? phaseNames[nextPhase] : 'End Turn';
     const currentLabel = phaseNames[phase] || phase;
 
-    // Don't show Next Phase during active attacker declaration
-    if (!(isCombat && Combat.phase === 'declare_attackers')) {
-      html += `<button class="action-btn primary" onclick="Game.advancePhase()">
-        ${currentLabel} → ${nextLabel}
-      </button>`;
-      if (this.pendingDraw) {
-        html += `<button class="action-btn" onclick="Game.human.draw(1); GameLog.add('You draw a card (triggered effect).', 'action'); GameUI.pendingDraw = false; GameUI.renderGame(Game);">
-    🃏 Draw a Card
-  </button>`;
+    // Log button always visible
+    el.innerHTML = `<button class="hud-log-btn" onclick="GameUI.toggleMobileLog()">📋 Log</button>`;
+
+    // Combat/advance button in pills row right side
+    if (combatArea) {
+      let combatHtml = '';
+      if (!(isCombat && Combat.phase === 'declare_attackers')) {
+        combatHtml += `<button class="hud-combat-btn" onclick="Game.advancePhase()">→ ${nextLabel}</button>`;
       }
+      if (game.isHumanTurn && isCombat && Combat.phase === null) {
+        combatHtml += `<button class="hud-combat-btn attack" onclick="Game.beginCombat()">⚔ Attack</button>`;
+      }
+      if (game.isHumanTurn && isCombat && Combat.phase === 'declare_attackers') {
+        combatHtml += `<button class="hud-combat-btn attack" onclick="Combat.confirmAttackers(Game.human, Game.opponent)">✓ Confirm (${Combat.attackers.length})</button>`;
+      }
+      combatArea.innerHTML = combatHtml;
     }
 
-    // Combat buttons
-    if (game.isHumanTurn) {
-      if (isCombat && Combat.phase === null) {
-        html += `<button class="action-btn attack" onclick="Game.beginCombat()">
-          ⚔ Declare Attackers
-        </button>`;
-      }
+    // Hand card actions — append below log button
+    if (this.selectedCard !== null) {
+      const card = game.human.hand[this.selectedCard];
+      if (card) {
+        const type = (card.type_line || '').toLowerCase();
+        const isLand = type.includes('land');
+        let cardHtml = '';
 
-      if (isCombat && Combat.phase === 'declare_attackers') {
-        html += `<button class="action-btn attack" onclick="Combat.confirmAttackers(Game.human, Game.opponent)">
-          ✓ Confirm Attackers (${Combat.attackers.length})
-        </button>`;
-        html += `<button class="action-btn" onclick="Combat.end()">
-          Skip Combat
-        </button>`;
+        if (Scryfall.isMDFC(card) && isMain) {
+          const landFace = Scryfall.getMDFCLandFace(card);
+          const spellFace = Scryfall.getMDFCSpellFace(card);
+          if (landFace && game.human.canPlayLand()) {
+            cardHtml += `<button class="action-btn land" onclick="Game.playMDFCLand(${this.selectedCard})">🌲 Play ${landFace.name}</button>`;
+          }
+          if (spellFace) {
+            const cmc = card.cmc || 0;
+            const canAfford = Game.canAffordCard(card);
+            cardHtml += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled' : ''}>✨ Cast ${spellFace.name} (${cmc})</button>`;
+          }
+        } else if (isLand && isMain && game.human.canPlayLand()) {
+          cardHtml += `<button class="action-btn land" onclick="Game.playLand(${this.selectedCard})">🌲 Play ${card.name}</button>`;
+        } else if (!isLand && isMain) {
+          const canAfford = Game.canAffordCard(card);
+          cardHtml += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled' : ''}>✨ Cast ${card.name} (${card.cmc || 0})</button>`;
+        }
+
+        if (cardHtml) el.innerHTML += cardHtml;
       }
     }
+  },
 
     // Actions for selected hand card
     if (this.selectedCard !== null) {

@@ -247,28 +247,45 @@
 
       <!-- BOTTOM HUD — fixed, outside game-board -->
       <div class="game-hud-bottom" id="game-hud-bottom">
-        <div class="mana-bar" id="mana-pool"></div>
-        <div class="action-bar" id="action-buttons"></div>
+
+        <!-- Hand row -->
+        <div class="hud-hand-row">
+          <span class="hud-hand-label">YOUR HAND</span>
+          <span class="hud-mana-label" id="mana-pool"></span>
+        </div>
         <div class="hand-zone">
           <div class="hand-cards" id="human-hand"></div>
         </div>
-        <div class="command-zone-area">
-          <div id="command-zone"></div>
-        </div>
-        <div class="hud-drawers">
-          <div class="drawer drawer--up" id="graveyard-drawer">
-            <button class="drawer__tab" onclick="GameUI.toggleDrawer('graveyard-drawer')">
-              Graveyard · <span id="graveyard-count">0</span>
-            </button>
-            <div class="drawer__body" id="graveyard-list"></div>
-          </div>
-          <div class="drawer drawer--up" id="exile-drawer">
-            <button class="drawer__tab" onclick="GameUI.toggleDrawer('exile-drawer')">
-              Exile · <span id="exile-count">0</span>
-            </button>
-            <div class="drawer__body" id="exile-list"></div>
+
+        <!-- Phase bar + Log row -->
+        <div class="hud-controls-row">
+          <div id="action-buttons"></div>
+          <div class="hud-phase-bar" id="phase-bar-bottom">
+            <div class="phase-bar" id="phase-bar"></div>
           </div>
         </div>
+
+        <!-- Pills row -->
+        <div class="hud-pills-row">
+          <div class="hud-pills-left">
+            <button class="hud-pill" onclick="GameUI.toggleDrawer('commander-drawer')">★ · <span id="commander-count">0</span></button>
+            <button class="hud-pill" onclick="GameUI.toggleDrawer('graveyard-drawer')">⚰ · <span id="graveyard-count">0</span></button>
+            <button class="hud-pill" onclick="GameUI.toggleDrawer('exile-drawer')">✕ · <span id="exile-count">0</span></button>
+          </div>
+          <div class="hud-pills-right" id="combat-btn-area"></div>
+        </div>
+
+        <!-- Hidden drawers -->
+        <div class="drawer drawer--up hidden" id="commander-drawer">
+          <div class="drawer__body" id="command-zone"></div>
+        </div>
+        <div class="drawer drawer--up hidden" id="graveyard-drawer">
+          <div class="drawer__body" id="graveyard-list"></div>
+        </div>
+        <div class="drawer drawer--up hidden" id="exile-drawer">
+          <div class="drawer__body" id="exile-list"></div>
+        </div>
+
       </div>
 
       <!-- Mulligan Screen -->
