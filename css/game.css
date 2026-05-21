@@ -1467,3 +1467,10 @@
   text-align: right;
   line-height: 1.4;
 }
+
+.hud-pills-right {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
