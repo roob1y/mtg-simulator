@@ -265,48 +265,39 @@
 
 /* ── BATTLEFIELD ZONES ── */
 .game-zone {
-  padding: 10px;
+  padding: 12px 14px;
   min-height: 110px;
   position: relative;
 }
 
 .opp-zone {
   border-bottom: none;
-  min-height: 160px;
+  min-height: 180px;
 }
 
 .human-zone {
-  min-height: 160px;
+  min-height: 180px;
 }
 
 /* Arcane circle divider */
 .battlefield-divider {
   position: relative;
   text-align: center;
-  font-size: 7px;
+  font-size: 8px;
   font-family: var(--font-display);
-  letter-spacing: 0.4em;
-  color: rgba(200,168,75,0.35);
-  padding: 6px 0;
+  letter-spacing: 0.3em;
+  color: rgba(200,168,75,0.6);
+  padding: 8px 0;
   text-transform: uppercase;
-
-  background:
-    linear-gradient(90deg,
-      transparent 0%,
-      rgba(200,168,75,0.06) 25%,
-      rgba(200,168,75,0.14) 50%,
-      rgba(200,168,75,0.06) 75%,
-      transparent 100%
-    );
-  border-top: 1px solid rgba(200,168,75,0.1);
-  border-bottom: 1px solid rgba(200,168,75,0.1);
+  border-top: 1px solid rgba(200,168,75,0.15);
+  border-bottom: 1px solid rgba(200,168,75,0.15);
 }
 
 .battlefield-divider::before,
 .battlefield-divider::after {
   content: '✦';
-  color: rgba(200,168,75,0.3);
-  margin: 0 12px;
+  color: rgba(200,168,75,0.5);
+  margin: 0 10px;
   font-size: 8px;
 }
 
@@ -324,17 +315,17 @@
 .permanent-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 12px;
   align-items: flex-end;
 }
 
 .permanent {
-  width: 68px;
-  height: 96px;
+  width: 76px;
+  height: 108px;
   background: var(--bg-raised);
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -359,19 +350,18 @@
 }
 
 .permanent.tapped {
-  transform: rotate(90deg);
-  margin: 14px 14px;
-  opacity: 0.75;
+  transform: rotate(15deg);
+  opacity: 0.85;
   box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .opp-zone .permanent.tapped {
-  margin: 14px 14px;
+  transform: rotate(15deg);
 }
 
 .lands-row .permanent {
-  width: 68px;
-  height: 96px;
+  width: 76px;
+  height: 108px;
 }
 
 .permanent.sick {
