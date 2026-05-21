@@ -182,7 +182,17 @@ const GameUI = {
     const lands = game.opponent.getLands();
     const handSize = game.opponent.hand.length;
 
-    let html = `<div class="zone-label">Opponent — Hand: ${handSize} cards · Library: ${game.opponent.library.length}</div>`;
+    let html = `
+      <div class="opp-info-row">
+        <div class="opp-info-text">
+          <span>hand: ${handSize}</span>
+          <span>library: ${game.opponent.library.length}</span>
+        </div>
+        <div class="opp-info-pills">
+          <span class="zone-pill" onclick="GameUI.toggleDrawer('opp-graveyard-drawer')">⚰ Graveyard · ${game.opponent.graveyard.length}</span>
+          <span class="zone-pill">◻ Exile · ${game.opponent.exile ? game.opponent.exile.length : 0}</span>
+        </div>
+      </div>`;
 
     if (creatures.length > 0) {
       html += `<div class="permanent-row">`;
@@ -272,7 +282,7 @@ const GameUI = {
       return !type.includes('creature') && !type.includes('land');
     });
 
-    let html = `<div class="zone-label">Your Battlefield · Library: ${humanPlayer.library.length} · Graveyard: ${humanPlayer.graveyard.length}</div>`;
+    let html = `<div class="zone-label">YOUR PERMANENTS</div>`;
 
     if (otherPerms.length > 0) {
       html += `<div class="permanent-row">`;
@@ -351,7 +361,7 @@ const GameUI = {
 
     if (
       html ===
-      `<div class="zone-label">Your Battlefield · Library: ${humanPlayer.library.length} · Graveyard: ${humanPlayer.graveyard.length}</div>`
+      `<div class="zone-label">YOUR PERMANENTS</div>`
     ) {
       html += `<p class="muted" style="padding:8px; font-size:12px">No permanents in play yet.</p>`;
     }

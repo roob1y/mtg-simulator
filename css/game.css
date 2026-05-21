@@ -1247,3 +1247,56 @@
 }
 
 /* Fixed HUDs work with natural page scroll on mobile */
+
+/* ── OPPONENT INFO ROW ── */
+.opp-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px 10px;
+  gap: 8px;
+}
+
+.opp-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  font-family: var(--font-ui);
+}
+
+.opp-info-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.zone-pill {
+  font-size: 9px;
+  font-family: var(--font-ui);
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.zone-pill:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+}
+
+/* ── YOUR PERMANENTS label ── */
+.zone-label {
+  font-size: 8px;
+  font-family: var(--font-display);
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.15);
+  text-transform: uppercase;
+  text-align: center;
+  padding: 4px 0 8px;
+}
