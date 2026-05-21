@@ -1300,3 +1300,13 @@
   text-align: center;
   padding: 4px 0 8px;
 }
+
+.opp-zone-label {
+  text-align: center;
+  font-size: 8px;
+  font-family: var(--font-display);
+  letter-spacing: 0.25em;
+  color: rgba(255,255,255,0.2);
+  text-transform: uppercase;
+  padding: 4px 0 2px;
+}

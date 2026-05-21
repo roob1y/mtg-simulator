@@ -183,6 +183,7 @@ const GameUI = {
     const handSize = game.opponent.hand.length;
 
     let html = `
+      <div class="opp-zone-label">OPPONENT</div>
       <div class="opp-info-row">
         <div class="opp-info-text">
           <span>hand: ${handSize}</span>
