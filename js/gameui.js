@@ -125,7 +125,7 @@ const GameUI = {
     }
 
     if (turnInfo)
-      turnInfo.textContent = `Turn ${game.turn} — ${game.isHumanTurn ? 'Your Turn' : "Opponent's Turn"}`;
+      turnInfo.innerHTML = `Turn ${game.turn}<span class="turn-whose">${game.isHumanTurn ? 'Your Turn' : "Opponent's Turn"}</span>`;
   },
 
   // ── DRAWERS ──
