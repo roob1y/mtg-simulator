@@ -1474,3 +1474,10 @@
   gap: 6px;
   align-items: center;
 }
+
+#opp-graveyard-drawer {
+  display: none;
+}
+#opp-graveyard-drawer.is-open {
+  display: block;
+}

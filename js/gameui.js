@@ -468,6 +468,8 @@ const GameUI = {
 
   renderCommandZone(humanPlayer) {
     const el = document.getElementById('command-zone');
+    const countEl = document.getElementById('commander-count');
+    if (countEl) countEl.textContent = humanPlayer.commanders.length;
     if (!el) return;
 
     if (humanPlayer.commanders.length === 0) {
@@ -672,6 +674,11 @@ const GameUI = {
     // Log button always visible
     el.innerHTML = `<button class="hud-log-btn" onclick="GameUI.toggleMobileLog()">📋 Log</button>`;
 
+    // Pending draw trigger
+    if (this.pendingDraw) {
+      el.innerHTML += `<button class="hud-log-btn" style="border-color:rgba(200,168,75,0.4);color:var(--accent)" onclick="Game.human.draw(1); GameLog.add('You draw a card (triggered effect).', 'action'); GameUI.pendingDraw = false; GameUI.renderGame(Game);">🃏 Draw a Card</button>`;
+    }
+
     // Combat/advance button in pills row right side
     if (combatArea) {
       let combatHtml = '';
@@ -714,6 +721,11 @@ const GameUI = {
         }
 
         if (cardHtml) el.innerHTML += cardHtml;
+
+        // Discard at end step if over hand size
+        if (phase === 'end' && game.human.hand.length > game.human.maxHandSize) {
+          el.innerHTML += `<button class="action-btn discard" onclick="GameUI.discardCard(${this.selectedCard})">🗑 Discard ${card.name}</button>`;
+        }
       }
     }
   },
