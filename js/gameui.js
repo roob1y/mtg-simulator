@@ -201,7 +201,7 @@ const GameUI = {
       html += `<div class="permanent-row">`;
       creatures.forEach((perm) => {
         const { power, toughness } = game.opponent.getEffectivePT(perm);
-        const artUrl = Scryfall.getImageUrl(perm.card, 'normal');
+        const artUrl = Scryfall.getArtUrl(perm.card);
         html += `
           <div class="permanent opp-permanent ${perm.tapped ? 'tapped' : ''}"
             onclick="GameUI.onPermanentClick('${perm.id}')"
@@ -226,7 +226,7 @@ const GameUI = {
     if (lands.length > 0) {
       html += `<div class="permanent-row lands-row">`;
       lands.forEach((perm) => {
-        const landArt = Scryfall.getImageUrl(perm.card, 'normal');
+        const landArt = Scryfall.getArtUrl(perm.card);
         html += `
           <div class="permanent land-perm opp-land ${perm.tapped ? 'tapped' : ''}"
             onclick="GameUI.onPermanentClick('${perm.id}')"
@@ -290,7 +290,7 @@ const GameUI = {
     if (otherPerms.length > 0) {
       html += `<div class="permanent-row">`;
       otherPerms.forEach((perm) => {
-        const artUrl = Scryfall.getImageUrl(perm.card, 'normal');
+        const artUrl = Scryfall.getArtUrl(perm.card);
         const loyalty = perm.card.loyalty || Scryfall.getFrontFace(perm.card).loyalty;
         const isPlaneswalker = (perm.card.type_line || '').toLowerCase().includes('planeswalker');
         html += `
@@ -319,7 +319,7 @@ const GameUI = {
         const { power, toughness } = humanPlayer.getEffectivePT(perm);
         const isAttacker = combatMode && Combat.attackers.includes(perm.id);
         const canAttack = !perm.tapped && !perm.summoningSick;
-        const artUrl = Scryfall.getImageUrl(perm.card, 'normal');
+        const artUrl = Scryfall.getArtUrl(perm.card);
         const isCreature = (perm.card.type_line || '').toLowerCase().includes('creature');
 
         html += `
@@ -341,7 +341,7 @@ const GameUI = {
     if (lands.length > 0) {
       html += `<div class="permanent-row lands-row">`;
       lands.forEach((perm) => {
-        const landArt = Scryfall.getImageUrl(perm.card, 'normal');
+        const landArt = Scryfall.getArtUrl(perm.card);
         html += `
           <div class="permanent land-perm ${perm.tapped ? 'tapped' : ''}"
             onclick="GameUI.onLandClick('${perm.id}')"
