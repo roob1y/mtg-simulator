@@ -408,7 +408,7 @@ const GameUI = {
 
     el.innerHTML = humanPlayer.hand
       .map((card, idx) => {
-        const imgUrl = Scryfall.getImageUrl(card, 'normal');
+        const imgUrl = Scryfall.getArtUrl(card);
         const cost = Scryfall.formatManaCost(Scryfall.getManaCost(card));
         const face = Scryfall.getFrontFace(card);
         const type = face.type_line || '';
@@ -426,6 +426,7 @@ const GameUI = {
           onmouseup="GameUI.cancelLongPress()"
           onmouseleave="GameUI.cancelLongPress()">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+          ${cost ? `<div class="hand-card-cost">${cost}</div>` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${face.name}</div>
           </div>
