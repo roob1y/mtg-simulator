@@ -622,28 +622,25 @@
 
 /* ── HAND ── */
 .hand-zone {
-  padding: 0 0 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 20px 8px 12px;
   background: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.04);
-  overflow: visible;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+
+.hand-zone::-webkit-scrollbar { display: none; }
 
 .hand-cards {
   display: flex;
   gap: 5px;
   flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-top: 32px;
-  margin-top: -32px;
-  padding-bottom: 16px;
-  margin-bottom: -16px;
-  padding-left: 8px;
-  padding-right: 8px;
-  scrollbar-width: none;
+  width: max-content;
+  padding-bottom: 4px;
   touch-action: pan-x;
-  -webkit-overflow-scrolling: touch;
 }
-.hand-cards::-webkit-scrollbar { display: none; }
 
 .hand-card {
   width: 80px;
