@@ -105,7 +105,7 @@ const Scryfall = {
   formatManaCost(cost) {
     if (!cost) return '';
     return cost
-      .replace(/\{W\}/g, '⬜')
+      .replace(/\{W\}/g, '⚪')
       .replace(/\{U\}/g, '🔵')
       .replace(/\{B\}/g, '⚫')
       .replace(/\{R\}/g, '🔴')
