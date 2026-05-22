@@ -45,17 +45,19 @@ const GameUI = {
     requestAnimationFrame(() => {
       const topHud = document.getElementById('game-hud-top');
       const botHud = document.getElementById('game-hud-bottom');
+      const handLayer = document.getElementById('game-hand-layer');
       const bf = document.querySelector('.game-battlefield');
       const oppZone = document.getElementById('opp-battlefield');
       const humanZone = document.getElementById('human-battlefield');
       if (bf && topHud && botHud) {
         const topH = topHud.offsetHeight;
         const botH = botHud.offsetHeight;
+        const handH = handLayer ? handLayer.offsetHeight : 160;
         bf.style.paddingTop = topH + 'px';
-        bf.style.paddingBottom = botH + 'px';
+        bf.style.paddingBottom = (botH + handH + 16) + 'px';
         bf.style.minHeight = window.innerHeight + 'px';
         // Each zone gets half the remaining viewport space
-        const available = window.innerHeight - topH - botH;
+        const available = window.innerHeight - topH - botH - handH;
         const zoneH = Math.max(160, Math.floor(available / 2) - 20);
         if (oppZone) oppZone.style.minHeight = zoneH + 'px';
         if (humanZone) humanZone.style.minHeight = zoneH + 'px';
