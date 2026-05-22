@@ -680,13 +680,20 @@
 }
 
 .hand-card.cant-afford { 
+  opacity: 1;
+}
+
+.hand-card.cant-afford .hand-card-img {
   opacity: 0.45;
   filter: grayscale(60%);
 }
 
-.hand-card.cant-afford .card-action-overlay {
-  opacity: 1;
-  filter: none;
+.hand-card.cant-afford .hand-card-cost {
+  opacity: 0.45;
+}
+
+.hand-card.cant-afford .hand-card-name {
+  opacity: 0.45;
 }
 
 .hand-card-img {
