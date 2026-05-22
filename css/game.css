@@ -681,7 +681,10 @@
   position: relative;
 }
 
-.hand-card.cant-afford { opacity: 0.35; }
+.hand-card.cant-afford { 
+  opacity: 0.45;
+  filter: grayscale(60%);
+}
 
 .hand-card-img {
   width: 100%;
