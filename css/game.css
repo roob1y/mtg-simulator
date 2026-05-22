@@ -275,8 +275,10 @@
   border-top: 1px solid rgba(200,168,75,0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  max-height: 55vh;
+  max-height: 60vh;
   overflow: visible;
+  padding-top: 16px;
+  margin-top: -16px;
 }
 
 .game-battlefield {
@@ -622,10 +624,9 @@
 
 /* ── HAND ── */
 .hand-zone {
-  padding: 12px 8px 8px;
-  background: rgba(6,5,3,0.88);
+  padding: 4px 8px 8px;
+  background: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.04);
-  backdrop-filter: blur(6px);
   overflow: visible;
 }
 
