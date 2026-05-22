@@ -207,6 +207,9 @@ document.addEventListener('DOMContentLoaded', () => {
       touchMode = null;
       dragCardIdx = getCardIdx(e.target);
 
+      // If touching a card, prevent browser scroll immediately so we own this touch sequence
+      if (dragCardIdx !== -1) e.preventDefault();
+
       // Long press = preview (only if no movement)
       clearTimeout(longPressTimer);
       if (dragCardIdx !== -1) {
@@ -811,5 +814,6 @@ function deleteAIDeck(name) {
 function clearAIDeck() {
   AIDeck.clear();
 }
+
 
 
