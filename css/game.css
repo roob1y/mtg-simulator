@@ -641,7 +641,7 @@
 .hand-cards::-webkit-scrollbar { display: none; }
 
 .hand-card {
-  width: 60px;
+  width: 80px;
   flex-shrink: 0;
   touch-action: pan-x;
   background: var(--bg-raised);
@@ -1073,7 +1073,7 @@
     margin-right: 260px;
   }
   .game-hud-bottom {
-    right: 260px;
+    right: 0;
   }
   .permanent {
     width: 90px;
