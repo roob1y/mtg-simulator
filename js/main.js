@@ -41,15 +41,17 @@ function showPage(id) {
     // Measure actual HUD heights and position hand layer
     requestAnimationFrame(() => {
       const topH = topHud ? topHud.offsetHeight : 130;
-      const botH = botHud ? botHud.offsetHeight : 240;
-      const bf = document.querySelector('.game-battlefield');
-      if (bf) {
-        bf.style.paddingTop = (topH + 4) + 'px';
-        bf.style.paddingBottom = (botH + 160) + 'px';
-      }
-      if (handLayer) {
-        handLayer.style.bottom = botH + 'px';
-      }
+      const botH = botHud ? botHud.offsetHeight : 110;
+      if (handLayer) handLayer.style.bottom = botH + 'px';
+      // Second RAF to measure hand layer after it's positioned
+      requestAnimationFrame(() => {
+        const handH = handLayer ? handLayer.offsetHeight : 160;
+        const bf = document.querySelector('.game-battlefield');
+        if (bf) {
+          bf.style.paddingTop = (topH + 4) + 'px';
+          bf.style.paddingBottom = (botH + handH + 24) + 'px';
+        }
+      });
     });
   } else {
     if (topHud) topHud.style.display = 'none';
