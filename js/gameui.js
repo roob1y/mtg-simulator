@@ -56,7 +56,7 @@ const GameUI = {
         // Always keep hand layer correctly positioned
         if (handLayer) handLayer.style.bottom = botH + 'px';
         bf.style.paddingTop = topH + 'px';
-        bf.style.paddingBottom = (botH + handH - 8) + 'px';
+        bf.style.paddingBottom = (botH + handH) + 'px';
         bf.style.minHeight = window.innerHeight + 'px';
         const available = window.innerHeight - topH - botH - handH;
         const zoneH = Math.max(160, Math.floor(available / 2) - 20);
