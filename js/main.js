@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }, LONG_PRESS_MS);
       }
-    }, { passive: true });
+    }, { passive: false });
 
     handLayer.addEventListener('touchmove', (e) => {
       const hand = getHand();
@@ -811,4 +811,5 @@ function deleteAIDeck(name) {
 function clearAIDeck() {
   AIDeck.clear();
 }
+
 
