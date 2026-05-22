@@ -1534,6 +1534,11 @@
 }
 #opp-graveyard-drawer.is-open {
   display: block;
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  z-index: 200;
 }
 
 #card-preview-modal {
@@ -1651,5 +1656,21 @@
   display: none;
 }
 #opp-exile-drawer.is-open {
+  display: block;
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  z-index: 200;
+}
+
+#graveyard-drawer.is-open,
+#exile-drawer.is-open,
+#commander-drawer.is-open {
+  position: fixed;
+  bottom: 260px;
+  left: 0;
+  right: 0;
+  z-index: 200;
   display: block;
 }
