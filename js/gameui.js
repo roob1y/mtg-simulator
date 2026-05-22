@@ -1182,6 +1182,18 @@ const GameUI = {
         mobileEntries.innerHTML = entries.innerHTML;
         mobileEntries.scrollTop = mobileEntries.scrollHeight;
       }
+
+      // Close when clicking outside
+      setTimeout(() => {
+        const handler = (e) => {
+          if (!drawer.contains(e.target)) {
+            drawer.classList.add('hidden');
+            if (toggle) toggle.textContent = '▲';
+            document.removeEventListener('click', handler);
+          }
+        };
+        document.addEventListener('click', handler);
+      }, 0);
     }
   },
   startHandLongPress(idx) {
