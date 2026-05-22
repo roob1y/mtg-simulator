@@ -50,11 +50,6 @@ function showPage(id) {
       if (handLayer) {
         handLayer.style.bottom = botH + 'px';
       }
-      const toast = document.getElementById('game-log-toast');
-      if (toast) {
-        const handH = handLayer ? handLayer.offsetHeight : 160;
-        toast.style.bottom = (botH + handH + 8) + 'px';
-      }
     });
   } else {
     if (topHud) topHud.style.display = 'none';
