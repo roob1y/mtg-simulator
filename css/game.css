@@ -625,7 +625,7 @@
   background: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.04);
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: clip;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
