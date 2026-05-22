@@ -193,7 +193,7 @@ const GameUI = {
         </div>
         <div class="opp-info-pills">
           <span class="zone-pill" onclick="GameUI.toggleDrawer('opp-graveyard-drawer')">⚰ Graveyard · ${game.opponent.graveyard.length}</span>
-          <span class="zone-pill">◻ Exile · ${game.opponent.exile ? game.opponent.exile.length : 0}</span>
+          <span class="zone-pill" onclick="GameUI.toggleDrawer('opp-exile-drawer')">◻ Exile · ${game.opponent.exile ? game.opponent.exile.length : 0}</span>
         </div>
       </div>`;
 
@@ -591,6 +591,30 @@ const GameUI = {
             const imgUrl = Scryfall.getArtUrl(card);
             return `
           <div class="hand-card" onclick="GameUI.previewGameCard(Game.opponent.graveyard[${idx}])">
+            ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+            <div class="hand-card-info">
+              <div class="hand-card-name">${card.name}</div>
+              <div class="hand-card-meta">${card.type_line || ''}</div>
+            </div>
+          </div>`;
+          })
+          .join('');
+      }
+    }
+
+    // Opponent exile
+    const oppExileEl = document.getElementById('opp-exile-list');
+    const oppExileCountEl = document.getElementById('opp-exile-count');
+    if (oppExileEl && opponent.exile) {
+      if (oppExileCountEl) oppExileCountEl.textContent = opponent.exile.length;
+      if (opponent.exile.length === 0) {
+        oppExileEl.innerHTML = '<p class="muted" style="font-size:12px">Empty.</p>';
+      } else {
+        oppExileEl.innerHTML = opponent.exile
+          .map((card, idx) => {
+            const imgUrl = Scryfall.getArtUrl(card);
+            return `
+          <div class="hand-card" onclick="GameUI.previewGameCard(Game.opponent.exile[${idx}])">
             ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
             <div class="hand-card-info">
               <div class="hand-card-name">${card.name}</div>

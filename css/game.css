@@ -1646,3 +1646,10 @@
   border-color: rgba(180,80,80,0.5);
   color: #ffaaaa;
 }
+
+#opp-exile-drawer {
+  display: none;
+}
+#opp-exile-drawer.is-open {
+  display: block;
+}
