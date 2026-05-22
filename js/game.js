@@ -487,7 +487,12 @@ const Game = {
   canAffordCard(card) {
     const face = Scryfall.getFrontFace(card);
     const cost = face.mana_cost || '';
+    const cmc = card.cmc || 0;
     const pool = { ...this.human.manaPool };
+    const totalMana = Object.values(pool).reduce((a, b) => a + b, 0);
+
+    // If card has a cmc but no mana in pool at all, can't afford
+    if (cmc > 0 && totalMana === 0) return false;
 
     // Check specific colour pips first
     const pips = cost.match(/\{([WUBRG])\}/g) || [];
