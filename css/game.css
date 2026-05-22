@@ -1379,10 +1379,19 @@
 
 .hud-controls-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 4px 12px;
   gap: 8px;
+  min-height: 44px;
+}
+
+#action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  max-width: 50%;
 }
 
 .hud-pills-row {
@@ -1390,12 +1399,21 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px 10px;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .hud-pills-left {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.hud-pill {
+  flex-shrink: 1;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .hud-pill {
@@ -1442,12 +1460,13 @@
   border: 1.5px solid var(--accent-dim);
   color: var(--accent);
   font-family: var(--font-display);
-  font-size: 12px;
-  padding: 8px 18px;
+  font-size: 11px;
+  padding: 7px 12px;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .hud-combat-btn:hover {
@@ -1488,6 +1507,9 @@
   flex-direction: row;
   gap: 6px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 #opp-graveyard-drawer {
