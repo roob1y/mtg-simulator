@@ -59,7 +59,7 @@ const GameUI = {
         bf.style.paddingBottom = (botH + handH) + 'px';
         bf.style.minHeight = window.innerHeight + 'px';
         const available = window.innerHeight - topH - botH - handH;
-        const zoneH = Math.max(160, Math.floor(available / 2) - 20);
+        const zoneH = Math.floor(available / 2);
         if (oppZone) oppZone.style.minHeight = zoneH + 'px';
         if (humanZone) humanZone.style.minHeight = zoneH + 'px';
       }
