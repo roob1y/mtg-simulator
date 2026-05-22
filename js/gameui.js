@@ -417,6 +417,7 @@ const GameUI = {
         const canAfford = Game.canAffordCard(card);
 
         const isLand = (face.type_line || '').toLowerCase().includes('land');
+        const affordClass = canAfford && !isLand && ['main1','main2'].includes(Game.currentPhase) ? 'can-afford' : '';
         const phase = Game.currentPhase;
         const isMain = ['main1','main2'].includes(phase);
         let cardActionBtn = '';
