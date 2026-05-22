@@ -1386,13 +1386,17 @@
 
 #action-buttons {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 4px;
-  flex: 1;
-  align-items: center;
-  overflow: hidden;
-  max-height: 80px;
+  align-items: flex-start;
+}
+
+.hud-log-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  position: relative;
 }
 
 .hud-pills-row {
@@ -1568,4 +1572,20 @@
   opacity: 0;
   transform: translateX(-10px);
   transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Action buttons float above log button, don't push HUD */
+.hud-log-area .action-btn {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 10;
+}
+
+.hud-log-area .action-btn:nth-child(2) {
+  bottom: calc(100% + 40px);
+}
+
+.hud-log-area .action-btn:nth-child(3) {
+  bottom: calc(100% + 74px);
 }
