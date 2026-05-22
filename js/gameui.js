@@ -471,14 +471,9 @@ const GameUI = {
 
         return `
         <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''} ${affordClass}"
+          data-hand-idx="${idx}"
           onclick="GameUI.handleHandCardTap(${idx})"
-          oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])"
-          onmousedown="GameUI.startHandLongPress(${idx})"
-          onmouseup="GameUI.cancelLongPress()"
-          onmouseleave="GameUI.cancelLongPress()"
-          ontouchstart="GameUI.startHandLongPress(${idx})"
-          ontouchend="GameUI.cancelLongPress()"
-          ontouchmove="GameUI.cancelLongPress()">
+          oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
           ${cost ? `<div class="hand-card-cost">${cost}</div>` : ''}
           ${cardActionBtn ? `<div class="card-action-overlay">${cardActionBtn}</div>` : ''}
@@ -1254,18 +1249,22 @@ const GameUI = {
     if (!handLayer) return;
 
     const self = this;
+    const DRAG_THRESHOLD = 10; // px before drag starts
+    const LONG_PRESS_MS = 500; // ms hold = preview (longer than drag threshold)
 
     // Ghost element
-    const ghost = document.createElement('div');
-    ghost.id = 'drag-ghost';
-    ghost.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;width:72px;height:100px;border-radius:6px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(200,168,75,0.6);transform:scale(1.15) rotate(-4deg);display:none;transition:transform 0.1s;';
-    document.body.appendChild(ghost);
+    let ghost = document.getElementById('drag-ghost');
+    if (!ghost) {
+      ghost = document.createElement('div');
+      ghost.id = 'drag-ghost';
+      document.body.appendChild(ghost);
+    }
+    ghost.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;width:72px;height:100px;border-radius:6px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(200,168,75,0.6);transform:scale(1.15) rotate(-4deg);display:none;';
 
     function getCardIdx(el) {
-      const card = el.closest('.hand-card');
+      const card = el.closest('[data-hand-idx]');
       if (!card) return -1;
-      const cards = document.querySelectorAll('#human-hand .hand-card');
-      return Array.from(cards).indexOf(card);
+      return parseInt(card.dataset.handIdx, 10);
     }
 
     function getBFRect() {
@@ -1278,123 +1277,167 @@ const GameUI = {
       return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
     }
 
-    function startDrag(idx, x, y) {
-      const card = Game.human?.hand?.[idx];
-      if (!card) return;
-      const phase = Game.currentPhase;
-      if (!['main1','main2'].includes(phase)) return;
-
-      self._dragState = { idx, startX: x, startY: y, moved: false };
-
+    function showGhost(card, x, y) {
       const imgUrl = Scryfall.getArtUrl(card);
-      ghost.innerHTML = imgUrl ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;">` : `<div style="background:#1a1508;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#c8a84b;padding:4px;text-align:center;">${card.name}</div>`;
+      ghost.innerHTML = imgUrl
+        ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<div style="background:#1a1508;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#c8a84b;padding:4px;text-align:center;">${card.name}</div>`;
       ghost.style.display = 'block';
       ghost.style.left = (x - 36) + 'px';
       ghost.style.top = (y - 60) + 'px';
     }
 
-    function moveDrag(x, y) {
-      if (!self._dragState) return;
-      const dx = x - self._dragState.startX;
-      const dy = y - self._dragState.startY;
-      if (!self._dragState.moved && Math.sqrt(dx*dx+dy*dy) > 8) {
-        self._dragState.moved = true;
-        // Cancel long press
-        self.cancelLongPress();
-      }
-      if (!self._dragState.moved) return;
-      ghost.style.left = (x - 36) + 'px';
-      ghost.style.top = (y - 60) + 'px';
-
-      // Highlight drop zone
-      const bf = document.getElementById('human-battlefield');
-      if (bf) {
-        if (isOverBF(x, y)) {
-          bf.classList.add('drag-over');
-        } else {
-          bf.classList.remove('drag-over');
-        }
-      }
-    }
-
-    function endDrag(x, y) {
-      if (!self._dragState) return;
-      const { idx, moved } = self._dragState;
-      self._dragState = null;
+    function hideGhost() {
       ghost.style.display = 'none';
       document.getElementById('human-battlefield')?.classList.remove('drag-over');
+    }
 
-      if (!moved) return;
+    function playCard(idx) {
+      const card = Game.human?.hand?.[idx];
+      if (!card) return;
+      const face = Scryfall.getFrontFace(card);
+      const isLand = (face.type_line || '').toLowerCase().includes('land');
+      const canAfford = Game.canAffordCard(card);
 
-      // Dropped over battlefield — try to play
-      if (isOverBF(x, y)) {
-        const card = Game.human?.hand?.[idx];
-        if (!card) return;
-        const face = Scryfall.getFrontFace(card);
-        const isLand = (face.type_line || '').toLowerCase().includes('land');
-        const canAfford = Game.canAffordCard(card);
-
-        if (Scryfall.isMDFC && Scryfall.isMDFC(card)) {
-          const landFace = Scryfall.getMDFCLandFace(card);
-          const spellFace = Scryfall.getMDFCSpellFace(card);
-          if (landFace && Game.human.canPlayLand()) {
-            Game.playMDFCLand(idx);
-          } else if (spellFace && canAfford) {
-            Game.castSpell(idx);
-          } else {
-            GameLog.add("Can't play that card right now.", 'warning');
-          }
-        } else if (isLand) {
-          if (Game.human.canPlayLand()) {
-            Game.playLand(idx);
-          } else {
-            GameLog.add("You've already played a land this turn.", 'warning');
-          }
-        } else {
-          if (canAfford) {
-            Game.castSpell(idx);
-          } else {
-            GameLog.add("Not enough mana to cast that.", 'warning');
-          }
-        }
+      if (Scryfall.isMDFC && Scryfall.isMDFC(card)) {
+        const landFace = Scryfall.getMDFCLandFace(card);
+        const spellFace = Scryfall.getMDFCSpellFace(card);
+        if (landFace && Game.human.canPlayLand()) { Game.playMDFCLand(idx); }
+        else if (spellFace && canAfford) { Game.castSpell(idx); }
+        else { GameLog.add("Can't play that card right now.", 'warning'); }
+      } else if (isLand) {
+        if (Game.human.canPlayLand()) { Game.playLand(idx); }
+        else { GameLog.add("You've already played a land this turn.", 'warning'); }
+      } else {
+        if (canAfford) { Game.castSpell(idx); }
+        else { GameLog.add("Not enough mana to cast that.", 'warning'); }
       }
     }
 
-    // Touch events
+    // ── TOUCH ──
     handLayer.addEventListener('touchstart', (e) => {
       const idx = getCardIdx(e.target);
       if (idx === -1) return;
       const t = e.touches[0];
-      startDrag(idx, t.clientX, t.clientY);
+      // Start tracking — don't prevent default yet (allows tap to still work)
+      self._dragState = {
+        idx,
+        startX: t.clientX,
+        startY: t.clientY,
+        moved: false,
+        longPressTimer: setTimeout(() => {
+          // No movement = long press = preview
+          if (self._dragState && !self._dragState.moved) {
+            hideGhost();
+            self._dragState = null;
+            const card = Game.human?.hand?.[idx];
+            if (card) self.previewGameCard(card);
+          }
+        }, LONG_PRESS_MS),
+      };
     }, { passive: true });
 
     handLayer.addEventListener('touchmove', (e) => {
       if (!self._dragState) return;
       const t = e.touches[0];
-      moveDrag(t.clientX, t.clientY);
-    }, { passive: true });
+      const dx = t.clientX - self._dragState.startX;
+      const dy = t.clientY - self._dragState.startY;
+
+      if (!self._dragState.moved) {
+        if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
+        // Crossed threshold — it's a drag
+        self._dragState.moved = true;
+        clearTimeout(self._dragState.longPressTimer);
+        const card = Game.human?.hand?.[self._dragState.idx];
+        if (!card) { self._dragState = null; return; }
+        const phase = Game.currentPhase;
+        if (!['main1', 'main2'].includes(phase)) { self._dragState = null; return; }
+        showGhost(card, t.clientX, t.clientY);
+      }
+
+      // Prevent page scroll while dragging
+      e.preventDefault();
+
+      ghost.style.left = (t.clientX - 36) + 'px';
+      ghost.style.top = (t.clientY - 60) + 'px';
+
+      const bf = document.getElementById('human-battlefield');
+      if (bf) bf.classList.toggle('drag-over', isOverBF(t.clientX, t.clientY));
+    }, { passive: false });
 
     handLayer.addEventListener('touchend', (e) => {
-      if (!self._dragState?.moved) { self._dragState = null; ghost.style.display='none'; return; }
+      if (!self._dragState) return;
+      clearTimeout(self._dragState.longPressTimer);
+      const { idx, moved } = self._dragState;
+      self._dragState = null;
+
+      if (!moved) return; // normal tap — let onclick handle it
+
       const t = e.changedTouches[0];
-      endDrag(t.clientX, t.clientY);
+      hideGhost();
+      if (isOverBF(t.clientX, t.clientY)) playCard(idx);
+    }, { passive: false });
+
+    handLayer.addEventListener('touchcancel', () => {
+      if (self._dragState) clearTimeout(self._dragState.longPressTimer);
+      self._dragState = null;
+      hideGhost();
     });
 
-    // Mouse events
+    // ── MOUSE ──
     handLayer.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       const idx = getCardIdx(e.target);
       if (idx === -1) return;
-      startDrag(idx, e.clientX, e.clientY);
+      self._dragState = {
+        idx,
+        startX: e.clientX,
+        startY: e.clientY,
+        moved: false,
+        longPressTimer: setTimeout(() => {
+          if (self._dragState && !self._dragState.moved) {
+            hideGhost();
+            self._dragState = null;
+            const card = Game.human?.hand?.[idx];
+            if (card) self.previewGameCard(card);
+          }
+        }, LONG_PRESS_MS),
+      };
     });
 
     document.addEventListener('mousemove', (e) => {
-      moveDrag(e.clientX, e.clientY);
+      if (!self._dragState) return;
+      const dx = e.clientX - self._dragState.startX;
+      const dy = e.clientY - self._dragState.startY;
+
+      if (!self._dragState.moved) {
+        if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
+        self._dragState.moved = true;
+        clearTimeout(self._dragState.longPressTimer);
+        const card = Game.human?.hand?.[self._dragState.idx];
+        if (!card) { self._dragState = null; return; }
+        const phase = Game.currentPhase;
+        if (!['main1', 'main2'].includes(phase)) { self._dragState = null; return; }
+        showGhost(card, e.clientX, e.clientY);
+      }
+
+      ghost.style.left = (e.clientX - 36) + 'px';
+      ghost.style.top = (e.clientY - 60) + 'px';
+
+      const bf = document.getElementById('human-battlefield');
+      if (bf) bf.classList.toggle('drag-over', isOverBF(e.clientX, e.clientY));
     });
 
     document.addEventListener('mouseup', (e) => {
       if (!self._dragState) return;
-      endDrag(e.clientX, e.clientY);
+      clearTimeout(self._dragState.longPressTimer);
+      const { idx, moved } = self._dragState;
+      self._dragState = null;
+
+      if (!moved) return;
+
+      hideGhost();
+      if (isOverBF(e.clientX, e.clientY)) playCard(idx);
     });
   },
 
@@ -1406,4 +1449,5 @@ const GameUI = {
     }, 300);
   },
 };
+
 
