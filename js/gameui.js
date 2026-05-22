@@ -144,7 +144,18 @@ const GameUI = {
 
   toggleDrawer(drawerId) {
     const el = document.getElementById(drawerId);
-    if (el) el.classList.toggle('is-open');
+    if (el) {
+      el.classList.toggle('is-open');
+
+      // For opp drawers, position below the pill that opened them
+      if ((drawerId === 'opp-graveyard-drawer' || drawerId === 'opp-exile-drawer') && el.classList.contains('is-open')) {
+        const oppInfoRow = document.querySelector('.opp-info-row');
+        if (oppInfoRow) {
+          const rect = oppInfoRow.getBoundingClientRect();
+          el.style.top = (rect.bottom + 4) + 'px';
+        }
+      }
+    }
   },
 
   // ── MANA POOL ──
