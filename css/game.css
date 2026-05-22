@@ -1499,3 +1499,41 @@
   z-index: 9999 !important;
   inset: 0;
 }
+
+/* ── GAME LOG TOAST ── */
+.game-log-toast {
+  position: absolute;
+  bottom: 100%;
+  left: 12px;
+  right: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+}
+
+.game-log-toast.toast-hidden {
+  opacity: 0;
+}
+
+.toast-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10,8,5,0.92);
+  border: 1px solid rgba(200,168,75,0.2);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-family: var(--font-ui);
+  color: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+}
+
+.toast-icon { color: var(--accent); font-size: 10px; }
+.toast-entry.toast-action .toast-msg { color: var(--accent); }
+.toast-entry.toast-combat .toast-msg { color: #ff9999; }
+.toast-entry.toast-phase .toast-msg { color: rgba(255,255,255,0.4); }
