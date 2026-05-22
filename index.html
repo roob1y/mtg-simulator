@@ -247,6 +247,15 @@
       <!-- BOTTOM HUD — fixed, outside game-board -->
       <div class="game-hud-bottom" id="game-hud-bottom">
 
+        <!-- Mobile log drawer -->
+        <div id="mobile-log-drawer" class="mobile-log-drawer hidden">
+          <div class="mobile-log-header" onclick="GameUI.toggleMobileLog()">
+            <span>Game Log</span>
+            <span id="mobile-log-toggle">▲</span>
+          </div>
+          <div id="mobile-log-entries" class="mobile-log-entries"></div>
+        </div>
+
         <!-- Hand row -->
         <div class="hud-hand-row">
           <span class="hud-hand-label">YOUR HAND</span>
@@ -329,17 +338,7 @@
           </div>
         </div>
 
-        <!-- Mobile log drawer -->
-        <div id="mobile-log-drawer" class="mobile-log-drawer hidden">
-          <div class="mobile-log-header" onclick="GameUI.toggleMobileLog()">
-            <span>Game Log</span>
-            <span id="mobile-log-toggle">▲</span>
-          </div>
-          <div id="mobile-log-entries" class="mobile-log-entries"></div>
-        </div>
 
-      </div>
-    </div>
 
     <div id="game-over" class="game-over hidden"></div>
 
