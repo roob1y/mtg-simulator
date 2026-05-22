@@ -1537,3 +1537,9 @@
 .toast-entry.toast-action .toast-msg { color: var(--accent); }
 .toast-entry.toast-combat .toast-msg { color: #ff9999; }
 .toast-entry.toast-phase .toast-msg { color: rgba(255,255,255,0.4); }
+
+.toast-entry-hiding {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
