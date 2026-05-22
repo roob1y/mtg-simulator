@@ -624,13 +624,7 @@
 .hand-zone {
   background: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.04);
-  overflow-x: auto;
-  overflow-y: clip;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
 }
-
-.hand-zone::-webkit-scrollbar { display: none; }
 
 .hand-cards {
   display: flex;
@@ -1658,16 +1652,19 @@
   display: block;
 }
 
-/* ── FREE-FLOATING HAND LAYER ── */
 .game-hand-layer {
   display: none;
   position: fixed;
   left: 0;
   right: 0;
   z-index: 60;
-  pointer-events: none;
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+
+.game-hand-layer::-webkit-scrollbar { display: none; }
 
 .game-hand-layer .hand-zone,
 .game-hand-layer .hud-hand-row,
