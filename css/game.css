@@ -684,6 +684,11 @@
   filter: grayscale(60%);
 }
 
+.hand-card.cant-afford .card-action-overlay {
+  opacity: 1;
+  filter: none;
+}
+
 .hand-card-img {
   width: 100%;
   height: 84px;
