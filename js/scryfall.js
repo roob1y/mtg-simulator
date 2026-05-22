@@ -111,9 +111,16 @@ const Scryfall = {
       .replace(/\{R\}/g, '🔴')
       .replace(/\{G\}/g, '🟢')
       .replace(/\{C\}/g, '◇')
+      .replace(/\{T\}/g, '↻')
+      .replace(/\{Q\}/g, '↺')
+      .replace(/\{S\}/g, '❄')
+      .replace(/\{E\}/g, '⚡')
+      .replace(/\{P\}/g, '◈')
       .replace(/\{(\d+)\}/g, '($1)')
       .replace(/\{X\}/g, '(X)')
-      .replace(/\{[A-Z]\/[A-Z]\}/g, (m) => m); // hybrid — leave as is
+      .replace(/\{Y\}/g, '(Y)')
+      .replace(/\{Z\}/g, '(Z)')
+      .replace(/\{[A-Z]\/[A-Z]\}/g, (m) => m);
   },
 
   // Determine card type category for deck grouping

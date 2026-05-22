@@ -933,7 +933,7 @@ const GameUI = {
       <div class="preview-name">${card.name}</div>
       <div class="preview-type">${card.type_line || ''}</div>
       ${cost ? `<div class="preview-cost">${cost}</div>` : ''}
-      ${oracle ? `<div class="preview-text">${oracle.replace(/\n/g, '<br>')}</div>` : ''}
+      ${oracle ? `<div class="preview-text">${Scryfall.formatManaCost(oracle).replace(/\n/g, '<br>')}</div>` : ''}
       ${card.power ? `<div class="preview-pt">${card.power} / ${card.toughness}</div>` : ''}
       ${loyalty ? `<div class="preview-pt">${loyalty}</div>` : ''}
       ${counterHtml}
