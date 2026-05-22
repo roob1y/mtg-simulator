@@ -635,7 +635,8 @@
   gap: 5px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  overflow-y: visible;
+  padding-top: 12px;
+  margin-top: -12px;
   padding-bottom: 4px;
   scrollbar-width: none;
   touch-action: pan-x;
