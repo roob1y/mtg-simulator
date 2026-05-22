@@ -622,10 +622,11 @@
 
 /* ── HAND ── */
 .hand-zone {
-  padding: 4px 8px 8px;
+  padding: 12px 8px 8px;
   background: rgba(6,5,3,0.88);
   border-bottom: 1px solid rgba(255,255,255,0.04);
   backdrop-filter: blur(6px);
+  overflow: visible;
 }
 
 .hand-cards {
@@ -633,6 +634,7 @@
   gap: 5px;
   flex-wrap: nowrap;
   overflow-x: auto;
+  overflow-y: visible;
   padding-bottom: 4px;
   scrollbar-width: none;
   touch-action: pan-x;
