@@ -622,21 +622,21 @@
 
 /* ── HAND ── */
 .hand-zone {
-  padding: 20px 8px 12px;
   background: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.04);
-  overflow: visible;
-  touch-action: pan-x;
 }
 
 .hand-cards {
   display: flex;
   gap: 5px;
   flex-wrap: nowrap;
-  width: max-content;
-  padding-bottom: 4px;
+  overflow-x: auto;
+  padding: 20px 8px 14px;
+  scrollbar-width: none;
   touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
 }
+.hand-cards::-webkit-scrollbar { display: none; }
 
 .hand-card {
   width: 80px;
