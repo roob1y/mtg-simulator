@@ -417,7 +417,31 @@ const GameUI = {
         const canAfford = Game.canAffordCard(card);
 
         const isLand = (face.type_line || '').toLowerCase().includes('land');
-        const affordClass = canAfford && !isLand && ['main1','main2'].includes(Game.currentPhase) ? 'can-afford' : '';
+        const phase = Game.currentPhase;
+        const isMain = ['main1','main2'].includes(phase);
+        let cardActionBtn = '';
+
+        if (isSelected && isMain) {
+          if (Scryfall.isMDFC(card)) {
+            const landFace = Scryfall.getMDFCLandFace(card);
+            const spellFace = Scryfall.getMDFCSpellFace(card);
+            if (landFace && Game.human.canPlayLand()) {
+              cardActionBtn += `<button class="card-action-btn land" onclick="event.stopPropagation(); Game.playMDFCLand(${idx})">🌲 Play</button>`;
+            }
+            if (spellFace && canAfford) {
+              cardActionBtn += `<button class="card-action-btn cast" onclick="event.stopPropagation(); Game.castSpell(${idx})">✨ Cast</button>`;
+            }
+          } else if (isLand && Game.human.canPlayLand()) {
+            cardActionBtn = `<button class="card-action-btn land" onclick="event.stopPropagation(); Game.playLand(${idx})">🌲 Play</button>`;
+          } else if (!isLand && canAfford) {
+            cardActionBtn = `<button class="card-action-btn cast" onclick="event.stopPropagation(); Game.castSpell(${idx})">✨ Cast</button>`;
+          }
+        }
+
+        if (isSelected && phase === 'end' && Game.human.hand.length > Game.human.maxHandSize) {
+          cardActionBtn = `<button class="card-action-btn discard" onclick="event.stopPropagation(); GameUI.discardCard(${idx})">🗑 Discard</button>`;
+        }
+
         return `
         <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''} ${affordClass}"
           onclick="GameUI.handleHandCardTap(${idx})"
@@ -430,6 +454,7 @@ const GameUI = {
           ontouchmove="GameUI.cancelLongPress()">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
           ${cost ? `<div class="hand-card-cost">${cost}</div>` : ''}
+          ${cardActionBtn ? `<div class="card-action-overlay">${cardActionBtn}</div>` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${face.name}</div>
           </div>
@@ -695,41 +720,6 @@ const GameUI = {
         combatHtml += `<button class="hud-combat-btn attack" onclick="Combat.confirmAttackers(Game.human, Game.opponent)">✓ Confirm (${Combat.attackers.length})</button>`;
       }
       combatArea.innerHTML = combatHtml;
-    }
-
-    // Hand card actions — append below log button
-    if (this.selectedCard !== null) {
-      const card = game.human.hand[this.selectedCard];
-      if (card) {
-        const type = (card.type_line || '').toLowerCase();
-        const isLand = type.includes('land');
-        let cardHtml = '';
-
-        if (Scryfall.isMDFC(card) && isMain) {
-          const landFace = Scryfall.getMDFCLandFace(card);
-          const spellFace = Scryfall.getMDFCSpellFace(card);
-          if (landFace && game.human.canPlayLand()) {
-            cardHtml += `<button class="action-btn land" onclick="Game.playMDFCLand(${this.selectedCard})">🌲 Play ${landFace.name}</button>`;
-          }
-          if (spellFace) {
-            const cmc = card.cmc || 0;
-            const canAfford = Game.canAffordCard(card);
-            cardHtml += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled' : ''}>✨ Cast ${spellFace.name} (${cmc})</button>`;
-          }
-        } else if (isLand && isMain && game.human.canPlayLand()) {
-          cardHtml += `<button class="action-btn land" onclick="Game.playLand(${this.selectedCard})">🌲 Play ${card.name}</button>`;
-        } else if (!isLand && isMain) {
-          const canAfford = Game.canAffordCard(card);
-          cardHtml += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled' : ''}>✨ Cast ${card.name} (${card.cmc || 0})</button>`;
-        }
-
-        if (cardHtml) el.innerHTML += cardHtml;
-
-        // Discard at end step if over hand size
-        if (phase === 'end' && game.human.hand.length > game.human.maxHandSize) {
-          el.innerHTML += `<button class="action-btn discard" onclick="GameUI.discardCard(${this.selectedCard})">🗑 Discard ${card.name}</button>`;
-        }
-      }
     }
   },
 
