@@ -1238,13 +1238,14 @@ const GameUI = {
     }
   },
 
-  startHandLongPress  startHandLongPress(idx) {
+  startHandLongPress(idx) {
     this._longPressTimer = setTimeout(() => {
       const card = Game.human.hand[idx];
       if (card) this.previewGameCard(card);
     }, 300);
   },
 };
+
 
 
 
