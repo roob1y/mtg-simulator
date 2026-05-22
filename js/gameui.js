@@ -38,6 +38,7 @@ const GameUI = {
     this.renderBattlefield(game.human, Combat.phase === 'declare_attackers');
     this.renderHand(game.human);
     this.renderCommandZone(game.human);
+    this.initHandDrag();
     this.renderActionButtons(game);
     this.renderGraveyard(game.human, game.opponent);
     this.renderExile(game.human);
@@ -1242,6 +1243,162 @@ const GameUI = {
       }, 0);
     }
   },
+  // ── HAND DRAG-AND-DROP ──
+  _dragState: null,
+
+  initHandDrag() {
+    if (this._dragInited) return;
+    this._dragInited = true;
+
+    const handLayer = document.getElementById('game-hand-layer');
+    if (!handLayer) return;
+
+    const self = this;
+
+    // Ghost element
+    const ghost = document.createElement('div');
+    ghost.id = 'drag-ghost';
+    ghost.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;width:72px;height:100px;border-radius:6px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(200,168,75,0.6);transform:scale(1.15) rotate(-4deg);display:none;transition:transform 0.1s;';
+    document.body.appendChild(ghost);
+
+    function getCardIdx(el) {
+      const card = el.closest('.hand-card');
+      if (!card) return -1;
+      const cards = document.querySelectorAll('#human-hand .hand-card');
+      return Array.from(cards).indexOf(card);
+    }
+
+    function getBFRect() {
+      return document.getElementById('human-battlefield')?.getBoundingClientRect();
+    }
+
+    function isOverBF(x, y) {
+      const r = getBFRect();
+      if (!r) return false;
+      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    }
+
+    function startDrag(idx, x, y) {
+      const card = Game.human?.hand?.[idx];
+      if (!card) return;
+      const phase = Game.currentPhase;
+      if (!['main1','main2'].includes(phase)) return;
+
+      self._dragState = { idx, startX: x, startY: y, moved: false };
+
+      const imgUrl = Scryfall.getArtUrl(card);
+      ghost.innerHTML = imgUrl ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;">` : `<div style="background:#1a1508;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#c8a84b;padding:4px;text-align:center;">${card.name}</div>`;
+      ghost.style.display = 'block';
+      ghost.style.left = (x - 36) + 'px';
+      ghost.style.top = (y - 60) + 'px';
+    }
+
+    function moveDrag(x, y) {
+      if (!self._dragState) return;
+      const dx = x - self._dragState.startX;
+      const dy = y - self._dragState.startY;
+      if (!self._dragState.moved && Math.sqrt(dx*dx+dy*dy) > 8) {
+        self._dragState.moved = true;
+        // Cancel long press
+        self.cancelLongPress();
+      }
+      if (!self._dragState.moved) return;
+      ghost.style.left = (x - 36) + 'px';
+      ghost.style.top = (y - 60) + 'px';
+
+      // Highlight drop zone
+      const bf = document.getElementById('human-battlefield');
+      if (bf) {
+        if (isOverBF(x, y)) {
+          bf.classList.add('drag-over');
+        } else {
+          bf.classList.remove('drag-over');
+        }
+      }
+    }
+
+    function endDrag(x, y) {
+      if (!self._dragState) return;
+      const { idx, moved } = self._dragState;
+      self._dragState = null;
+      ghost.style.display = 'none';
+      document.getElementById('human-battlefield')?.classList.remove('drag-over');
+
+      if (!moved) return;
+
+      // Dropped over battlefield — try to play
+      if (isOverBF(x, y)) {
+        const card = Game.human?.hand?.[idx];
+        if (!card) return;
+        const face = Scryfall.getFrontFace(card);
+        const isLand = (face.type_line || '').toLowerCase().includes('land');
+        const canAfford = Game.canAffordCard(card);
+
+        if (Scryfall.isMDFC && Scryfall.isMDFC(card)) {
+          const landFace = Scryfall.getMDFCLandFace(card);
+          const spellFace = Scryfall.getMDFCSpellFace(card);
+          if (landFace && Game.human.canPlayLand()) {
+            Game.playMDFCLand(idx);
+          } else if (spellFace && canAfford) {
+            Game.castSpell(idx);
+          } else {
+            GameLog.add("Can't play that card right now.", 'warning');
+          }
+        } else if (isLand) {
+          if (Game.human.canPlayLand()) {
+            Game.playLand(idx);
+          } else {
+            GameLog.add("You've already played a land this turn.", 'warning');
+          }
+        } else {
+          if (canAfford) {
+            Game.castSpell(idx);
+          } else {
+            GameLog.add("Not enough mana to cast that.", 'warning');
+          }
+        }
+      }
+    }
+
+    // Touch events
+    handLayer.addEventListener('touchstart', (e) => {
+      const idx = getCardIdx(e.target);
+      if (idx === -1) return;
+      const t = e.touches[0];
+      startDrag(idx, t.clientX, t.clientY);
+    }, { passive: true });
+
+    handLayer.addEventListener('touchmove', (e) => {
+      if (!self._dragState) return;
+      const t = e.touches[0];
+      moveDrag(t.clientX, t.clientY);
+    }, { passive: true });
+
+    handLayer.addEventListener('touchend', (e) => {
+      if (!self._dragState?.moved) { self._dragState = null; ghost.style.display='none'; return; }
+      const t = e.changedTouches[0];
+      endDrag(t.clientX, t.clientY);
+    });
+
+    // Mouse events
+    handLayer.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      const idx = getCardIdx(e.target);
+      if (idx === -1) return;
+      startDrag(idx, e.clientX, e.clientY);
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      moveDrag(e.clientX, e.clientY);
+    });
+
+    document.addEventListener('mouseup', (e) => {
+      if (!self._dragState) return;
+      endDrag(e.clientX, e.clientY);
+    });
+  },
+
+
   startHandLongPress(idx) {
     this._longPressTimer = setTimeout(() => {
       const card = Game.human.hand[idx];
@@ -1249,3 +1406,4 @@ const GameUI = {
     }, 300);
   },
 };
+
