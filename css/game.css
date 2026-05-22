@@ -1526,11 +1526,10 @@
 
 /* ── GAME LOG TOAST ── */
 .game-log-toast {
-  position: absolute;
-  bottom: 100%;
+  position: fixed;
   left: 12px;
   right: 12px;
-  margin-bottom: 8px;
+  z-index: 500;
   display: flex;
   flex-direction: column;
   gap: 4px;
