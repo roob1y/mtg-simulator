@@ -1075,22 +1075,6 @@
 
 /* ── DESKTOP ── */
 @media (min-width: 769px) {
-  .game-sidebar {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 260px;
-    background: rgba(8,6,4,0.95);
-    border-left: 1px solid var(--border-subtle);
-    overflow-y: auto;
-    z-index: 40;
-  }
-  .game-battlefield {
-    margin-right: 260px;
-  }
   .game-hud-bottom {
     right: 0;
   }
