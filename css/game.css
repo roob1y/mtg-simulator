@@ -1671,3 +1671,17 @@
 .game-hand-layer .hand-card {
   pointer-events: all;
 }
+
+
+/* ── HAND DRAG DROP ZONE ── */
+#human-battlefield.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: -4px;
+  background: rgba(200, 168, 75, 0.06);
+  transition: background 0.15s, outline 0.15s;
+}
+
+#drag-ghost {
+  border-radius: 6px;
+  overflow: hidden;
+}
