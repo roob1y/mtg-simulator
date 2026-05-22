@@ -33,7 +33,7 @@ const GameUI = {
     }
     this.renderPhaseBar(game);
     this.renderLifeTotals(game);
-    this.renderManaPool(game);
+    // mana pool now shown on cards directly
     this.renderOpponentArea(game);
     this.renderBattlefield(game.human, Combat.phase === 'declare_attackers');
     this.renderHand(game.human);
