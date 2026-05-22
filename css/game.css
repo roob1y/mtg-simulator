@@ -1658,13 +1658,9 @@
   left: 0;
   right: 0;
   z-index: 60;
-  overflow-x: auto;
-  overflow-y: visible;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
+  touch-action: pan-x;
 }
-
-.game-hand-layer::-webkit-scrollbar { display: none; }
 
 .game-hand-layer .hand-zone,
 .game-hand-layer .hud-hand-row,

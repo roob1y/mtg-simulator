@@ -109,6 +109,59 @@ document.addEventListener('DOMContentLoaded', () => {
   const at = document.getElementById('auto-tap-toggle');
   if (bm) bm.checked = Settings.get('beginnerMode');
   if (at) at.checked = Settings.get('autoTap');
+
+  // Hand card touch scrolling (no overflow so glow stays free)
+  const handLayer = document.getElementById('game-hand-layer');
+  if (handLayer) {
+    let startX = 0, lastX = 0, velX = 0, offset = 0, dragging = false, rafId = null;
+
+    const getHand = () => document.getElementById('human-hand');
+
+    const clamp = (val) => {
+      const hand = getHand();
+      if (!hand) return val;
+      const max = Math.max(0, hand.offsetWidth - handLayer.offsetWidth + 16);
+      return Math.max(-max, Math.min(0, val));
+    };
+
+    const applyOffset = (val) => {
+      const hand = getHand();
+      if (!hand) return;
+      offset = clamp(val);
+      hand.style.transform = `translateX(${offset}px)`;
+    };
+
+    const momentum = () => {
+      velX *= 0.92;
+      if (Math.abs(velX) > 0.5) {
+        applyOffset(offset + velX);
+        rafId = requestAnimationFrame(momentum);
+      }
+    };
+
+    handLayer.addEventListener('touchstart', (e) => {
+      const hand = getHand();
+      if (!hand || !hand.contains(e.target)) return;
+      dragging = true;
+      cancelAnimationFrame(rafId);
+      startX = lastX = e.touches[0].clientX;
+      velX = 0;
+    }, { passive: true });
+
+    handLayer.addEventListener('touchmove', (e) => {
+      if (!dragging) return;
+      const x = e.touches[0].clientX;
+      velX = x - lastX;
+      lastX = x;
+      applyOffset(offset + velX);
+    }, { passive: true });
+
+    handLayer.addEventListener('touchend', () => {
+      if (!dragging) return;
+      dragging = false;
+      rafId = requestAnimationFrame(momentum);
+    });
+  }
 });
 
 async function searchCards() {
