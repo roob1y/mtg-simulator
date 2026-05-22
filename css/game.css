@@ -1493,3 +1493,9 @@
 #opp-graveyard-drawer.is-open {
   display: block;
 }
+
+#card-preview-modal {
+  position: fixed !important;
+  z-index: 9999 !important;
+  inset: 0;
+}
