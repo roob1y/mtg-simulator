@@ -943,7 +943,10 @@ const GameUI = {
     `;
 
     document.getElementById('card-preview-modal-content').innerHTML = html;
-    document.getElementById('card-preview-modal').classList.remove('hidden');
+    const modal = document.getElementById('card-preview-modal');
+    modal.classList.remove('hidden');
+    modal.style.pointerEvents = 'none';
+    setTimeout(() => { modal.style.pointerEvents = ''; }, 400);
 
     if (!isMobile) {
       const el = document.getElementById('game-card-preview');
