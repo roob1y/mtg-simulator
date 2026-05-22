@@ -53,11 +53,12 @@ const GameUI = {
         const topH = topHud.offsetHeight;
         const botH = botHud.offsetHeight;
         const handH = handLayer ? handLayer.offsetHeight : 160;
+        const handBottom = handLayer ? parseInt(handLayer.style.bottom) || botH : botH;
         bf.style.paddingTop = topH + 'px';
-        bf.style.paddingBottom = (botH + handH + 16) + 'px';
+        bf.style.paddingBottom = (handBottom + handH + 8) + 'px';
         bf.style.minHeight = window.innerHeight + 'px';
         // Each zone gets half the remaining viewport space
-        const available = window.innerHeight - topH - botH - handH;
+        const available = window.innerHeight - topH - handBottom - handH;
         const zoneH = Math.max(160, Math.floor(available / 2) - 20);
         if (oppZone) oppZone.style.minHeight = zoneH + 'px';
         if (humanZone) humanZone.style.minHeight = zoneH + 'px';
