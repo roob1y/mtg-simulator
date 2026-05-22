@@ -624,19 +624,22 @@
 .hand-zone {
   background: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.04);
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+
+.hand-zone::-webkit-scrollbar { display: none; }
 
 .hand-cards {
   display: flex;
   gap: 5px;
   flex-wrap: nowrap;
-  overflow-x: auto;
+  width: max-content;
   padding: 20px 8px 14px;
-  scrollbar-width: none;
   touch-action: pan-x;
-  -webkit-overflow-scrolling: touch;
 }
-.hand-cards::-webkit-scrollbar { display: none; }
 
 .hand-card {
   width: 80px;
