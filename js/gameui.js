@@ -144,16 +144,23 @@ const GameUI = {
 
   toggleDrawer(drawerId) {
     const el = document.getElementById(drawerId);
-    if (el) {
-      el.classList.toggle('is-open');
+    if (!el) return;
 
-      // For opp drawers, position below the pill that opened them
-      if ((drawerId === 'opp-graveyard-drawer' || drawerId === 'opp-exile-drawer') && el.classList.contains('is-open')) {
-        const oppInfoRow = document.querySelector('.opp-info-row');
-        if (oppInfoRow) {
-          const rect = oppInfoRow.getBoundingClientRect();
-          el.style.top = (rect.bottom + 4) + 'px';
-        }
+    // For opp drawers, close the other one first
+    if (drawerId === 'opp-graveyard-drawer') {
+      document.getElementById('opp-exile-drawer')?.classList.remove('is-open');
+    } else if (drawerId === 'opp-exile-drawer') {
+      document.getElementById('opp-graveyard-drawer')?.classList.remove('is-open');
+    }
+
+    el.classList.toggle('is-open');
+
+    // For opp drawers, position below the pill that opened them
+    if ((drawerId === 'opp-graveyard-drawer' || drawerId === 'opp-exile-drawer') && el.classList.contains('is-open')) {
+      const oppInfoRow = document.querySelector('.opp-info-row');
+      if (oppInfoRow) {
+        const rect = oppInfoRow.getBoundingClientRect();
+        el.style.top = (rect.bottom + 4) + 'px';
       }
     }
   },
