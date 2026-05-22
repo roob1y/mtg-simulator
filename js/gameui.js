@@ -53,12 +53,16 @@ const GameUI = {
         const topH = topHud.offsetHeight;
         const botH = botHud.offsetHeight;
         const handH = handLayer ? handLayer.offsetHeight : 160;
-        // Always keep hand layer correctly positioned
+        // Keep hand layer correctly positioned
         if (handLayer) handLayer.style.bottom = botH + 'px';
+        // Battlefield scrolls between top HUD and hand layer
         bf.style.paddingTop = topH + 'px';
         bf.style.paddingBottom = (botH + handH) + 'px';
         bf.style.minHeight = window.innerHeight + 'px';
-        const available = window.innerHeight - topH - botH - handH;
+        // Zones fill the visible area between the two HUDs
+        const divider = document.querySelector('.battlefield-divider');
+        const dividerH = divider ? divider.offsetHeight : 29;
+        const available = window.innerHeight - topH - botH - handH - dividerH;
         const zoneH = Math.floor(available / 2);
         if (oppZone) oppZone.style.minHeight = zoneH + 'px';
         if (humanZone) humanZone.style.minHeight = zoneH + 'px';
