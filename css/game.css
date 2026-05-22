@@ -647,7 +647,6 @@
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius-md);
   cursor: pointer;
-  overflow: hidden;
   position: relative;
   box-shadow:
     0 4px 10px rgba(0,0,0,0.7),
@@ -699,6 +698,7 @@
   object-position: center;
   display: block;
   flex: 1;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .hand-card-info { padding: 3px 4px 4px; }
