@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Translate the hand-cards element
       const current = hand._translateX || 0;
       const maxScroll = Math.max(0, hand.scrollWidth - hand.parentElement.offsetWidth);
-      const next = Math.max(-maxScroll, Math.min(0, current - (x - startX) * 0.5));
+      const next = Math.max(-maxScroll, Math.min(0, current + (x - startX)));
       // Update startX for next move
       startX = x;
       hand._translateX = next;
