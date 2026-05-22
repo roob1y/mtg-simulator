@@ -28,27 +28,33 @@ function showPage(id) {
   // Show/hide game HUDs
   const topHud = document.getElementById('game-hud-top');
   const botHud = document.getElementById('game-hud-bottom');
+  const handLayer = document.getElementById('game-hand-layer');
   const header = document.getElementById('main-header');
   const gear = document.getElementById('game-gear');
 
   if (id === 'game') {
     if (topHud) topHud.style.display = 'block';
     if (botHud) botHud.style.display = 'block';
+    if (handLayer) handLayer.style.display = 'block';
     if (header) header.classList.add('hidden');
     if (gear) gear.classList.remove('hidden');
-    // Measure actual HUD heights and apply to battlefield
+    // Measure actual HUD heights and position hand layer
     requestAnimationFrame(() => {
       const topH = topHud ? topHud.offsetHeight : 130;
       const botH = botHud ? botHud.offsetHeight : 240;
       const bf = document.querySelector('.game-battlefield');
       if (bf) {
         bf.style.paddingTop = (topH + 4) + 'px';
-        bf.style.paddingBottom = (botH + 16) + 'px';
+        bf.style.paddingBottom = (botH + 160) + 'px';
+      }
+      if (handLayer) {
+        handLayer.style.bottom = botH + 'px';
       }
     });
   } else {
     if (topHud) topHud.style.display = 'none';
     if (botHud) botHud.style.display = 'none';
+    if (handLayer) handLayer.style.display = 'none';
     if (header) header.classList.remove('hidden');
     if (gear) gear.classList.add('hidden');
     document.getElementById('game-settings-dropdown')?.classList.add('hidden');

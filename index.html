@@ -246,6 +246,17 @@
         <div class="drawer__body" id="opp-exile-list"></div>
       </div>
 
+      <!-- HAND LAYER — fixed, independent of bottom HUD, cards are free floating -->
+      <div class="game-hand-layer" id="game-hand-layer">
+        <div class="hud-hand-row">
+          <span class="hud-hand-label">YOUR HAND</span>
+          <span class="hud-mana-label" id="mana-pool"></span>
+        </div>
+        <div class="hand-zone">
+          <div class="hand-cards" id="human-hand"></div>
+        </div>
+      </div>
+
       <!-- BOTTOM HUD — fixed, outside game-board -->
       <div class="game-hud-bottom" id="game-hud-bottom">
 
@@ -259,15 +270,6 @@
             <span id="mobile-log-toggle">▲</span>
           </div>
           <div id="mobile-log-entries" class="mobile-log-entries"></div>
-        </div>
-
-        <!-- Hand row -->
-        <div class="hud-hand-row">
-          <span class="hud-hand-label">YOUR HAND</span>
-          <span class="hud-mana-label" id="mana-pool"></span>
-        </div>
-        <div class="hand-zone">
-          <div class="hand-cards" id="human-hand"></div>
         </div>
 
         <!-- Phase bar + Log row -->
