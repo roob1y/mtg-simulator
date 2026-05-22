@@ -18,6 +18,7 @@ const GameLog = {
   },
 
   showToast(entry) {
+    if (entry.type === 'phase') return;
     const toast = document.getElementById('game-log-toast');
     if (!toast) return;
 
