@@ -622,16 +622,12 @@
 
 /* ── HAND ── */
 .hand-zone {
-  overflow-x: auto;
-  overflow-y: visible;
   padding: 20px 8px 12px;
   background: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.04);
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
+  touch-action: pan-x;
 }
-
-.hand-zone::-webkit-scrollbar { display: none; }
 
 .hand-cards {
   display: flex;

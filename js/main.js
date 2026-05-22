@@ -103,6 +103,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const at = document.getElementById('auto-tap-toggle');
   if (bm) bm.checked = Settings.get('beginnerMode');
   if (at) at.checked = Settings.get('autoTap');
+
+  // JS touch scroll for hand zone (overflow:visible can't scroll natively)
+  const handZone = document.getElementById('game-hud-bottom');
+  if (handZone) {
+    let startX = 0, scrollLeft = 0, isDragging = false;
+    handZone.addEventListener('touchstart', (e) => {
+      const hand = document.getElementById('human-hand');
+      if (!hand || !hand.contains(e.target)) return;
+      isDragging = true;
+      startX = e.touches[0].pageX;
+      scrollLeft = hand.parentElement.scrollLeft || 0;
+    }, { passive: true });
+    handZone.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const hand = document.getElementById('human-hand');
+      if (!hand) return;
+      const x = e.touches[0].pageX;
+      const walk = startX - x;
+      // Translate the hand-cards element
+      const current = hand._translateX || 0;
+      const maxScroll = Math.max(0, hand.scrollWidth - hand.parentElement.offsetWidth);
+      const next = Math.max(-maxScroll, Math.min(0, current - (x - startX) * 0.5));
+      // Update startX for next move
+      startX = x;
+      hand._translateX = next;
+      hand.style.transform = `translateX(${next}px)`;
+    }, { passive: true });
+    handZone.addEventListener('touchend', () => { isDragging = false; });
+  }
 });
 
 async function searchCards() {
