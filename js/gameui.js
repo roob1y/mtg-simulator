@@ -396,25 +396,28 @@ const GameUI = {
 
     el.innerHTML = html;
 
-    // Animate permanents in
+    // Animate new permanents in (diff by ID to avoid wrong-slice bug)
     const bfKey = Game.human.battlefield.map((p) => p.id).join(',');
     if (bfKey !== this._lastBfKey) {
-      const lastCount = this._lastBfKey ? this._lastBfKey.split(',').length : 0;
-      const perms = el.querySelectorAll('.permanent');
-      const newPerms = Array.from(perms).slice(lastCount);
-      if (newPerms.length > 0) {
-        gsap.fromTo(
-          newPerms,
-          { scale: 0, opacity: 0 },
-          {
-            scale: 1,
-            opacity: 1,
-            duration: 0.2,
-            stagger: 0.03,
-            ease: 'back.out(1.6)',
-            clearProps: 'transform',
-          }
-        );
+      const prevIds = new Set(this._lastBfKey ? this._lastBfKey.split(',') : []);
+      const newIds = new Set(Game.human.battlefield.map((p) => String(p.id)));
+      const addedIds = [...newIds].filter((id) => !prevIds.has(id));
+      if (addedIds.length > 0) {
+        const newPerms = addedIds.map((id) => el.querySelector(`[onclick*="${id}"]`)).filter(Boolean);
+        if (newPerms.length > 0) {
+          gsap.fromTo(
+            newPerms,
+            { scale: 0, opacity: 0 },
+            {
+              scale: 1,
+              opacity: 1,
+              duration: 0.2,
+              stagger: 0.03,
+              ease: 'back.out(1.6)',
+              clearProps: 'all',
+            }
+          );
+        }
       }
     }
     this._lastBfKey = bfKey;
@@ -1245,6 +1248,7 @@ const GameUI = {
     }, 300);
   },
 };
+
 
 
 
