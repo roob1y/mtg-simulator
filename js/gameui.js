@@ -41,6 +41,33 @@ const GameUI = {
     this.renderActionButtons(game);
     this.renderGraveyard(game.human, game.opponent);
     this.renderExile(game.human);
+    // Recalculate battlefield padding and zone heights based on actual HUD heights
+    requestAnimationFrame(() => {
+      const topHud = document.getElementById('game-hud-top');
+      const botHud = document.getElementById('game-hud-bottom');
+      const handLayer = document.getElementById('game-hand-layer');
+      const bf = document.querySelector('.game-battlefield');
+      const oppZone = document.getElementById('opp-battlefield');
+      const humanZone = document.getElementById('human-battlefield');
+      if (bf && topHud && botHud) {
+        const topH = topHud.offsetHeight;
+        const botH = botHud.offsetHeight;
+        const handH = handLayer ? handLayer.offsetHeight : 160;
+        // Keep hand layer correctly positioned
+        if (handLayer) handLayer.style.bottom = botH + 'px';
+        // Battlefield scrolls between top HUD and hand layer
+        bf.style.paddingTop = topH + 'px';
+        bf.style.paddingBottom = (botH + handH) + 'px';
+        bf.style.minHeight = window.innerHeight + 'px';
+        // Zones fill the visible area between the two HUDs
+        const divider = document.querySelector('.battlefield-divider');
+        const dividerH = divider ? divider.offsetHeight : 29;
+        const available = window.innerHeight - topH - botH - handH - dividerH;
+        const zoneH = Math.floor(available / 2);
+        if (oppZone) oppZone.style.minHeight = zoneH + 'px';
+        if (humanZone) humanZone.style.minHeight = zoneH + 'px';
+      }
+    });
     document
       .getElementById('game-board')
       ?.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -50,37 +77,99 @@ const GameUI = {
 
   renderPhaseBar(game) {
     const phases = [
-      { id: 'untap', label: 'Untap' },
-      { id: 'upkeep', label: 'Upkeep' },
-      { id: 'draw', label: 'Draw' },
-      { id: 'main1', label: 'Main 1' },
-      { id: 'combat', label: 'Combat' },
-      { id: 'main2', label: 'Main 2' },
-      { id: 'end', label: 'End' },
+      { id: 'untap',  icon: '↺',  label: 'Untap' },
+      { id: 'upkeep', icon: '◆',  label: 'Upkeep' },
+      { id: 'draw',   icon: '⧗',  label: 'Draw' },
+      { id: 'main1',  icon: null, label: 'Main 1' },
+      { id: 'combat', icon: '✕',  label: 'Combat' },
+      { id: 'main2',  icon: null, label: 'Main 2' },
+      { id: 'end',    icon: '◆',  label: 'End' },
     ];
 
     const el = document.getElementById('phase-bar');
     if (!el) return;
 
-    el.innerHTML = phases
-      .map(
-        (p) =>
-          `<div class="phase-pip ${game.currentPhase === p.id ? 'active' : ''}">${p.label}</div>`
-      )
-      .join('');
+    el.innerHTML = phases.map(p => {
+      const isActive = game.currentPhase === p.id;
+      const isCard = p.icon === null; // main1 and main2 use card shape
+      return `<div class="phase-pip ${isActive ? 'active' : ''} ${isCard ? 'card-shape' : ''}">
+        ${isCard ? '<span class="phase-card-icon"></span>' : `<span class="phase-icon">${p.icon}</span>`}
+        ${isActive ? `<span class="phase-label">${p.label}</span>` : ''}
+      </div>`;
+    }).join('');
   },
 
   // ── LIFE TOTALS ──
+
+  _prevHumanLife: null,
+  _prevOppLife: null,
 
   renderLifeTotals(game) {
     const humanLife = document.getElementById('human-life');
     const oppLife = document.getElementById('opp-life');
     const turnInfo = document.getElementById('turn-info');
 
-    if (humanLife) humanLife.textContent = game.human.life;
-    if (oppLife) oppLife.textContent = game.opponent.life;
+    if (humanLife) {
+      const prev = this._prevHumanLife;
+      humanLife.textContent = game.human.life;
+      if (prev !== null && prev !== game.human.life) {
+        humanLife.classList.remove('life-flash-damage', 'life-flash-gain');
+        void humanLife.offsetWidth;
+        humanLife.classList.add(game.human.life < prev ? 'life-flash-damage' : 'life-flash-gain');
+        setTimeout(() => humanLife.classList.remove('life-flash-damage', 'life-flash-gain'), 600);
+      }
+      this._prevHumanLife = game.human.life;
+    }
+
+    if (oppLife) {
+      const prev = this._prevOppLife;
+      oppLife.textContent = game.opponent.life;
+      if (prev !== null && prev !== game.opponent.life) {
+        oppLife.classList.remove('life-flash-damage', 'life-flash-gain');
+        void oppLife.offsetWidth;
+        oppLife.classList.add(game.opponent.life < prev ? 'life-flash-damage' : 'life-flash-gain');
+        setTimeout(() => oppLife.classList.remove('life-flash-damage', 'life-flash-gain'), 600);
+      }
+      this._prevOppLife = game.opponent.life;
+    }
+
     if (turnInfo)
-      turnInfo.textContent = `Turn ${game.turn} — ${game.isHumanTurn ? 'Your Turn' : "Opponent's Turn"}`;
+      turnInfo.innerHTML = `Turn ${game.turn}<span class="turn-whose">${game.isHumanTurn ? 'Your Turn' : "Opponent's Turn"}</span>`;
+  },
+
+  // ── DRAWERS ──
+
+  summariseCounters(counters) {
+    const tally = {};
+    counters.forEach(c => { tally[c] = (tally[c] || 0) + 1; });
+    return Object.entries(tally).map(([type, count]) => {
+      if (type === '+1/+1') return `+${count}/+${count}`;
+      if (type === '-1/-1') return `-${count}/-${count}`;
+      return count > 1 ? `${count}× ${type}` : type;
+    }).join(', ');
+  },
+
+  toggleDrawer(drawerId) {
+    const el = document.getElementById(drawerId);
+    if (!el) return;
+
+    // For opp drawers, close the other one first
+    if (drawerId === 'opp-graveyard-drawer') {
+      document.getElementById('opp-exile-drawer')?.classList.remove('is-open');
+    } else if (drawerId === 'opp-exile-drawer') {
+      document.getElementById('opp-graveyard-drawer')?.classList.remove('is-open');
+    }
+
+    el.classList.toggle('is-open');
+
+    // For opp drawers, position below the pill that opened them
+    if ((drawerId === 'opp-graveyard-drawer' || drawerId === 'opp-exile-drawer') && el.classList.contains('is-open')) {
+      const oppInfoRow = document.querySelector('.opp-info-row');
+      if (oppInfoRow) {
+        const rect = oppInfoRow.getBoundingClientRect();
+        el.style.top = (rect.bottom + 4) + 'px';
+      }
+    }
   },
 
   // ── MANA POOL ──
@@ -93,7 +182,7 @@ const GameUI = {
     const colorSymbols = { W: '⬜', U: '🔵', B: '⚫', R: '🔴', G: '🟢', C: '◇' };
     const total = game.human.totalMana();
 
-    let html = `<span class="mana-label">Mana:</span>`;
+    let html = `<span class="mana-label">Mana:</span> `;
 
     if (total === 0) {
       html += `<span class="mana-empty">Empty</span>`;
@@ -101,7 +190,7 @@ const GameUI = {
       for (const [color, amount] of Object.entries(pool)) {
         if (amount > 0) {
           for (let i = 0; i < amount; i++) {
-            html += `<span class="mana-pip" title="${color}">${colorSymbols[color]}</span>`;
+            html += `<span class="mana-pip">${colorSymbols[color]}</span>`;
           }
         }
       }
@@ -120,7 +209,18 @@ const GameUI = {
     const lands = game.opponent.getLands();
     const handSize = game.opponent.hand.length;
 
-    let html = `<div class="zone-label">Opponent — Hand: ${handSize} cards · Library: ${game.opponent.library.length}</div>`;
+    let html = `
+      <div class="opp-zone-label">OPPONENT</div>
+      <div class="opp-info-row">
+        <div class="opp-info-text">
+          <span>hand: ${handSize}</span>
+          <span>library: ${game.opponent.library.length}</span>
+        </div>
+        <div class="opp-info-pills">
+          <span class="zone-pill" onclick="GameUI.toggleDrawer('opp-graveyard-drawer')">⚰ Graveyard · ${game.opponent.graveyard.length}</span>
+          <span class="zone-pill" onclick="GameUI.toggleDrawer('opp-exile-drawer')">◻ Exile · ${game.opponent.exile ? game.opponent.exile.length : 0}</span>
+        </div>
+      </div>`;
 
     if (creatures.length > 0) {
       html += `<div class="permanent-row">`;
@@ -142,7 +242,7 @@ const GameUI = {
               <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
               <div class="perm-pt">${power}/${toughness}</div>
             </div>
-            ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(', ')}</div>` : ''}
+            ${perm.counters.length > 0 ? `<div class="perm-counters">${GameUI.summariseCounters(perm.counters)}</div>` : ''}
           </div>`;
       });
       html += `</div>`;
@@ -210,15 +310,29 @@ const GameUI = {
       return !type.includes('creature') && !type.includes('land');
     });
 
-    let html = `<div class="zone-label">Your Battlefield · Library: ${humanPlayer.library.length} · Graveyard: ${humanPlayer.graveyard.length}</div>`;
+    let html = `<div class="zone-label">YOUR PERMANENTS</div>`;
 
     if (otherPerms.length > 0) {
       html += `<div class="permanent-row">`;
       otherPerms.forEach((perm) => {
+        const artUrl = Scryfall.getImageUrl(perm.card, 'normal');
+        const loyalty = perm.card.loyalty || Scryfall.getFrontFace(perm.card).loyalty;
+        const isPlaneswalker = (perm.card.type_line || '').toLowerCase().includes('planeswalker');
         html += `
-          <div class="permanent other-perm ${perm.tapped ? 'tapped' : ''}" onclick="GameUI.onArtifactClick('${perm.id}')">
-            <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
-            <div class="perm-type">${Scryfall.getFrontFace(perm.card).type_line || ''}</div>
+          <div class="permanent other-perm ${perm.tapped ? 'tapped' : ''}"
+            onclick="GameUI.onArtifactClick('${perm.id}')"
+            onmousedown="GameUI.startPermanentLongPress('${perm.id}', event)"
+            onmouseup="GameUI.cancelLongPress()"
+            onmouseleave="GameUI.cancelLongPress()"
+            ontouchstart="GameUI.startPermanentLongPress('${perm.id}', event)"
+            ontouchend="GameUI.cancelLongPress()"
+            ontouchmove="GameUI.cancelLongPress()">
+            ${artUrl ? `<img class="perm-art" src="${artUrl}" alt="${Scryfall.getFrontFace(perm.card).name}">` : ''}
+            ${perm.counters.length > 0 ? `<div class="perm-counters">${GameUI.summariseCounters(perm.counters)}</div>` : ''}
+            ${isPlaneswalker && loyalty ? `<div class="perm-loyalty">${loyalty}</div>` : ''}
+            <div class="perm-overlay">
+              <div class="perm-name">${Scryfall.getFrontFace(perm.card).name}</div>
+            </div>
           </div>`;
       });
       html += `</div>`;
@@ -243,7 +357,7 @@ const GameUI = {
             ${artUrl ? `<img class="perm-art" src="${artUrl}" alt="${Scryfall.getFrontFace(perm.card).name}">` : ''}
             ${perm.summoningSick ? '<div class="sick-label">Sick</div>' : ''}
             ${perm.isCommander ? '<div class="cmd-label">CMD</div>' : ''}
-            ${perm.counters.length > 0 ? `<div class="perm-counters">${perm.counters.join(' ')}</div>` : ''}
+            ${perm.counters.length > 0 ? `<div class="perm-counters">${GameUI.summariseCounters(perm.counters)}</div>` : ''}
           </div>`;
       });
       html += `</div>`;
@@ -275,32 +389,35 @@ const GameUI = {
 
     if (
       html ===
-      `<div class="zone-label">Your Battlefield · Library: ${humanPlayer.library.length} · Graveyard: ${humanPlayer.graveyard.length}</div>`
+      `<div class="zone-label">YOUR PERMANENTS</div>`
     ) {
-      html += `<p class="muted" style="padding:8px; font-size:12px">No permanents in play yet.</p>`;
+      html += ``;
     }
 
     el.innerHTML = html;
 
-    // Animate permanents in
+    // Animate new permanents in (diff by ID to avoid wrong-slice bug)
     const bfKey = Game.human.battlefield.map((p) => p.id).join(',');
     if (bfKey !== this._lastBfKey) {
-      const lastCount = this._lastBfKey ? this._lastBfKey.split(',').length : 0;
-      const perms = el.querySelectorAll('.permanent');
-      const newPerms = Array.from(perms).slice(lastCount);
-      if (newPerms.length > 0) {
-        gsap.fromTo(
-          newPerms,
-          { scale: 0, opacity: 0 },
-          {
-            scale: 1,
-            opacity: 1,
-            duration: 0.2,
-            stagger: 0.03,
-            ease: 'back.out(1.6)',
-            clearProps: 'transform',
-          }
-        );
+      const prevIds = new Set(this._lastBfKey ? this._lastBfKey.split(',') : []);
+      const newIds = new Set(Game.human.battlefield.map((p) => String(p.id)));
+      const addedIds = [...newIds].filter((id) => !prevIds.has(id));
+      if (addedIds.length > 0) {
+        const newPerms = addedIds.map((id) => el.querySelector(`[onclick*="${id}"]`)).filter(Boolean);
+        if (newPerms.length > 0) {
+          gsap.fromTo(
+            newPerms,
+            { scale: 0, opacity: 0 },
+            {
+              scale: 1,
+              opacity: 1,
+              duration: 0.2,
+              stagger: 0.03,
+              ease: 'back.out(1.6)',
+              clearProps: 'all',
+            }
+          );
+        }
       }
     }
     this._lastBfKey = bfKey;
@@ -327,20 +444,43 @@ const GameUI = {
         const cmc = card.cmc || 0;
         const canAfford = Game.canAffordCard(card);
 
+        const isLand = (face.type_line || '').toLowerCase().includes('land');
+        const affordClass = canAfford && !isLand && ['main1','main2'].includes(Game.currentPhase) ? 'can-afford' : '';
+        const phase = Game.currentPhase;
+        const isMain = ['main1','main2'].includes(phase);
+        let cardActionBtn = '';
+
+        if (isSelected && isMain) {
+          if (Scryfall.isMDFC(card)) {
+            const landFace = Scryfall.getMDFCLandFace(card);
+            const spellFace = Scryfall.getMDFCSpellFace(card);
+            if (landFace && Game.human.canPlayLand()) {
+              cardActionBtn += `<button class="card-action-btn land" onclick="event.stopPropagation(); Game.playMDFCLand(${idx})">🌲 Play</button>`;
+            }
+            if (spellFace && canAfford) {
+              cardActionBtn += `<button class="card-action-btn cast" onclick="event.stopPropagation(); Game.castSpell(${idx})">✨ Cast</button>`;
+            }
+          } else if (isLand && Game.human.canPlayLand()) {
+            cardActionBtn = `<button class="card-action-btn land" onclick="event.stopPropagation(); Game.playLand(${idx})">🌲 Play</button>`;
+          } else if (!isLand && canAfford) {
+            cardActionBtn = `<button class="card-action-btn cast" onclick="event.stopPropagation(); Game.castSpell(${idx})">✨ Cast</button>`;
+          }
+        }
+
+        if (isSelected && phase === 'end' && Game.human.hand.length > Game.human.maxHandSize) {
+          cardActionBtn = `<button class="card-action-btn discard" onclick="event.stopPropagation(); GameUI.discardCard(${idx})">🗑 Discard</button>`;
+        }
+
         return `
-        <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''}"
+        <div class="hand-card ${isSelected ? 'selected' : ''} ${!canAfford && cmc > 0 ? 'cant-afford' : ''} ${affordClass}"
+          data-hand-idx="${idx}"
           onclick="GameUI.handleHandCardTap(${idx})"
-          oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])"
-          onmousedown="GameUI.startHandLongPress(${idx})"
-          onmouseup="GameUI.cancelLongPress()"
-          onmouseleave="GameUI.cancelLongPress()"
-          ontouchstart="GameUI.startHandLongPress(${idx})"
-          ontouchend="GameUI.cancelLongPress()"
-          ontouchmove="GameUI.cancelLongPress()">
+          oncontextmenu="event.preventDefault(); GameUI.previewGameCard(Game.human.hand[${idx}])">
           ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+          ${cost ? `<div class="hand-card-cost">${cost}</div>` : ''}
+          ${cardActionBtn ? `<div class="card-action-overlay">${cardActionBtn}</div>` : ''}
           <div class="hand-card-info">
             <div class="hand-card-name">${face.name}</div>
-            <div class="hand-card-meta">${type} ${cost ? '· ' + cost : ''}</div>
           </div>
         </div>`;
       })
@@ -380,6 +520,8 @@ const GameUI = {
 
   renderCommandZone(humanPlayer) {
     const el = document.getElementById('command-zone');
+    const countEl = document.getElementById('commander-count');
+    if (countEl) countEl.textContent = humanPlayer.commanders.length;
     if (!el) return;
 
     if (humanPlayer.commanders.length === 0) {
@@ -482,6 +624,30 @@ const GameUI = {
           .join('');
       }
     }
+
+    // Opponent exile
+    const oppExileEl = document.getElementById('opp-exile-list');
+    const oppExileCountEl = document.getElementById('opp-exile-count');
+    if (oppExileEl && opponent.exile) {
+      if (oppExileCountEl) oppExileCountEl.textContent = opponent.exile.length;
+      if (opponent.exile.length === 0) {
+        oppExileEl.innerHTML = '<p class="muted" style="font-size:12px">Empty.</p>';
+      } else {
+        oppExileEl.innerHTML = opponent.exile
+          .map((card, idx) => {
+            const imgUrl = Scryfall.getArtUrl(card);
+            return `
+          <div class="hand-card" onclick="GameUI.previewGameCard(Game.opponent.exile[${idx}])">
+            ${imgUrl ? `<img class="hand-card-img" src="${imgUrl}" alt="${card.name}" loading="lazy">` : ''}
+            <div class="hand-card-info">
+              <div class="hand-card-name">${card.name}</div>
+              <div class="hand-card-meta">${card.type_line || ''}</div>
+            </div>
+          </div>`;
+          })
+          .join('');
+      }
+    }
   },
 
   returnToHand(graveyardIdx) {
@@ -562,23 +728,17 @@ const GameUI = {
 
   renderActionButtons(game) {
     const el = document.getElementById('action-buttons');
+    const combatArea = document.getElementById('combat-btn-area');
     if (!el) return;
 
-    // FIX: use local `phase` variable consistently — no Game.currentPhase reference
     const phase = game.currentPhase;
     const isMain = ['main1', 'main2'].includes(phase);
     const isCombat = phase === 'combat';
 
-    let html = '';
-
     const phaseNames = {
-      untap: 'Untap',
-      upkeep: 'Upkeep',
-      draw: 'Draw',
-      main1: 'Main Phase 1',
-      combat: 'Combat',
-      main2: 'Main Phase 2',
-      end: 'End Step',
+      untap: 'Untap', upkeep: 'Upkeep', draw: 'Draw',
+      main1: 'Main Phase 1', combat: 'Combat',
+      main2: 'Main Phase 2', end: 'End Step',
     };
 
     const phases = ['untap', 'upkeep', 'draw', 'main1', 'combat', 'main2', 'end'];
@@ -587,82 +747,28 @@ const GameUI = {
     const nextLabel = nextPhase ? phaseNames[nextPhase] : 'End Turn';
     const currentLabel = phaseNames[phase] || phase;
 
-    // Don't show Next Phase during active attacker declaration
-    if (!(isCombat && Combat.phase === 'declare_attackers')) {
-      html += `<button class="action-btn primary" onclick="Game.advancePhase()">
-        ${currentLabel} → ${nextLabel}
-      </button>`;
-      if (this.pendingDraw) {
-        html += `<button class="action-btn" onclick="Game.human.draw(1); GameLog.add('You draw a card (triggered effect).', 'action'); GameUI.pendingDraw = false; GameUI.renderGame(Game);">
-    🃏 Draw a Card
-  </button>`;
-      }
+    // Log button always visible
+    el.innerHTML = `<button class="hud-log-btn" onclick="GameUI.toggleMobileLog()">📋 Log</button>`;
+
+    // Pending draw trigger
+    if (this.pendingDraw) {
+      el.innerHTML += `<button class="hud-log-btn" style="border-color:rgba(200,168,75,0.4);color:var(--accent)" onclick="Game.human.draw(1); GameLog.add('You draw a card (triggered effect).', 'action'); GameUI.pendingDraw = false; GameUI.renderGame(Game);">🃏 Draw a Card</button>`;
     }
 
-    // Combat buttons
-    if (game.isHumanTurn) {
-      if (isCombat && Combat.phase === null) {
-        html += `<button class="action-btn attack" onclick="Game.beginCombat()">
-          ⚔ Declare Attackers
-        </button>`;
+    // Combat/advance button in pills row right side
+    if (combatArea) {
+      let combatHtml = '';
+      if (!(isCombat && Combat.phase === 'declare_attackers')) {
+        combatHtml += `<button class="hud-combat-btn" onclick="Game.advancePhase()">→ ${nextLabel}</button>`;
       }
-
-      if (isCombat && Combat.phase === 'declare_attackers') {
-        html += `<button class="action-btn attack" onclick="Combat.confirmAttackers(Game.human, Game.opponent)">
-          ✓ Confirm Attackers (${Combat.attackers.length})
-        </button>`;
-        html += `<button class="action-btn" onclick="Combat.end()">
-          Skip Combat
-        </button>`;
+      if (game.isHumanTurn && isCombat && Combat.phase === null) {
+        combatHtml += `<button class="hud-combat-btn attack" onclick="Game.beginCombat()">⚔ Attack</button>`;
       }
-    }
-
-    // Actions for selected hand card
-    if (this.selectedCard !== null) {
-      const card = game.human.hand[this.selectedCard];
-      if (card) {
-        const type = (card.type_line || '').toLowerCase();
-        const isLand = type.includes('land');
-
-        if (Scryfall.isMDFC(card) && isMain) {
-          const landFace = Scryfall.getMDFCLandFace(card);
-          const spellFace = Scryfall.getMDFCSpellFace(card);
-          if (landFace && game.human.canPlayLand()) {
-            html += `<button class="action-btn land" onclick="Game.playMDFCLand(${this.selectedCard})">
-      🌲 Play ${landFace.name}
-    </button>`;
-          }
-          if (spellFace) {
-            const cmc = card.cmc || 0;
-            const canAffordMDFC = Game.canAffordCard(card);
-            html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAffordMDFC ? 'disabled title="Not enough mana"' : ''}>
-      ✨ Cast ${spellFace.name} (${cmc} mana)${!canAffordMDFC ? ' 🔒' : ''}
-    </button>`;
-          }
-        } else if (isLand && isMain && game.human.canPlayLand()) {
-          html += `<button class="action-btn land" onclick="Game.playLand(${this.selectedCard})">
-    🌲 Play ${card.name}
-  </button>`;
-        } else if (!isLand && isMain) {
-          const canAfford = Game.canAffordCard(card);
-          html += `<button class="action-btn cast" onclick="Game.castSpell(${this.selectedCard})" ${!canAfford ? 'disabled title="Not enough mana"' : ''}>
-    ✨ Cast ${card.name} (${card.cmc || 0} mana)${!canAfford ? ' 🔒' : ''}
-  </button>`;
-        }
-
-        // FIX: use local phase variable, not Game.currentPhase
-        if (phase === 'end' && game.human.hand.length > game.human.maxHandSize) {
-          html += `<button class="action-btn discard" onclick="GameUI.discardCard(${this.selectedCard})">
-            🗑 Discard ${card.name}
-          </button>`;
-        }
+      if (game.isHumanTurn && isCombat && Combat.phase === 'declare_attackers') {
+        combatHtml += `<button class="hud-combat-btn attack" onclick="Combat.confirmAttackers(Game.human, Game.opponent)">✓ Confirm (${Combat.attackers.length})</button>`;
       }
+      combatArea.innerHTML = combatHtml;
     }
-    if (window.innerWidth <= 768) {
-      html += `<button class="action-btn" onclick="GameUI.toggleMobileLog()">📋 Log</button>`;
-    }
-
-    el.innerHTML = html;
   },
 
   // ── CLICK HANDLERS ──
@@ -868,14 +974,17 @@ const GameUI = {
       <div class="preview-name">${card.name}</div>
       <div class="preview-type">${card.type_line || ''}</div>
       ${cost ? `<div class="preview-cost">${cost}</div>` : ''}
-      ${oracle ? `<div class="preview-text">${oracle.replace(/\n/g, '<br>')}</div>` : ''}
+      ${oracle ? `<div class="preview-text">${Scryfall.formatManaCost(oracle).replace(/\n/g, '<br>')}</div>` : ''}
       ${card.power ? `<div class="preview-pt">${card.power} / ${card.toughness}</div>` : ''}
       ${loyalty ? `<div class="preview-pt">${loyalty}</div>` : ''}
       ${counterHtml}
     `;
 
     document.getElementById('card-preview-modal-content').innerHTML = html;
-    document.getElementById('card-preview-modal').classList.remove('hidden');
+    const modal = document.getElementById('card-preview-modal');
+    modal.classList.remove('hidden');
+    modal.style.pointerEvents = 'none';
+    setTimeout(() => { modal.style.pointerEvents = ''; }, 400);
 
     if (!isMobile) {
       const el = document.getElementById('game-card-preview');
@@ -1055,7 +1164,7 @@ const GameUI = {
       <div class="game-over-inner">
         <div class="game-over-title">${won ? '🏆 You Win!' : '💀 You Lose'}</div>
         <div class="game-over-text">${won ? 'Congratulations!' : 'Better luck next time!'}</div>
-        <button onclick="showPage('deck-builder')">Back to Deck Builder</button>
+        <button onclick="abandonGame()">Back to Deck Builder</button>
       </div>
     `;
     el.classList.remove('hidden');
@@ -1072,6 +1181,17 @@ const GameUI = {
       this._lastTapIdx = idx;
       this.onHandCardClick(idx);
     }
+  },
+
+  flashHandCard(idx, type) {
+    const handCards = document.querySelectorAll('#human-hand .hand-card');
+    const el = handCards[idx];
+    if (!el) return;
+    const cls = type === 'land' ? 'flash-land' : 'flash-cast';
+    // Force reflow before adding class to ensure animation triggers fresh
+    el.classList.remove('flash-cast', 'flash-land');
+    void el.offsetWidth;
+    el.classList.add(cls);
   },
   startPermanentLongPress(permanentId, event) {
     this._longPressTimer = setTimeout(() => {
@@ -1106,8 +1226,21 @@ const GameUI = {
         mobileEntries.innerHTML = entries.innerHTML;
         mobileEntries.scrollTop = mobileEntries.scrollHeight;
       }
+
+      // Close when clicking outside
+      setTimeout(() => {
+        const handler = (e) => {
+          if (!drawer.contains(e.target)) {
+            drawer.classList.add('hidden');
+            if (toggle) toggle.textContent = '▲';
+            document.removeEventListener('click', handler);
+          }
+        };
+        document.addEventListener('click', handler);
+      }, 0);
     }
   },
+
   startHandLongPress(idx) {
     this._longPressTimer = setTimeout(() => {
       const card = Game.human.hand[idx];
@@ -1115,3 +1248,8 @@ const GameUI = {
     }, 300);
   },
 };
+
+
+
+
+

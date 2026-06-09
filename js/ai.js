@@ -24,26 +24,32 @@ const AI = {
     const list = this.opponent.getDeckList();
     const identifiers = list.map((e) => ({ name: e.name }));
 
-    const res = await fetch('https://api.scryfall.com/cards/collection', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifiers }),
-    });
+    try {
+      const res = await fetch('https://api.scryfall.com/cards/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifiers }),
+      });
 
-    const data = await res.json();
-    const fetched = data.data || [];
+      const data = await res.json();
+      const fetched = data.data || [];
 
-    const cards = [];
-    list.forEach((entry) => {
-      const card = fetched.find((c) => c.name.toLowerCase() === entry.name.toLowerCase());
-      if (card) {
-        for (let i = 0; i < entry.qty; i++) cards.push({ ...card });
-      } else {
-        GameLog.add(`AI deck: couldn't find ${entry.name}.`, 'warning');
-      }
-    });
+      const cards = [];
+      list.forEach((entry) => {
+        const card = fetched.find((c) => c.name.toLowerCase() === entry.name.toLowerCase());
+        if (card) {
+          for (let i = 0; i < entry.qty; i++) cards.push({ ...card });
+        } else {
+          GameLog.add(`AI deck: couldn't find ${entry.name}.`, 'warning');
+        }
+      });
 
-    this.player.loadDeck(cards);
+      this.player.loadDeck(cards);
+    } catch (err) {
+      GameLog.add('Failed to load opponent deck from Scryfall. Starting with empty deck.', 'warning');
+      this.player.loadDeck([]);
+    }
+
     return this.player;
   },
 

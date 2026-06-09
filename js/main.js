@@ -24,6 +24,63 @@ function showPage(id) {
 
   const btn = document.querySelector(`.nav-btn[onclick="showPage('${id}')"]`);
   if (btn) btn.classList.add('active');
+
+  // Show/hide game HUDs
+  const topHud = document.getElementById('game-hud-top');
+  const botHud = document.getElementById('game-hud-bottom');
+  const handLayer = document.getElementById('game-hand-layer');
+  const header = document.getElementById('main-header');
+  const gear = document.getElementById('game-gear');
+
+  if (id === 'game') {
+    if (topHud) topHud.style.display = 'block';
+    if (botHud) botHud.style.display = 'block';
+    if (handLayer) handLayer.style.display = 'block';
+    if (header) header.classList.add('hidden');
+    if (gear) gear.classList.remove('hidden');
+    // Measure actual HUD heights and position hand layer
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const topH = topHud ? topHud.offsetHeight : 76;
+        const botH = botHud ? botHud.offsetHeight : 120;
+        if (handLayer) handLayer.style.bottom = botH + 'px';
+      });
+    });
+  } else {
+    if (topHud) topHud.style.display = 'none';
+    if (botHud) botHud.style.display = 'none';
+    if (handLayer) handLayer.style.display = 'none';
+    if (header) header.classList.remove('hidden');
+    if (gear) gear.classList.add('hidden');
+    document.getElementById('game-settings-dropdown')?.classList.add('hidden');
+  }
+}
+
+function exitToDeckBuilder() {
+  document.getElementById('game-settings-dropdown')?.classList.add('hidden');
+  // Show resume banner on deck builder
+  const banner = document.getElementById('game-in-progress-banner');
+  if (banner) banner.classList.remove('hidden');
+  showPage('deck-builder');
+}
+
+function abandonGame() {
+  if (document.getElementById('game-over') && !document.getElementById('game-over').classList.contains('hidden')) {
+    // Coming from game over screen — no confirm needed
+  } else if (!confirm('Abandon this game? This cannot be undone.')) {
+    return;
+  }
+  document.getElementById('game-settings-dropdown')?.classList.add('hidden');
+  document.getElementById('game-over')?.classList.add('hidden');
+  const banner = document.getElementById('game-in-progress-banner');
+  if (banner) banner.classList.add('hidden');
+  const boardEl = document.getElementById('game-board');
+  const mulliganEl = document.getElementById('mulligan-screen');
+  if (boardEl) boardEl.classList.add('hidden');
+  if (mulliganEl) mulliganEl.classList.add('hidden');
+  const playBtn = document.getElementById('play-btn');
+  if (playBtn) playBtn.disabled = true;
+  showPage('deck-builder');
 }
 
 // ── CARD SEARCH ──
@@ -47,6 +104,217 @@ document.addEventListener('DOMContentLoaded', () => {
   const at = document.getElementById('auto-tap-toggle');
   if (bm) bm.checked = Settings.get('beginnerMode');
   if (at) at.checked = Settings.get('autoTap');
+
+  // Hand card touch scrolling (no overflow so glow stays free)
+  const handLayer = document.getElementById('game-hand-layer');
+  if (handLayer) {
+    // Unified hand touch handler: horizontal scroll + vertical drag-to-battlefield
+    let startX = 0, startY = 0, lastX = 0, velX = 0, scrollOffset = 0, rafId = null;
+    let touchMode = null; // null | 'scroll' | 'drag'
+    let dragCardIdx = -1;
+    const DRAG_THRESHOLD = 12;
+    const LONG_PRESS_MS = 500;
+    let longPressTimer = null;
+
+    const getHand = () => document.getElementById('human-hand');
+
+    const clamp = (val) => {
+      const hand = getHand();
+      if (!hand) return val;
+      const max = Math.max(0, hand.offsetWidth - handLayer.offsetWidth + 16);
+      return Math.max(-max, Math.min(0, val));
+    };
+
+    const applyOffset = (val) => {
+      const hand = getHand();
+      if (!hand) return;
+      scrollOffset = clamp(val);
+      hand.style.transform = `translateX(${scrollOffset}px)`;
+    };
+
+    const momentum = () => {
+      velX *= 0.92;
+      if (Math.abs(velX) > 0.5) {
+        applyOffset(scrollOffset + velX);
+        rafId = requestAnimationFrame(momentum);
+      }
+    };
+
+    // Ghost element for drag
+    let ghost = document.getElementById('drag-ghost');
+    if (!ghost) {
+      ghost = document.createElement('div');
+      ghost.id = 'drag-ghost';
+      document.body.appendChild(ghost);
+    }
+    ghost.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;width:72px;height:100px;border-radius:6px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 20px rgba(200,168,75,0.6);transform:scale(1.15) rotate(-4deg);display:none;';
+
+    const getCardIdx = (el) => {
+      const card = el.closest('[data-hand-idx]');
+      return card ? parseInt(card.dataset.handIdx, 10) : -1;
+    };
+
+    const isOverBF = (x, y) => {
+      const r = document.getElementById('human-battlefield')?.getBoundingClientRect();
+      return r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    };
+
+    const showGhost = (card, x, y) => {
+      const imgUrl = typeof Scryfall !== 'undefined' ? Scryfall.getArtUrl(card) : null;
+      ghost.innerHTML = imgUrl
+        ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<div style="background:#1a1508;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#c8a84b;padding:4px;text-align:center;">${card.name}</div>`;
+      ghost.style.display = 'block';
+      ghost.style.left = (x - 36) + 'px';
+      ghost.style.top = (y - 60) + 'px';
+    };
+
+    const hideGhost = () => {
+      ghost.style.display = 'none';
+      document.getElementById('human-battlefield')?.classList.remove('drag-over');
+    };
+
+    const playCard = (idx) => {
+      if (typeof GameUI === 'undefined' || typeof Game === 'undefined') return;
+      const card = Game.human?.hand?.[idx];
+      if (!card) return;
+      const face = Scryfall.getFrontFace(card);
+      const isLand = (face.type_line || '').toLowerCase().includes('land');
+      const canAfford = Game.canAffordCard(card);
+      if (Scryfall.isMDFC && Scryfall.isMDFC(card)) {
+        const lf = Scryfall.getMDFCLandFace(card);
+        const sf = Scryfall.getMDFCSpellFace(card);
+        if (lf && Game.human.canPlayLand()) Game.playMDFCLand(idx);
+        else if (sf && canAfford) Game.castSpell(idx);
+        else GameLog.add("Can't play that card right now.", 'warning');
+      } else if (isLand) {
+        if (Game.human.canPlayLand()) Game.playLand(idx);
+        else GameLog.add("You've already played a land this turn.", 'warning');
+      } else {
+        if (canAfford) Game.castSpell(idx);
+        else GameLog.add("Not enough mana to cast that.", 'warning');
+      }
+    };
+
+    handLayer.addEventListener('touchstart', (e) => {
+      const hand = getHand();
+      if (!hand || !hand.contains(e.target)) return;
+      cancelAnimationFrame(rafId);
+      const t = e.touches[0];
+      startX = lastX = t.clientX;
+      startY = t.clientY;
+      velX = 0;
+      touchMode = null;
+      dragCardIdx = getCardIdx(e.target);
+
+      // If touching a card, prevent browser scroll immediately so we own this touch sequence
+      if (dragCardIdx !== -1) e.preventDefault();
+
+      // Long press = preview (only if no movement)
+      clearTimeout(longPressTimer);
+      if (dragCardIdx !== -1) {
+        longPressTimer = setTimeout(() => {
+          if (touchMode === null) {
+            touchMode = 'preview';
+            const card = Game?.human?.hand?.[dragCardIdx];
+            if (card && typeof GameUI !== 'undefined') GameUI.previewGameCard(card);
+          }
+        }, LONG_PRESS_MS);
+      }
+    }, { passive: false });
+
+    handLayer.addEventListener('touchmove', (e) => {
+      const hand = getHand();
+      if (!hand) return;
+      const t = e.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (touchMode === null && dist > DRAG_THRESHOLD) {
+        clearTimeout(longPressTimer);
+        // Decide mode: mostly vertical upward on a card = drag; horizontal = scroll
+        const angle = Math.abs(dy) / (Math.abs(dx) + 0.001);
+        if (dragCardIdx !== -1 && dy < -DRAG_THRESHOLD && angle > 1.2
+            && typeof Game !== 'undefined'
+            && ['main1','main2'].includes(Game.currentPhase)) {
+          touchMode = 'drag';
+          const card = Game.human?.hand?.[dragCardIdx];
+          if (card) showGhost(card, t.clientX, t.clientY);
+        } else {
+          touchMode = 'scroll';
+        }
+      }
+
+      if (touchMode === 'scroll') {
+        velX = t.clientX - lastX;
+        lastX = t.clientX;
+        applyOffset(scrollOffset + velX);
+      } else if (touchMode === 'drag') {
+        e.preventDefault();
+        ghost.style.left = (t.clientX - 36) + 'px';
+        ghost.style.top = (t.clientY - 60) + 'px';
+        const bf = document.getElementById('human-battlefield');
+        if (bf) bf.classList.toggle('drag-over', isOverBF(t.clientX, t.clientY));
+      }
+    }, { passive: false });
+
+    handLayer.addEventListener('touchend', (e) => {
+      clearTimeout(longPressTimer);
+      if (touchMode === 'scroll') {
+        rafId = requestAnimationFrame(momentum);
+      } else if (touchMode === 'drag') {
+        const t = e.changedTouches[0];
+        hideGhost();
+        if (isOverBF(t.clientX, t.clientY)) playCard(dragCardIdx);
+      }
+      touchMode = null;
+      dragCardIdx = -1;
+    });
+
+    handLayer.addEventListener('touchcancel', () => {
+      clearTimeout(longPressTimer);
+      touchMode = null;
+      dragCardIdx = -1;
+      hideGhost();
+    });
+
+    // Mouse drag (desktop)
+    let mouseDragState = null;
+    handLayer.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      const idx = getCardIdx(e.target);
+      if (idx === -1) return;
+      mouseDragState = { idx, startX: e.clientX, startY: e.clientY, dragging: false };
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!mouseDragState) return;
+      const dx = e.clientX - mouseDragState.startX;
+      const dy = e.clientY - mouseDragState.startY;
+      if (!mouseDragState.dragging && Math.sqrt(dx*dx+dy*dy) > DRAG_THRESHOLD) {
+        if (typeof Game === 'undefined' || !['main1','main2'].includes(Game.currentPhase)) {
+          mouseDragState = null; return;
+        }
+        mouseDragState.dragging = true;
+        const card = Game.human?.hand?.[mouseDragState.idx];
+        if (card) showGhost(card, e.clientX, e.clientY);
+      }
+      if (mouseDragState?.dragging) {
+        ghost.style.left = (e.clientX - 36) + 'px';
+        ghost.style.top = (e.clientY - 60) + 'px';
+        const bf = document.getElementById('human-battlefield');
+        if (bf) bf.classList.toggle('drag-over', isOverBF(e.clientX, e.clientY));
+      }
+    });
+    document.addEventListener('mouseup', (e) => {
+      if (!mouseDragState) return;
+      const { idx, dragging } = mouseDragState;
+      mouseDragState = null;
+      if (!dragging) return;
+      hideGhost();
+      if (isOverBF(e.clientX, e.clientY)) playCard(idx);
+    });
+  }
 });
 
 async function searchCards() {
@@ -413,17 +681,19 @@ async function startGame() {
   btn.textContent = 'Loading opponent deck...';
   btn.disabled = true;
 
-  // FIX: init game BEFORE showing game page
-  const aiCards = AIDeck.totalCards() > 0 ? AIDeck.getFlatDeck() : null;
-  await Game.init(deckCards, commanders, aiCards);
-  // Show game page
-  showPage('game');
-
-  // Show mulligan screen, hide board
-  const mulliganEl = document.getElementById('mulligan-screen');
-  const boardEl = document.getElementById('game-board');
-  if (mulliganEl) mulliganEl.classList.remove('hidden');
-  if (boardEl) boardEl.classList.add('hidden');
+  try {
+    const aiCards = AIDeck.totalCards() > 0 ? AIDeck.getFlatDeck() : null;
+    await Game.init(deckCards, commanders, aiCards);
+    showPage('game');
+    const mulliganEl = document.getElementById('mulligan-screen');
+    const boardEl = document.getElementById('game-board');
+    if (mulliganEl) mulliganEl.classList.remove('hidden');
+    if (boardEl) boardEl.classList.add('hidden');
+  } catch (err) {
+    btn.textContent = '▶ Start Game';
+    btn.disabled = false;
+    alert('Failed to start game: ' + err.message);
+  }
 }
 
 // ── SETTINGS TOGGLES ──
@@ -544,3 +814,6 @@ function deleteAIDeck(name) {
 function clearAIDeck() {
   AIDeck.clear();
 }
+
+
+

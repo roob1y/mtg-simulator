@@ -8,13 +8,14 @@
     <link rel="stylesheet" href="css/game.css" />
   </head>
   <body>
-    <header>
+    <header id="main-header">
       <h1>MTG Simulator</h1>
-      <nav>
-        <button class="nav-btn active" onclick="showPage('deck-builder')">Deck Builder</button>
-        <button class="nav-btn" onclick="showPage('game')" id="play-btn" disabled>Play</button>
-      </nav>
-      <div id="settings-bar">
+    </header>
+
+    <!-- Floating gear — only visible on game page -->
+    <div id="game-gear" class="hidden">
+      <button class="gear-btn" onclick="document.getElementById('game-settings-dropdown').classList.toggle('hidden')" title="Settings">⚙</button>
+      <div id="game-settings-dropdown" class="hidden">
         <label class="setting-toggle">
           <input type="checkbox" id="beginner-mode-toggle" onchange="toggleBeginnerMode()" />
           Beginner Mode
@@ -23,11 +24,18 @@
           <input type="checkbox" id="auto-tap-toggle" onchange="toggleAutoTap()" />
           Auto-tap
         </label>
+        <hr style="border-color: rgba(200,168,75,0.15); margin: 4px 0;">
+        <button class="gear-menu-btn" onclick="exitToDeckBuilder()">← Deck Builder</button>
+        <button class="gear-menu-btn danger" onclick="abandonGame()">✕ Abandon Game</button>
       </div>
-    </header>
+    </div>
 
     <!-- DECK BUILDER PAGE -->
     <div id="deck-builder" class="page active">
+      <div id="game-in-progress-banner" class="hidden">
+        <span>⚔ Game in progress</span>
+        <button onclick="showPage('game')">Resume →</button>
+      </div>
       <div class="deck-builder-layout">
         <div class="panel" id="search-panel">
           <h2>Card Search</h2>
@@ -210,6 +218,93 @@
 
     <!-- GAME PAGE -->
     <div id="game" class="page hidden">
+
+      <!-- TOP HUD — fixed, outside game-board -->
+      <div class="game-hud-top" id="game-hud-top">
+        <div class="game-header">
+          <div class="life-block">
+            <span class="life-label">Opponent</span>
+            <span class="life-total" id="opp-life">40</span>
+          </div>
+          <div class="turn-block">
+            <div id="turn-info">Turn 1 — Your Turn</div>
+          </div>
+          <div class="life-block">
+            <span class="life-label">You</span>
+            <span class="life-total" id="human-life">40</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPP GRAVEYARD DRAWER — hidden, opened via pill -->
+      <div class="drawer drawer--down" id="opp-graveyard-drawer">
+        <div class="drawer__body" id="opp-graveyard-list"></div>
+      </div>
+
+      <!-- OPP EXILE DRAWER — hidden, opened via pill -->
+      <div class="drawer drawer--down" id="opp-exile-drawer">
+        <div class="drawer__body" id="opp-exile-list"></div>
+      </div>
+
+      <!-- HAND LAYER — fixed, independent of bottom HUD, cards are free floating -->
+      <div class="game-hand-layer" id="game-hand-layer">
+        <div class="hud-hand-row">
+          <span class="hud-hand-label">YOUR HAND</span>
+          <span class="hud-mana-label" id="mana-pool"></span>
+        </div>
+        <div class="hand-zone">
+          <div class="hand-cards" id="human-hand"></div>
+        </div>
+      </div>
+
+      <!-- MOBILE LOG DRAWER — fixed, outside all HUDs -->
+      <div id="mobile-log-drawer" class="mobile-log-drawer hidden">
+        <div class="mobile-log-header" onclick="GameUI.toggleMobileLog()">
+          <span>Game Log</span>
+          <span id="mobile-log-toggle">▲</span>
+        </div>
+        <div id="mobile-log-entries" class="mobile-log-entries"></div>
+      </div>
+
+      <!-- GAME LOG TOAST — fixed, outside all HUDs -->
+      <div id="game-log-toast" class="game-log-toast toast-hidden"></div>
+
+      <!-- BOTTOM HUD — fixed, outside game-board -->
+      <div class="game-hud-bottom" id="game-hud-bottom">
+
+        <!-- Phase bar + Log row -->
+        <div class="hud-controls-row">
+          <div class="hud-log-area">
+            <div id="action-buttons"></div>
+          </div>
+          <div class="hud-phase-bar" id="phase-bar-bottom">
+            <div class="phase-bar" id="phase-bar"></div>
+          </div>
+        </div>
+
+        <!-- Pills row -->
+        <div class="hud-pills-row">
+          <div class="hud-pills-left">
+            <button class="hud-pill" onclick="GameUI.toggleDrawer('commander-drawer')">★ · <span id="commander-count">0</span></button>
+            <button class="hud-pill" onclick="GameUI.toggleDrawer('graveyard-drawer')">⚰ · <span id="graveyard-count">0</span></button>
+            <button class="hud-pill" onclick="GameUI.toggleDrawer('exile-drawer')">✕ · <span id="exile-count">0</span></button>
+          </div>
+          <div class="hud-pills-right" id="combat-btn-area"></div>
+        </div>
+
+        <!-- Hidden drawers -->
+        <div class="drawer drawer--up" id="commander-drawer">
+          <div class="drawer__body" id="command-zone"></div>
+        </div>
+        <div class="drawer drawer--up" id="graveyard-drawer">
+          <div class="drawer__body" id="graveyard-list"></div>
+        </div>
+        <div class="drawer drawer--up" id="exile-drawer">
+          <div class="drawer__body" id="exile-list"></div>
+        </div>
+
+      </div>
+
       <!-- Mulligan Screen -->
       <div id="mulligan-screen" class="hidden">
         <div class="mulligan-inner">
@@ -225,94 +320,36 @@
         </div>
       </div>
 
-      <!-- Game Board -->
+      <!-- Game Board — scrollable battlefield only -->
       <div id="game-board" class="hidden">
-        <div id="phase-bar" class="phase-bar"></div>
 
-        <div class="game-header">
-          <div class="life-block">
-            <span class="life-label">Opponent</span>
-            <span class="life-total" id="opp-life">40</span>
+        <!-- BATTLEFIELD -->
+        <div class="game-battlefield">
+          <div class="game-zone opp-zone" id="opp-battlefield"></div>
+          <div class="battlefield-divider">— Battlefield —</div>
+          <div class="game-zone human-zone" id="human-battlefield"></div>
+        </div>
+
+        <!-- Sidebar (desktop only) -->
+        <div class="game-sidebar">
+          <div class="sidebar-section">
+            <div class="sidebar-label">Card Preview</div>
+            <div id="game-card-preview">
+              <p class="muted" style="font-size: 12px">Click a card to preview</p>
+            </div>
           </div>
-          <div class="turn-block">
-            <div id="turn-info">Turn 1 — Your Turn</div>
-          </div>
-          <div class="life-block">
-            <span class="life-label">You</span>
-            <span class="life-total" id="human-life">40</span>
+          <div id="phase-tip" class="phase-tip hidden"></div>
+          <div id="trigger-reminder" class="trigger-reminder hidden"></div>
+          <div id="mana-choice" class="mana-choice hidden"></div>
+          <div class="sidebar-section">
+            <div class="sidebar-label">Game Log</div>
+            <div id="game-log-entries" class="game-log"></div>
           </div>
         </div>
 
-        <div class="game-layout">
-          <div class="game-main">
-            <div class="game-zone opp-zone" id="opp-battlefield"></div>
-            <div class="graveyard-area">
-              <div class="zone-label">
-                Opponent Graveyard (
-                <span id="opp-graveyard-count">0</span>
-                )
-              </div>
-              <div id="opp-graveyard-list"></div>
-            </div>
-            <div class="battlefield-divider">— Battlefield —</div>
-            <div class="game-zone human-zone" id="human-battlefield"></div>
-            <div class="mana-bar" id="mana-pool"></div>
-            <div class="action-bar" id="action-buttons"></div>
-            <div class="hand-zone">
-              <div class="zone-label">Your Hand</div>
-              <div class="hand-cards" id="human-hand"></div>
-            </div>
-            <div class="command-zone-area">
-              <div class="zone-label">Command Zone</div>
-              <div id="command-zone"></div>
-            </div>
-            <div class="graveyard-area">
-              <div class="zone-label">
-                Graveyard (
-                <span id="graveyard-count">0</span>
-                )
-              </div>
-              <div id="graveyard-list"></div>
-            </div>
-            <div class="graveyard-area">
-              <div class="zone-label">
-                Exile (
-                <span id="exile-count">0</span>
-                )
-              </div>
-              <div id="exile-list"></div>
-            </div>
-          </div>
 
-          <div class="game-sidebar">
-            <div class="sidebar-section">
-              <div class="sidebar-label">Card Preview</div>
-              <div id="game-card-preview">
-                <p class="muted" style="font-size: 12px">Click a card to preview</p>
-              </div>
-            </div>
-            <div id="phase-tip" class="phase-tip hidden"></div>
-            <div id="trigger-reminder" class="trigger-reminder hidden"></div>
-            <div id="mana-choice" class="mana-choice hidden"></div>
-            <div class="sidebar-section">
-              <div class="sidebar-label">Game Log</div>
-              <div id="game-log-entries" class="game-log"></div>
-            </div>
-          </div>
 
-          <!-- Mobile log drawer -->
-          <div id="mobile-log-drawer" class="mobile-log-drawer hidden">
-            <div class="mobile-log-header" onclick="GameUI.toggleMobileLog()">
-              <span>Game Log</span>
-              <span id="mobile-log-toggle">▲</span>
-            </div>
-            <div id="mobile-log-entries" class="mobile-log-entries"></div>
-          </div>
-        </div>
-
-        <div id="game-over" class="game-over hidden"></div>
-      </div>
-    </div>
+    <div id="game-over" class="game-over hidden"></div>
 
     <script src="js/scryfall.js"></script>
     <script src="js/opponents/aggro.js"></script>
@@ -327,17 +364,32 @@
     <script src="js/game.js"></script>
     <script src="js/gameui.js"></script>
     <script src="js/main.js"></script>
+    <script>
+      document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('game-settings-dropdown');
+        const gearBtn = document.querySelector('#game-gear .gear-btn');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+          if (!dropdown.contains(e.target) && e.target !== gearBtn) {
+            dropdown.classList.add('hidden');
+          }
+        }
+      });
+    </script>
+
+
+    <div id="card-preview-modal" class="modal hidden">
+      <div class="modal-inner" onclick="event.stopPropagation()">
+        <div id="card-preview-modal-content"></div>
+        <button
+          onclick="document.getElementById('card-preview-modal').classList.add('hidden')"
+          style="width: 100%; margin-top: 8px"
+        >
+          Close
+        </button>
+      </div>
+    </div>
   </body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <div id="card-preview-modal" class="modal hidden">
-    <div class="modal-inner" onclick="event.stopPropagation()">
-      <div id="card-preview-modal-content"></div>
-      <button
-        onclick="document.getElementById('card-preview-modal').classList.add('hidden')"
-        style="width: 100%; margin-top: 8px"
-      >
-        Close
-      </button>
-    </div>
-  </div>
 </html>
+
+

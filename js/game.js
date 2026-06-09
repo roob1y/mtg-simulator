@@ -269,6 +269,7 @@ const Game = {
     const card = this.human.hand[cardIndex];
     if (!card) return false;
 
+    GameUI.flashHandCard(cardIndex, 'land');
     const success = this.human.playLand(cardIndex);
     if (success) {
       // Determine if land enters tapped
@@ -291,7 +292,7 @@ const Game = {
       this.checkTriggers('land_enters', card);
       this.processETB(card);
       this.checkWinCondition();
-      GameUI.renderGame(this);
+      setTimeout(() => GameUI.renderGame(this), 300);
     }
     return success;
   },
@@ -486,7 +487,12 @@ const Game = {
   canAffordCard(card) {
     const face = Scryfall.getFrontFace(card);
     const cost = face.mana_cost || '';
+    const cmc = card.cmc || 0;
     const pool = { ...this.human.manaPool };
+    const totalMana = Object.values(pool).reduce((a, b) => a + b, 0);
+
+    // If card has a cmc but no mana in pool at all, can't afford
+    if (cmc > 0 && totalMana === 0) return false;
 
     // Check specific colour pips first
     const pips = cost.match(/\{([WUBRG])\}/g) || [];
@@ -546,29 +552,24 @@ const Game = {
       return false;
     }
 
-    // FIX: Spend mana intelligently — parse mana cost to match colors
-    this._spendManaCost(card);
+    GameUI.flashHandCard(cardIndex, 'cast');
 
-    const result = this.human.castFromHand(cardIndex);
-    if (result) {
-      GameLog.add(`You cast ${card.name}.`, 'action');
+    // Delay actual cast so flash animation is visible
+    setTimeout(() => {
+      this._spendManaCost(card);
+      const result = this.human.castFromHand(cardIndex);
+      if (result) {
+        GameLog.add(`You cast ${card.name}.`, 'action');
+        this.processETB(card);
+        GameUI.selectedCard = null;
+        this.human.battlefield.forEach((p) => { p.canUntap = false; });
+        this.checkTriggers('spell_cast', card);
+        this.checkWinCondition();
+        GameUI.renderGame(this);
+      }
+    }, 300);
 
-      this.processETB(card);
-
-      // FIX: deselect only on success
-      GameUI.selectedCard = null;
-
-      this.human.battlefield.forEach((p) => {
-        p.canUntap = false;
-      });
-
-      // Check triggers
-      this.checkTriggers('spell_cast', card);
-      this.checkWinCondition();
-      GameUI.renderGame(this);
-    }
-
-    return !!result;
+    return true;
   },
 
   // FIX: Parse mana cost string and spend matching colors before generic
